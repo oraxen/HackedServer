@@ -1,0 +1,22 @@
+# If enabled, HackedServer will send a fake forge handshake to your users
+# in order to retrieve the forge mod list sent by forge clients
+enabled: true
+
+categories:
+
+  whitelisted:
+    color: <green>
+    mods:
+      - "FML"
+      - "FORGE"
+      - "MCP"
+      - "MINECRAFT"
+      - "MERCURIUS_UPDATER"
+      - "BETTERFOLIAGE"
+
+  blacklisted:
+    color: <red>
+    mods:
+      - "FORGEWURST"
+      - "FORGEHAX"
+      - "WURST"

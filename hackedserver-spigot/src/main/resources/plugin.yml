@@ -1,0 +1,10 @@
+main: org.hackedserver.spigot.HackedServerPlugin
+name: HackedServer
+version: ${projectVersion}
+author: Th0rgal
+softdepend: [ ViaVersion, ProtocolSupport ]
+depend: [ ProtocolLib ]
+commands:
+  hackedserver:
+    description: Main command of HackedServer.
+    aliases: [ hs, hackeds, hserver ]
