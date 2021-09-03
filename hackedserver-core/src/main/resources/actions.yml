@@ -1,7 +1,0 @@
-alert:
-  commands:
-    console: [ ]
-    player: [ ]
-    opped_player: [ ]
-  alert: true
-  alert_message: "<red><player> <gray>just logged in using <red><name><gray> !"

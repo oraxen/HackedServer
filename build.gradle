@@ -43,6 +43,8 @@ project(":hackedserver-core") {
 
     dependencies {
         compileOnly group: "net.kyori", name: "adventure-text-minimessage", version: "4.1.0-SNAPSHOT"
+
+        implementation group: "io.github.xtomlj", name: "xtomlj", version: "1.1.0"
     }
 
 }
@@ -54,6 +56,7 @@ project(":hackedserver-spigot") {
         compileOnly group: "com.github.dmulloy2", name: "ProtocolLib", version: "4.7.0"
         compileOnly group: "net.kyori", name: "adventure-text-minimessage", version: "4.1.0-SNAPSHOT"
         compileOnly group: 'io.netty', name: 'netty-all', version: '4.1.65.Final'
+        compileOnly project(path: ":hackedserver-core", configuration: "shadow")
 
         implementation group: "net.kyori", name: "adventure-platform-bukkit", version: "4.0.0-SNAPSHOT"
         implementation group: "org.bstats", name: "bstats-bukkit", version: "2.2.1"
