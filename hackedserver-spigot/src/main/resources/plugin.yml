@@ -4,6 +4,7 @@ version: ${projectVersion}
 author: Th0rgal
 softdepend: [ ViaVersion, ProtocolSupport ]
 depend: [ ProtocolLib ]
+api-version: 1.17
 commands:
   hackedserver:
     description: Main command of HackedServer.

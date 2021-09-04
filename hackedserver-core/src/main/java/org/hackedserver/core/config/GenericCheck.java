@@ -1,17 +1,19 @@
 package org.hackedserver.core.config;
 
+import java.util.List;
+
 public class GenericCheck {
 
     private final String id;
     private final String name;
     private final String channel;
-    private final AbstractAction action;
+    private final List<Action> actions;
 
-    public GenericCheck(String id, String name, String channel, AbstractAction action) {
+    public GenericCheck(String id, String name, String channel, List<Action> actions) {
         this.id = id;
         this.name = name;
         this.channel = channel;
-        this.action = action;
+        this.actions = actions;
     }
 
     public String getId() {
@@ -26,8 +28,8 @@ public class GenericCheck {
         return channel;
     }
 
-    public AbstractAction getAction() {
-        return action;
+    public List<Action> getActions() {
+        return actions;
     }
 
 }

@@ -22,8 +22,8 @@ public class Logs {
         field.set(plugin, LOGGER);
     }
 
-    public static void onEnable() {
-        audiences = BukkitAudiences.create(plugin);
+    public static void onEnable(BukkitAudiences audiences) {
+        Logs.audiences = audiences;
     }
 
     public static void logInfo(String message) {
