@@ -7,12 +7,14 @@ public class GenericCheck {
     private final String id;
     private final String name;
     private final String channel;
+    private final String messageHas;
     private final List<Action> actions;
 
-    public GenericCheck(String id, String name, String channel, List<Action> actions) {
+    public GenericCheck(String id, String name, String channel, String messageHas, List<Action> actions) {
         this.id = id;
         this.name = name;
         this.channel = channel;
+        this.messageHas = messageHas;
         this.actions = actions;
     }
 
@@ -24,8 +26,9 @@ public class GenericCheck {
         return name;
     }
 
-    public String getChannel() {
-        return channel;
+    public boolean pass(String channel, String message) {
+        return channel.equals(this.channel)
+                && (messageHas == null || message.contains(messageHas));
     }
 
     public List<Action> getActions() {

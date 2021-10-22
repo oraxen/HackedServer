@@ -4,10 +4,12 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.listeners.CustomPayloadListener;
+import org.hackedserver.spigot.listeners.HackedPlayerListeners;
 import org.hackedserver.spigot.utils.logs.Logs;
 
 public class HackedServerPlugin extends JavaPlugin {
@@ -28,6 +30,7 @@ public class HackedServerPlugin extends JavaPlugin {
         audiences = BukkitAudiences.create(this);
         Logs.onEnable(audiences);
         new Metrics(this, 2008);
+        Bukkit.getPluginManager().registerEvents(new HackedPlayerListeners(), this);
         protocolManager = ProtocolLibrary.getProtocolManager();
         customPayloadListener = new CustomPayloadListener(protocolManager, this);
         customPayloadListener.register();

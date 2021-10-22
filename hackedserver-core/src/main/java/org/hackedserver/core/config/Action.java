@@ -33,6 +33,10 @@ public class Action {
         this.alert = alert;
     }
 
+    public boolean hasAlert() {
+        return alert != null;
+    }
+
     public String getId() {
         return id;
     }

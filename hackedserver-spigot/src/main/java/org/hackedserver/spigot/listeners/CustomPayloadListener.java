@@ -10,11 +10,14 @@ import io.netty.buffer.ByteBuf;
 import net.kyori.adventure.text.minimessage.Template;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.utils.logs.Logs;
+
+import java.nio.charset.StandardCharsets;
 
 public class CustomPayloadListener {
 
@@ -30,12 +33,16 @@ public class CustomPayloadListener {
                 PacketContainer packet = event.getPacket();
                 ByteBuf buf = (ByteBuf) packet.getModifier().read(1);
                 String channel = packet.getMinecraftKeys().read(0).getFullKey();
+                HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+                String message = buf.toString(StandardCharsets.UTF_8);
                 for (GenericCheck check : HackedServer.getChecks())
-                    if (check.getChannel().equalsIgnoreCase(channel))
+                    if (check.pass(channel, message)) {
+                        hackedPlayer.addGenericCheck(check);
                         for (Action action : check.getActions()) {
                             performActions(action, player, Template.of("player",
                                     player.getName()), Template.of("name", check.getName()));
                         }
+                    }
             }
         };
     }
@@ -49,11 +56,13 @@ public class CustomPayloadListener {
     }
 
     private void performActions(Action action, Player player, Template... templates) {
-        Logs.logComponent(action.getAlert(templates));
-        for (Player admin : Bukkit.getOnlinePlayers())
-            if (admin.hasPermission("hackedserver.alert"))
-                HackedServerPlugin.get().getAudiences().player(player)
-                        .sendMessage(action.getAlert(templates));
+        if (action.hasAlert()) {
+            Logs.logComponent(action.getAlert(templates));
+            for (Player admin : Bukkit.getOnlinePlayers())
+                if (admin.hasPermission("hackedserver.alert"))
+                    HackedServerPlugin.get().getAudiences().player(player)
+                            .sendMessage(action.getAlert(templates));
+        }
         for (String command : action.getConsoleCommands())
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                     command.replace("<player>",
