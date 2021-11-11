@@ -76,6 +76,9 @@ project(':hackedserver-bungeecord') {
         compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.17-R0.1-SNAPSHOT'
         compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.1.0-SNAPSHOT'
         compileOnly group: 'dev.simplix', name: 'protocolize-api', version: '2.0.1'
+        compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
+
+        implementation group: 'net.kyori', name: 'adventure-platform-bungeecord', version: '4.0.0'
         implementation group: 'org.bstats', name: 'bstats-bungeecord', version: '2.2.1'
     }
 
@@ -85,6 +88,7 @@ project(':hackedserver-velocity') {
 
     dependencies {
         compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.1.0-SNAPSHOT'
+        compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
 
         implementation group: 'org.bstats', name: 'bstats-velocity', version: '2.2.1'
     }
