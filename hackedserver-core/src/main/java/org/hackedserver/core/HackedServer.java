@@ -11,6 +11,12 @@ public class HackedServer {
     private final static Map<String, Action> actions = new HashMap<>();
     private final static Map<String, GenericCheck> genericChecks = new HashMap<>();
 
+    public static void clear() {
+        players.clear();
+        actions.clear();
+        genericChecks.clear();
+    }
+
     public static void registerPlayer(UUID uuid, HackedPlayer player) {
         players.put(uuid, player);
     }

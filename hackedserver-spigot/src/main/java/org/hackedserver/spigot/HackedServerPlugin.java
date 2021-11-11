@@ -2,12 +2,15 @@ package org.hackedserver.spigot;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import dev.jorel.commandapi.CommandAPI;
+import dev.jorel.commandapi.CommandAPIConfig;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.spigot.listeners.CustomPayloadListener;
 import org.hackedserver.spigot.listeners.HackedPlayerListeners;
 import org.hackedserver.spigot.utils.logs.Logs;
@@ -26,7 +29,13 @@ public class HackedServerPlugin extends JavaPlugin {
     }
 
     @Override
+    public void onLoad() {
+        CommandAPI.onLoad(new CommandAPIConfig().silentLogs(true));
+    }
+
+    @Override
     public void onEnable() {
+        CommandAPI.onEnable(this);
         audiences = BukkitAudiences.create(this);
         Logs.onEnable(audiences);
         new Metrics(this, 2008);
@@ -34,6 +43,7 @@ public class HackedServerPlugin extends JavaPlugin {
         protocolManager = ProtocolLibrary.getProtocolManager();
         customPayloadListener = new CustomPayloadListener(protocolManager, this);
         customPayloadListener.register();
+        new CommandsManager(this, audiences).loadCommands();
         Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
     }
 
