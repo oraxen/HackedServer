@@ -1,0 +1,3 @@
+[settings]
+# Name of a language file without extension, english.toml by default
+language = "english"

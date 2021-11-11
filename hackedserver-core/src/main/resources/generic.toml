@@ -1,0 +1,28 @@
+# If enabled, HackedServer will perform this provided list of generic checks on the custom payload packet
+enabled = true
+
+[labymod_v1]
+channel = "LABYMOD"
+name = "Labymod v1"
+actions = ["alert"]
+
+[labymod_v2]
+channel = "LMC"
+name = "Labymod v2"
+actions = ["alert"]
+
+[labymod_v3]
+channel = "labymod3:main"
+name = "Labymod v3"
+actions = ["alert"]
+
+[5_zig_mod]
+channel = "5zig_Set"
+name = "5zig Mod"
+actions = ["alert"]
+
+[fabric]
+channel = "minecraft:brand"
+message_has = "fabric"
+name = "Fabric"
+actions = ["alert"]

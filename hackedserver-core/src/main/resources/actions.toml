@@ -1,0 +1,6 @@
+[alert]
+send_alert = "<red><player> <gray>just logged in using <red><name><gray> !"
+[alert.commands]
+console = []
+player = []
+opped_player = []

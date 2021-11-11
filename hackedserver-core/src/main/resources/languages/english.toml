@@ -1,0 +1,13 @@
+[general]
+prefix = "<gradient:#2F80ED:#FFCAC9>HackedServer <#282B3F>| "
+
+[logs]
+loaded = "<prefix><#55ffa4>Successfully enabled"
+
+[commands]
+help = """
+<prefix><#b8bbc2>Available commands
+<hover:show_text:\"<gray>fill reload command\"><click:SUGGEST_COMMAND:/oraxen reload ><#6f737d>/o \
+<#b8bbc2>reload</click></hover>  <#6f737d>»<#b8bbc2> reload the plugin
+"""
+reload_success = "<prefix><#55ffa4>Successfully reloaded"
