@@ -33,4 +33,8 @@ public class HackedPlayer {
         return genericChecks.contains(check.getId());
     }
 
+    public Set<String> getGenericChecks() {
+        return genericChecks;
+    }
+
 }

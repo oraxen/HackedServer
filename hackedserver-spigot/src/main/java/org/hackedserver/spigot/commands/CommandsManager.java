@@ -1,8 +1,13 @@
 package org.hackedserver.spigot.commands;
 
 import dev.jorel.commandapi.CommandAPICommand;
+import dev.jorel.commandapi.arguments.PlayerArgument;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.kyori.adventure.text.minimessage.Template;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.hackedserver.core.HackedPlayer;
+import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.utils.logs.Logs;
@@ -22,6 +27,7 @@ public class CommandsManager {
                 .withAliases("hs")
                 .withPermission("hackedserver.command")
                 .withSubcommand(getReloadCommand())
+                .withSubcommand(getCheckCommand())
                 .executes((sender, args) -> {
                     Message.COMMANDS_HELP.send(audiences.sender(sender));
                 })
@@ -34,6 +40,24 @@ public class CommandsManager {
                 .executes((sender, args) -> {
                     ConfigsManager.reload(Logs.getLogger(), plugin.getDataFolder());
                     Message.COMMANDS_RELOAD_SUCCESS.send(audiences.sender(sender));
+                });
+    }
+
+    private CommandAPICommand getCheckCommand() {
+        return new CommandAPICommand("check")
+                .withPermission("hackedserver.command.check")
+                .withArguments(new PlayerArgument("player"))
+                .executes((sender, args) -> {
+                    HackedPlayer hackedPlayer = HackedServer.getPlayer(((Player) args[0]).getUniqueId());
+                    if (hackedPlayer.getGenericChecks().isEmpty())
+                        Message.CHECK_NO_MODS.send(audiences.sender(sender));
+                    else {
+                        Message.CHECK_MODS.send(audiences.sender(sender));
+                        for (String checkId : hackedPlayer.getGenericChecks()) {
+                            Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
+                                    Template.of("mod", HackedServer.getCheck(checkId).getName()));
+                        }
+                    }
                 });
     }
 

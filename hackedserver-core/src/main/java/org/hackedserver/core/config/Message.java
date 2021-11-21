@@ -17,7 +17,10 @@ public enum Message {
     PREFIX("general.prefix"),
     PLUGIN_LOADED("logs.loaded"),
     COMMANDS_HELP("commands.help"),
-    COMMANDS_RELOAD_SUCCESS("commands.reload_success");
+    COMMANDS_RELOAD_SUCCESS("commands.reload_success"),
+    CHECK_NO_MODS("commands.check_no_mods"),
+    CHECK_MODS("commands.check_mods"),
+    MOD_LIST_FORMAT("commands.mod_list_format");
 
     private static TomlParseResult result;
 
@@ -56,6 +59,10 @@ public enum Message {
 
     public void send(Audience audience) {
         audience.sendMessage(toComponent());
+    }
+
+    public void send(Audience audience, final Template... placeholders) {
+        audience.sendMessage(toComponent(placeholders));
     }
 
 }

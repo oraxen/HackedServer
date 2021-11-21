@@ -11,3 +11,6 @@ help = """
 <#b8bbc2>reload</click></hover>  <#6f737d>»<#b8bbc2> reload the plugin
 """
 reload_success = "<prefix><#55ffa4>Successfully reloaded"
+check_no_mods = "<prefix><#55ffa4> No mods detected"
+check_mods = "<prefix><#55ffa4> Detected mods:"
+mod_list_format = "<#6f737d>- <#facc43><mod>"
