@@ -9,6 +9,8 @@ help = """
 <prefix><#b8bbc2>Available commands
 <hover:show_text:\"<gray>fill reload command\"><click:SUGGEST_COMMAND:/hackedserver reload ><#6f737d>/hs \
 <#b8bbc2>reload</click></hover>  <#6f737d>»<#b8bbc2> reload the plugin
+<hover:show_text:\"<gray>fill give command\"><click:SUGGEST_COMMAND:/hackedserver check ><#6f737d>/hs \
+<#b8bbc2>check <#43c9fa>target</click></hover>  <#6f737d>»<#b8bbc2> check player detected mods
 """
 reload_success = "<prefix><#55ffa4>Successfully reloaded"
 check_no_mods = "<prefix><#55ffa4> No mods detected"

@@ -2,6 +2,8 @@ package org.hackedserver.bungee;
 
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.api.plugin.PluginManager;
+import org.hackedserver.bungee.commands.CommandsManager;
 import org.hackedserver.bungee.listeners.CustomPayloadListener;
 import org.hackedserver.bungee.listeners.HackedPlayerListeners;
 import org.hackedserver.bungee.logs.Logs;
@@ -18,9 +20,11 @@ public class HackedServerPlugin extends Plugin {
         audiences = BungeeAudiences.create(this);
         Logs.onEnable(getLogger(), audiences);
         ConfigsManager.init(getLogger(), getDataFolder());
-
-        this.getProxy().getPluginManager().registerListener(this, new HackedPlayerListeners());
-        this.getProxy().getPluginManager().registerListener(this, new CustomPayloadListener());
+        PluginManager pluginManager = this.getProxy().getPluginManager();
+        pluginManager.registerListener(this, new HackedPlayerListeners());
+        pluginManager.registerListener(this, new CustomPayloadListener());
+        pluginManager.registerCommand(this, new CommandsManager(this.getProxy(),
+                getLogger(), getDataFolder()));
     }
 
     public static HackedServerPlugin get() {
