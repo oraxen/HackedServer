@@ -4,4 +4,4 @@ version: ${projectVersion}
 author: Th0rgal
 softdepend: [ ViaVersion, ProtocolSupport ]
 depend: [ ProtocolLib ]
-api-version: 1.17
+api-version: 1.18

@@ -43,7 +43,7 @@ allprojects {
 project(':hackedserver-core') {
 
     dependencies {
-        compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.1.0-SNAPSHOT'
+        compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.2.0-SNAPSHOT'
 
         implementation group: 'io.github.xtomlj', name: 'xtomlj', version: '1.1.0'
     }
@@ -53,13 +53,13 @@ project(':hackedserver-core') {
 project(':hackedserver-spigot') {
 
     dependencies {
-        compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.17.1-R0.1-SNAPSHOT'
+        compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.18-R0.1-SNAPSHOT'
         compileOnly group: 'com.github.dmulloy2', name: 'ProtocolLib', version: '4.7.0'
         compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.1.0-SNAPSHOT'
         compileOnly group: 'io.netty', name: 'netty-all', version: '4.1.65.Final'
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
 
-        implementation group: 'dev.jorel.CommandAPI', name: 'commandapi-shade', version: '6.3.1'
+        implementation group: 'dev.jorel.CommandAPI', name: 'commandapi-shade', version: '6.5.3'
         implementation group: 'net.kyori', name: 'adventure-platform-bukkit', version: '4.0.0-SNAPSHOT'
         implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
     }
