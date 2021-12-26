@@ -6,14 +6,14 @@ public class GenericCheck {
 
     private final String id;
     private final String name;
-    private final String channel;
+    private final List<String> channels;
     private final String messageHas;
     private final List<Action> actions;
 
-    public GenericCheck(String id, String name, String channel, String messageHas, List<Action> actions) {
+    public GenericCheck(String id, String name, List<String> channels, String messageHas, List<Action> actions) {
         this.id = id;
         this.name = name;
-        this.channel = channel;
+        this.channels = channels;
         this.messageHas = messageHas;
         this.actions = actions;
     }
@@ -27,7 +27,7 @@ public class GenericCheck {
     }
 
     public boolean pass(String channel, String message) {
-        return channel.equals(this.channel)
+        return this.channels.contains(channel)
                 && (messageHas == null || message.contains(messageHas));
     }
 

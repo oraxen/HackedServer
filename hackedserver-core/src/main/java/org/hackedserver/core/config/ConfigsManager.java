@@ -113,6 +113,7 @@ public class ConfigsManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static void loadGenericChecks(@NotNull TomlParseResult result) {
         if (!Boolean.TRUE.equals(result.getBoolean("enabled")))
             return;
@@ -131,7 +132,7 @@ public class ConfigsManager {
             }
             HackedServer.registerCheck(new GenericCheck(key,
                     table.getString("name"),
-                    table.getString("channel"),
+                    (List<String>) (Object) table.getArray("channels").toList(),
                     table.getString("message_has"),
                     actions)
             );

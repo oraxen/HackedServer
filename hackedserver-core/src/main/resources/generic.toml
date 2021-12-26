@@ -2,27 +2,146 @@
 enabled = true
 
 [labymod_v1]
-channel = "LABYMOD"
-name = "Labymod v1"
 actions = ["alert"]
+channels = ["LABYMOD"]
+name = "Labymod v1"
 
 [labymod_v2]
-channel = "LMC"
-name = "Labymod v2"
 actions = ["alert"]
+channels = ["LMC"]
+name = "Labymod v2"
 
 [labymod_v3]
-channel = "labymod3:main"
-name = "Labymod v3"
 actions = ["alert"]
+channels = ["labymod3:main"]
+name = "Labymod v3"
 
 [5_zig_mod]
-channel = "5zig_Set"
-name = "5zig Mod"
 actions = ["alert"]
+channels = ["5zig_Set"]
+name = "5zig Mod"
+
+[px_mod]
+actions = ["alert"]
+channels = ["PX|Version"]
+name = "PX Mod"
+
+[better_sprinting]
+actions = ["alert"]
+channels = ["BSprint"]
+name = "Better Sprinting"
+
+[hyperium]
+actions = ["alert"]
+channels = ["hyperium"]
+name = "Hyperium"
+
+[journeymap]
+actions = ["alert"]
+channels = ["journeymap_channel"]
+name = "JourneyMap"
+
+[remix]
+actions = ["alert"]
+channels = ["BLC|M"]
+name = "Remix"
+
+[waila]
+actions = ["alert"]
+channels = ["waila"]
+name = "Waila"
+
+[winterware]
+actions = ["alert"]
+channels = ["LC|Brand"]
+name = "Winterware"
+
+[forge_mod_loader_v1]
+actions = ["alert"]
+channels = ["REGISTER", "minecraft:register"]
+message_has = "legacy:fml"
+name = "Legacy Forge Mod Loader"
+
+[forge_mod_loader_v2]
+actions = ["alert"]
+channels = ["FML|HS", "l:fmlhs"]
+name = "Forge Mod Loader"
+
+[world_downloader_v1]
+actions = ["alert"]
+channels = ["REGISTER", "minecraft:register"]
+message_has = "wdl"
+name = "World Downloader"
+
+[world_downloader_v2]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "WorldDownloader"
+name = "World Downloader"
+
+[world_downloader_v3]
+actions = ["alert"]
+channels = ["WDL|INIT"]
+name = "World Downloader"
+
+[world_downloader_v4]
+actions = ["alert"]
+channels = ["WDL|CONTROL"]
+message_has = "WDL"
+name = "World Downloader"
+
+[emc]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "Subsystem"
+name = "Easy Minecraft Client"
+
+[liteloader]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "LiteLoader"
+name = "LiteLoader"
 
 [fabric]
-channel = "minecraft:brand"
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
 message_has = "fabric"
 name = "Fabric"
+
+[forge]
 actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "forge"
+name = "Forge"
+
+[lunar_client]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "lunarclient"
+name = "Lunar Client"
+
+[pvp_lounge]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "PLC18"
+name = "PvPLounge Client"
+
+[cracked_vape]
+actions = ["alert"]
+channels = ["LOLIMAHCKER"]
+name = "Cracked Vape"
+
+[xaero_minimap]
+actions = ["alert"]
+channels = ["XaeroMinimap"]
+name = "XaeroMinimap"
+
+[inventory_tweaks]
+actions = ["alert"]
+channels = ["InventoryTweaks"]
+name = "InventoryTweaks"
+
+[world_edit_cui]
+actions = ["alert"]
+channels = ["WECUI"]
+name = "World Edit CUI"
