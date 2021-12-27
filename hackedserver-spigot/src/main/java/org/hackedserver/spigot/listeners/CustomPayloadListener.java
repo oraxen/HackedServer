@@ -64,19 +64,22 @@ public class CustomPayloadListener {
                             .sendMessage(action.getAlert(templates));
         }
         for (String command : action.getConsoleCommands())
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                    command.replace("<player>",
-                            player.getName()));
+            Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
+                    () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                            command.replace("<player>",
+                                    player.getName())));
         for (String command : action.getPlayerCommands())
-            Bukkit.dispatchCommand(player,
-                    command.replace("<player>",
-                            player.getName()));
+            Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
+                    () -> Bukkit.dispatchCommand(player,
+                            command.replace("<player>",
+                                    player.getName())));
         for (String command : action.getOppedPlayerCommands()) {
             boolean op = player.isOp();
             player.setOp(true);
-            Bukkit.dispatchCommand(player,
-                    command.replace("<player>",
-                            player.getName()));
+            Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
+                    () -> Bukkit.dispatchCommand(player,
+                            command.replace("<player>",
+                                    player.getName())));
             player.setOp(op);
         }
     }
