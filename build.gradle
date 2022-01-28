@@ -89,6 +89,8 @@ project(':hackedserver-velocity') {
     dependencies {
         compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.1.0-SNAPSHOT'
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
+        compileOnly group: 'com.velocitypowered', name: 'velocity-api', version: '3.0.1'
+        annotationProcessor group: 'com.velocitypowered', name: 'velocity-api', version: '3.0.1'
 
         implementation group: 'org.bstats', name: 'bstats-velocity', version: '2.2.1'
     }
