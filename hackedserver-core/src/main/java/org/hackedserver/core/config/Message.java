@@ -4,7 +4,8 @@ package org.hackedserver.core.config;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.Template;
+import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
+import net.kyori.adventure.text.minimessage.placeholder.PlaceholderResolver;
 import org.jetbrains.annotations.NotNull;
 import org.tomlj.TomlParseResult;
 
@@ -43,25 +44,25 @@ public enum Message {
     }
 
     public @NotNull
-    final Component toComponent(final Template... placeholders) {
-        List<Template> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
+    final Component toComponent(final Placeholder<?>... placeholders) {
+        List<Placeholder<?>> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
         if (this != PREFIX)
-            outputPlaceholders.add(Template.of("prefix", Message.PREFIX.toComponent()));
-        return MiniMessage.get().parse(toString(), outputPlaceholders.toArray());
+            outputPlaceholders.add(Placeholder.component("prefix", Message.PREFIX.toComponent()));
+        return MiniMessage.miniMessage().deserialize(toString(), PlaceholderResolver.placeholders(outputPlaceholders));
     }
 
-    public static Component parse(String message, Template[] placeholders) {
-        List<Template> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
-        outputPlaceholders.add(Template.of("prefix", Message.PREFIX.toComponent()));
-        return MiniMessage.get().parse(message,
-                outputPlaceholders);
+    public static Component parse(String message, Placeholder<?>... placeholders) {
+        List<Placeholder<?>> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
+        outputPlaceholders.add(Placeholder.component("prefix", Message.PREFIX.toComponent()));
+        return MiniMessage.miniMessage().deserialize(message,
+                PlaceholderResolver.placeholders(outputPlaceholders));
     }
 
     public void send(Audience audience) {
         audience.sendMessage(toComponent());
     }
 
-    public void send(Audience audience, final Template... placeholders) {
+    public void send(Audience audience, final Placeholder<?>... placeholders) {
         audience.sendMessage(toComponent(placeholders));
     }
 

@@ -3,7 +3,7 @@ package org.hackedserver.spigot.commands;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.PlayerArgument;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
-import net.kyori.adventure.text.minimessage.Template;
+import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.HackedPlayer;
@@ -55,9 +55,17 @@ public class CommandsManager {
                         Message.CHECK_MODS.send(audiences.sender(sender));
                         for (String checkId : hackedPlayer.getGenericChecks()) {
                             Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
-                                    Template.of("mod", HackedServer.getCheck(checkId).getName()));
+                                    Placeholder.miniMessage("mod", HackedServer.getCheck(checkId).getName()));
                         }
                     }
+                });
+    }
+
+    private CommandAPICommand getListCommand() {
+        return new CommandAPICommand("list")
+                .withPermission("hackedserver.command.list")
+                .executes((sender, args) -> {
+
                 });
     }
 

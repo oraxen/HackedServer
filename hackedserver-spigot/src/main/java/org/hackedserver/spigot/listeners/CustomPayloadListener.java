@@ -7,7 +7,7 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import io.netty.buffer.ByteBuf;
-import net.kyori.adventure.text.minimessage.Template;
+import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.hackedserver.core.HackedPlayer;
@@ -39,8 +39,8 @@ public class CustomPayloadListener {
                     if (check.pass(channel, message)) {
                         hackedPlayer.addGenericCheck(check);
                         for (Action action : check.getActions()) {
-                            performActions(action, player, Template.of("player",
-                                    player.getName()), Template.of("name", check.getName()));
+                            performActions(action, player, Placeholder.raw("player",
+                                    player.getName()), Placeholder.miniMessage("name", check.getName()));
                         }
                     }
             }
@@ -55,7 +55,7 @@ public class CustomPayloadListener {
         protocolManager.removePacketListener(adapter);
     }
 
-    private void performActions(Action action, Player player, Template... templates) {
+    private void performActions(Action action, Player player, Placeholder<?>... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : Bukkit.getOnlinePlayers())

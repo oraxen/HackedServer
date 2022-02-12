@@ -1,6 +1,6 @@
 package org.hackedserver.bungee.listeners;
 
-import net.kyori.adventure.text.minimessage.Template;
+import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
@@ -27,13 +27,13 @@ public class CustomPayloadListener implements Listener {
                 if (check.pass(channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions())
-                        performActions(action, player, Template.of("player",
-                                player.getName()), Template.of("name", check.getName()));
+                        performActions(action, player, Placeholder.raw("player",
+                                player.getName()), Placeholder.miniMessage("name", check.getName()));
                 }
         }
     }
 
-    private void performActions(Action action, ProxiedPlayer player, Template... templates) {
+    private void performActions(Action action, ProxiedPlayer player, Placeholder<?>... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (ProxiedPlayer admin : ProxyServer.getInstance().getPlayers())

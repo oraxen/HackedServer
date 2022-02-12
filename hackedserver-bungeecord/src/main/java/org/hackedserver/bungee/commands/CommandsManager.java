@@ -1,7 +1,7 @@
 package org.hackedserver.bungee.commands;
 
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.minimessage.Template;
+import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -52,7 +52,7 @@ public class CommandsManager extends Command {
                         Message.CHECK_MODS.send(audience);
                         for (String checkId : hackedPlayer.getGenericChecks()) {
                             Message.MOD_LIST_FORMAT.send(audience,
-                                    Template.of("mod", HackedServer.getCheck(checkId).getName()));
+                                    Placeholder.miniMessage("mod", HackedServer.getCheck(checkId).getName()));
                         }
                     }
                 } catch (Exception exception) {

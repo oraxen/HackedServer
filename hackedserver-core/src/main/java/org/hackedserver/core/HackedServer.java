@@ -33,6 +33,10 @@ public class HackedServer {
         return players.get(uuid);
     }
 
+    public static Collection<HackedPlayer> getPlayers() {
+        return players.values();
+    }
+
     public static void registerAction(Action action) {
         actions.put(action.getId(), action);
     }
