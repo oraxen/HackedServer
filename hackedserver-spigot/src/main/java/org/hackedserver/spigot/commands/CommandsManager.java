@@ -4,6 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.PlayerArgument;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.HackedPlayer;
@@ -11,6 +12,8 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.utils.logs.Logs;
+
+import java.util.Objects;
 
 public class CommandsManager {
 
@@ -53,10 +56,9 @@ public class CommandsManager {
                         Message.CHECK_NO_MODS.send(audiences.sender(sender));
                     else {
                         Message.CHECK_MODS.send(audiences.sender(sender));
-                        for (String checkId : hackedPlayer.getGenericChecks()) {
-                            Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
-                                    Placeholder.miniMessage("mod", HackedServer.getCheck(checkId).getName()));
-                        }
+                        hackedPlayer.getGenericChecks().forEach(checkId ->
+                                Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
+                                        Placeholder.miniMessage("mod", HackedServer.getCheck(checkId).getName())));
                     }
                 });
     }
@@ -65,7 +67,12 @@ public class CommandsManager {
         return new CommandAPICommand("list")
                 .withPermission("hackedserver.command.list")
                 .executes((sender, args) -> {
-
+                    Message.CHECK_PLAYERS.send(audiences.sender(sender));
+                    HackedServer.getPlayers().forEach(hackedPlayer ->
+                            Message.PLAYER_LIST_FORMAT.send(audiences.sender(sender),
+                                    Placeholder.miniMessage("player",
+                                            Objects.requireNonNull(
+                                                    Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName()))));
                 });
     }
 

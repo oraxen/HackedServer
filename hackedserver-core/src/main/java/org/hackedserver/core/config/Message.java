@@ -21,7 +21,9 @@ public enum Message {
     COMMANDS_RELOAD_SUCCESS("commands.reload_success"),
     CHECK_NO_MODS("commands.check_no_mods"),
     CHECK_MODS("commands.check_mods"),
-    MOD_LIST_FORMAT("commands.mod_list_format");
+    MOD_LIST_FORMAT("commands.mod_list_format"),
+    CHECK_PLAYERS("commands.check_players"),
+    PLAYER_LIST_FORMAT("commands.player_list_format");
 
     private static TomlParseResult result;
 
