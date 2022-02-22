@@ -1,7 +1,7 @@
 package org.hackedserver.core.config;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
 import java.util.List;
 
@@ -53,7 +53,7 @@ public class Action {
         return oppedPlayerCommands;
     }
 
-    public Component getAlert(Placeholder<?>... placeholders) {
+    public Component getAlert(TagResolver.Single... placeholders) {
         return Message.parse(alert, placeholders);
     }
 }

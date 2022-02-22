@@ -3,7 +3,7 @@ package org.hackedserver.spigot.commands;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.PlayerArgument;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
-import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -58,7 +58,7 @@ public class CommandsManager {
                         Message.CHECK_MODS.send(audiences.sender(sender));
                         hackedPlayer.getGenericChecks().forEach(checkId ->
                                 Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
-                                        Placeholder.miniMessage("mod", HackedServer.getCheck(checkId).getName())));
+                                        Placeholder.parsed("mod", HackedServer.getCheck(checkId).getName())));
                     }
                 });
     }
@@ -70,7 +70,7 @@ public class CommandsManager {
                     Message.CHECK_PLAYERS.send(audiences.sender(sender));
                     HackedServer.getPlayers().forEach(hackedPlayer ->
                             Message.PLAYER_LIST_FORMAT.send(audiences.sender(sender),
-                                    Placeholder.miniMessage("player",
+                                    Placeholder.parsed("player",
                                             Objects.requireNonNull(
                                                     Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName()))));
                 });

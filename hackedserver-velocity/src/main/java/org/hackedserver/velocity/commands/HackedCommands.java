@@ -6,7 +6,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
@@ -50,7 +50,7 @@ public class HackedCommands {
                                         Message.CHECK_MODS.send(context.getSource());
                                         for (String checkId : hackedPlayer.getGenericChecks()) {
                                             Message.MOD_LIST_FORMAT.send(context.getSource(),
-                                                    Placeholder.miniMessage("mod", HackedServer.getCheck(checkId).getName()));
+                                                    Placeholder.parsed("mod", HackedServer.getCheck(checkId).getName()));
                                         }
                                     }
                                 } catch (Exception exception) {

@@ -4,8 +4,9 @@ package org.hackedserver.core.config;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
-import net.kyori.adventure.text.minimessage.placeholder.PlaceholderResolver;
+
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.jetbrains.annotations.NotNull;
 import org.tomlj.TomlParseResult;
 
@@ -46,25 +47,25 @@ public enum Message {
     }
 
     public @NotNull
-    final Component toComponent(final Placeholder<?>... placeholders) {
-        List<Placeholder<?>> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
+    final Component toComponent(final TagResolver.Single... placeholders) {
+        List<TagResolver.Single> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
         if (this != PREFIX)
             outputPlaceholders.add(Placeholder.component("prefix", Message.PREFIX.toComponent()));
-        return MiniMessage.miniMessage().deserialize(toString(), PlaceholderResolver.placeholders(outputPlaceholders));
+        return MiniMessage.miniMessage().deserialize(toString(), TagResolver.resolver(outputPlaceholders));
     }
 
-    public static Component parse(String message, Placeholder<?>... placeholders) {
-        List<Placeholder<?>> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
+    public static Component parse(String message, TagResolver.Single... placeholders) {
+        List<TagResolver.Single> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
         outputPlaceholders.add(Placeholder.component("prefix", Message.PREFIX.toComponent()));
         return MiniMessage.miniMessage().deserialize(message,
-                PlaceholderResolver.placeholders(outputPlaceholders));
+                TagResolver.resolver(outputPlaceholders));
     }
 
     public void send(Audience audience) {
         audience.sendMessage(toComponent());
     }
 
-    public void send(Audience audience, final Placeholder<?>... placeholders) {
+    public void send(Audience audience, final TagResolver.Single... placeholders) {
         audience.sendMessage(toComponent(placeholders));
     }
 

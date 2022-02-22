@@ -4,7 +4,8 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import net.kyori.adventure.text.minimessage.placeholder.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.Action;
@@ -32,13 +33,13 @@ public class CustomPayloadListener {
                 if (check.pass(channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions())
-                        performActions(action, player, Placeholder.raw("player",
-                                player.getUsername()), Placeholder.miniMessage("name", check.getName()));
+                        performActions(action, player, Placeholder.unparsed("player",
+                                player.getUsername()), Placeholder.parsed("name", check.getName()));
                 }
         }
     }
 
-    private void performActions(Action action, Player player, Placeholder<?>... templates) {
+    private void performActions(Action action, Player player, TagResolver.Single... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : server.getAllPlayers())
