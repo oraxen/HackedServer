@@ -60,7 +60,7 @@ project(':hackedserver-spigot') {
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
 
         implementation group: 'dev.jorel.CommandAPI', name: 'commandapi-shade', version: '6.5.3'
-        implementation group: 'net.kyori', name: 'adventure-platform-bukkit', version: '4.0.0-SNAPSHOT'
+        implementation group: 'net.kyori', name: 'adventure-platform-bukkit', version: '4.0.1-SNAPSHOT'
         implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
     }
 
@@ -77,7 +77,7 @@ project(':hackedserver-bungeecord') {
         compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.10.0-SNAPSHOT'
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
 
-        implementation group: 'net.kyori', name: 'adventure-platform-bungeecord', version: '4.0.0'
+        implementation group: 'net.kyori', name: 'adventure-platform-bungeecord', version: '4.0.1'
         implementation group: 'org.bstats', name: 'bstats-bungeecord', version: '2.2.1'
     }
 
@@ -120,7 +120,7 @@ dependencies {
     implementation project(path: 'hackedserver-spigot', configuration: 'shadow')
     implementation project(path: 'hackedserver-bungeecord', configuration: 'shadow')
     implementation project(path: 'hackedserver-velocity', configuration: 'shadow')
-    implementation group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.2.0-SNAPSHOT'
+    implementation group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.10.0-SNAPSHOT'
     implementation group: 'org.yaml', name: 'snakeyaml', version: '1.28'
 }
 
