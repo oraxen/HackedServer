@@ -43,7 +43,7 @@ allprojects {
 project(':hackedserver-core') {
 
     dependencies {
-        compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.10.0-SNAPSHOT'
+        implementation group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.10.0-SNAPSHOT'
 
         implementation group: 'io.github.xtomlj', name: 'xtomlj', version: '1.1.0'
     }
