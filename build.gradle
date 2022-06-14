@@ -37,6 +37,8 @@ allprojects {
         maven { url = 'https://repo.codemc.org/repository/maven-public/' }
         // adventure
         maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
+        // commandAPI snapshots
+        maven { url = 'https://s01.oss.sonatype.org/content/repositories/snapshots' }
     }
 }
 
@@ -59,7 +61,7 @@ project(':hackedserver-spigot') {
         compileOnly group: 'io.netty', name: 'netty-all', version: '4.1.65.Final'
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
 
-        implementation group: 'dev.jorel', name: 'commandapi-shade', version: '8.3.1'
+        implementation group: 'dev.jorel', name: 'commandapi-shade', version: '8.4.0-SNAPSHOT'
         implementation group: 'net.kyori', name: 'adventure-platform-bukkit', version: '4.0.1-SNAPSHOT'
         implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
     }
