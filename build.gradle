@@ -87,6 +87,10 @@ project(':hackedserver-bungeecord') {
 
 project(':hackedserver-velocity') {
 
+    repositories {
+        maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
+    }
+
     dependencies {
         compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.10.0-SNAPSHOT'
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
