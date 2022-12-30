@@ -133,3 +133,39 @@ dependencies {
 compileJava.dependsOn clean
 build.dependsOn shadowJar
 
+boolean copyJar = project.findProperty('copyJar')
+String pluginPath = project.findProperty('hacked_server_plugin_path')
+String velocityPluginPath = project.findProperty('velocity_plugin_path')
+String bungeePluginPath = project.findProperty('bungee_plugin_path')
+
+if (copyJar) {
+
+    task copyJarTask(type: Copy) {
+        if (pluginPath != null) {
+            from 'build/libs/hackedserver-all.jar'
+            into pluginPath
+            doLast {
+                println('Copied to plugin directory ' + pluginPath)
+            }
+        }
+        if (velocityPluginPath != null) {
+            from 'build/libs/hackedserver-all.jar'
+            into velocityPluginPath
+            doLast {
+                println('Copied to plugin directory ' + velocityPluginPath)
+            }
+        }
+        if (bungeePluginPath != null) {
+            from 'build/libs/hackedserver-all.jar'
+            into bungeePluginPath
+            doLast {
+                println('Copied to plugin directory ' + bungeePluginPath)
+            }
+        }
+    }
+
+
+    copyJarTask.dependsOn('shadowJar')
+    tasks.named('build', DefaultTask).get().dependsOn('copyJarTask')
+}
+
