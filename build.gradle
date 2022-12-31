@@ -45,7 +45,7 @@ allprojects {
 project(':hackedserver-core') {
 
     dependencies {
-        implementation group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.11.0-SNAPSHOT'
+        implementation group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.12.0-SNAPSHOT'
 
         implementation group: 'io.github.xtomlj', name: 'xtomlj', version: '1.1.0'
     }
@@ -55,14 +55,14 @@ project(':hackedserver-core') {
 project(':hackedserver-spigot') {
 
     dependencies {
-        compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.19.2-R0.1-SNAPSHOT'
+        compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.19.3-R0.1-SNAPSHOT'
         compileOnly group: 'com.comphenix.protocol', name: 'ProtocolLib', version: '5.0.0-SNAPSHOT'
-        compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.11.0'
+        compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.12.0'
         compileOnly group: 'io.netty', name: 'netty-all', version: '4.1.68.Final'
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
 
-        implementation group: 'dev.jorel', name: 'commandapi-shade', version: '8.5.1-SNAPSHOT'
-        implementation group: 'net.kyori', name: 'adventure-platform-bukkit', version: '4.1.1-SNAPSHOT'
+        implementation group: 'dev.jorel', name: 'commandapi-shade', version: '8.7.0'
+        implementation group: 'net.kyori', name: 'adventure-platform-bukkit', version: '4.2.0'
         implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
     }
 
@@ -76,10 +76,10 @@ project(':hackedserver-bungeecord') {
 
     dependencies {
         compileOnly group: 'net.md-5', name: 'bungeecord-api', version: '1.19-R0.1-SNAPSHOT'
-        compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.11.0-SNAPSHOT'
+        compileOnly group: 'net.kyori', name: 'adventure-text-minimessage', version: '4.12.0-SNAPSHOT'
         compileOnly project(path: ':hackedserver-core', configuration: 'shadow')
 
-        implementation group: 'net.kyori', name: 'adventure-platform-bungeecord', version: '4.1.1'
+        implementation group: 'net.kyori', name: 'adventure-platform-bungeecord', version: '4.2.0'
         implementation group: 'org.bstats', name: 'bstats-bungeecord', version: '2.2.1'
     }
 
@@ -132,4 +132,40 @@ dependencies {
 
 compileJava.dependsOn clean
 build.dependsOn shadowJar
+
+boolean copyJar = project.findProperty('copyJar')
+String pluginPath = project.findProperty('hacked_server_plugin_path')
+String velocityPluginPath = project.findProperty('velocity_plugin_path')
+String bungeePluginPath = project.findProperty('bungee_plugin_path')
+
+if (copyJar) {
+
+    task copyJarTask(type: Copy) {
+        if (pluginPath != null) {
+            from 'build/libs/hackedserver-all.jar'
+            into pluginPath
+            doLast {
+                println('Copied to plugin directory ' + pluginPath)
+            }
+        }
+        if (velocityPluginPath != null) {
+            from 'build/libs/hackedserver-all.jar'
+            into velocityPluginPath
+            doLast {
+                println('Copied to plugin directory ' + velocityPluginPath)
+            }
+        }
+        if (bungeePluginPath != null) {
+            from 'build/libs/hackedserver-all.jar'
+            into bungeePluginPath
+            doLast {
+                println('Copied to plugin directory ' + bungeePluginPath)
+            }
+        }
+    }
+
+
+    copyJarTask.dependsOn('shadowJar')
+    tasks.named('build', DefaultTask).get().dependsOn('copyJarTask')
+}
 
