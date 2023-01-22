@@ -61,7 +61,7 @@ public class CustomPayloadListener {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : Bukkit.getOnlinePlayers())
                 if (admin.hasPermission("hackedserver.alert"))
-                    HackedServerPlugin.get().getAudiences().player(player)
+                    HackedServerPlugin.get().getAudiences().player(admin)
                             .sendMessage(action.getAlert(templates));
         }
         for (String command : action.getConsoleCommands())

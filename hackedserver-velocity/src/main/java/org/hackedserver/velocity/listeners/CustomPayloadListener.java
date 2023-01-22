@@ -44,7 +44,7 @@ public class CustomPayloadListener {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : server.getAllPlayers())
                 if (admin.hasPermission("hackedserver.alert"))
-                    player.sendMessage(action.getAlert(templates));
+                    admin.sendMessage(action.getAlert(templates));
         }
         for (String command : action.getConsoleCommands())
             server.getCommandManager().executeAsync(server.getConsoleCommandSource(),

@@ -39,7 +39,7 @@ public class CustomPayloadListener implements Listener {
             Logs.logComponent(action.getAlert(templates));
             for (ProxiedPlayer admin : ProxyServer.getInstance().getPlayers())
                 if (admin.hasPermission("hackedserver.alert"))
-                    HackedServerPlugin.get().getAudiences().player(player)
+                    HackedServerPlugin.get().getAudiences().player(admin)
                             .sendMessage(action.getAlert(templates));
         }
         for (String command : action.getConsoleCommands())
