@@ -57,6 +57,7 @@ public class CustomPayloadListener {
     }
 
     private void performActions(Action action, Player player, TagResolver.Single... templates) {
+        if (player.hasPermission("hackedserver.bypass")) return;
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : Bukkit.getOnlinePlayers())
