@@ -40,13 +40,13 @@ public class CustomPayloadListener {
     }
 
     private void performActions(Action action, Player player, TagResolver.Single... templates) {
-        if (player.hasPermission("hackedserver.bypass")) return;
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : server.getAllPlayers())
                 if (admin.hasPermission("hackedserver.alert"))
                     admin.sendMessage(action.getAlert(templates));
         }
+        if (player.hasPermission("hackedserver.bypass")) return;
         for (String command : action.getConsoleCommands())
             server.getCommandManager().executeAsync(server.getConsoleCommandSource(),
                     command.replace("<player>",

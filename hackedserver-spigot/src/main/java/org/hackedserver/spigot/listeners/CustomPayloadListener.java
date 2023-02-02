@@ -57,7 +57,6 @@ public class CustomPayloadListener {
     }
 
     private void performActions(Action action, Player player, TagResolver.Single... templates) {
-        if (player.hasPermission("hackedserver.bypass")) return;
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : Bukkit.getOnlinePlayers())
@@ -65,6 +64,7 @@ public class CustomPayloadListener {
                     HackedServerPlugin.get().getAudiences().player(admin)
                             .sendMessage(action.getAlert(templates));
         }
+        if (player.hasPermission("hackedserver.bypass")) return;
         for (String command : action.getConsoleCommands())
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
                     () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(),

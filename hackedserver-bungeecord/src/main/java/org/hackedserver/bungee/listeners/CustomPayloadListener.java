@@ -35,7 +35,6 @@ public class CustomPayloadListener implements Listener {
     }
 
     private void performActions(Action action, ProxiedPlayer player, TagResolver.Single... templates) {
-        if (player.hasPermission("hackedserver.bypass")) return;
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (ProxiedPlayer admin : ProxyServer.getInstance().getPlayers())
@@ -43,6 +42,7 @@ public class CustomPayloadListener implements Listener {
                     HackedServerPlugin.get().getAudiences().player(admin)
                             .sendMessage(action.getAlert(templates));
         }
+        if (player.hasPermission("hackedserver.bypass")) return;
         for (String command : action.getConsoleCommands())
             ProxyServer.getInstance().getPluginManager().dispatchCommand(ProxyServer.getInstance().getConsole(),
                     command.replace("<player>",
