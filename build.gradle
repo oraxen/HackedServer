@@ -121,6 +121,7 @@ shadowJar {
                         "${System.properties['os.version']}"
         )
     }
+    setArchiveFileName("hackedserver-${pluginVersion}.jar")
 }
 
 dependencies {
