@@ -3,7 +3,7 @@ package org.hackedserver.spigot;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPIConfig;
+import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -30,12 +30,12 @@ public class HackedServerPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        CommandAPI.onLoad(new CommandAPIConfig().silentLogs(true));
+        CommandAPI.onLoad(new CommandAPIBukkitConfig(this).silentLogs(true));
     }
 
     @Override
     public void onEnable() {
-        CommandAPI.onEnable(this);
+        CommandAPI.onEnable();
         audiences = BukkitAudiences.create(this);
         Logs.onEnable(audiences);
         new Metrics(this, 2008);

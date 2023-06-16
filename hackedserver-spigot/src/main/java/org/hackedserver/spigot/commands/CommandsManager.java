@@ -51,7 +51,7 @@ public class CommandsManager {
                 .withPermission("hackedserver.command.check")
                 .withArguments(new PlayerArgument("player"))
                 .executes((sender, args) -> {
-                    HackedPlayer hackedPlayer = HackedServer.getPlayer(((Player) args[0]).getUniqueId());
+                    HackedPlayer hackedPlayer = HackedServer.getPlayer(((Player) args.get("player")).getUniqueId());
                     if (hackedPlayer.getGenericChecks().isEmpty())
                         Message.CHECK_NO_MODS.send(audiences.sender(sender));
                     else {
