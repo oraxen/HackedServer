@@ -120,6 +120,12 @@ channels = ["MC|Brand", "minecraft:brand"]
 message_has = "lunarclient"
 name = "Lunar Client"
 
+[feather_client]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "feather"
+name = "Feather Client"
+
 [pvp_lounge]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]

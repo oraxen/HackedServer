@@ -28,7 +28,7 @@ public class GenericCheck {
 
     public boolean pass(String channel, String message) {
         return this.channels.contains(channel)
-                && (messageHas == null || message.contains(messageHas));
+                && (messageHas == null || message.toLowerCase().contains(messageHas.toLowerCase()));
     }
 
     public List<Action> getActions() {
