@@ -34,11 +34,11 @@ public class CustomPayloadListener {
                 PacketContainer packet = event.getPacket();
                 ByteBuf buf = (ByteBuf) packet.getModifier().read(1);
                 String channel = packet.getMinecraftKeys().read(0).getFullKey();
-                HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
                 String message = buf.toString(StandardCharsets.UTF_8);
+
                 for (GenericCheck check : HackedServer.getChecks())
                     if (check.pass(channel, message)) {
-                        hackedPlayer.addGenericCheck(check);
+                        HackedServer.getPlayer(player.getUniqueId()).addGenericCheck(check);
                         for (Action action : check.getActions()) {
                             performActions(action, player, Placeholder.unparsed("player",
                                     player.getName()), Placeholder.parsed("name", check.getName()));

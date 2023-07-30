@@ -48,7 +48,7 @@ public class HackedServerPlugin extends JavaPlugin {
         new CommandsManager(this, audiences).loadCommands();
         Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
 
-        Bukkit.getOnlinePlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId(), new HackedPlayer(player.getUniqueId())));
+        Bukkit.getOnlinePlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
     }
 
     @Override

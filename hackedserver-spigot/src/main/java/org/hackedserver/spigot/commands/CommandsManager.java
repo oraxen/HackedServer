@@ -40,7 +40,7 @@ public class CommandsManager {
                 .withPermission("hackedserver.command.reload")
                 .executes((sender, args) -> {
                     ConfigsManager.reload(Logs.getLogger(), plugin.getDataFolder());
-                    Bukkit.getOnlinePlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId(), new HackedPlayer(player.getUniqueId())));
+                    Bukkit.getOnlinePlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
                     Message.COMMANDS_RELOAD_SUCCESS.send(audiences.sender(sender));
                 });
     }

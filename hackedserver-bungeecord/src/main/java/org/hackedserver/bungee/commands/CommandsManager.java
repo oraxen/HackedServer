@@ -37,12 +37,12 @@ public class CommandsManager extends Command {
         }
 
         switch (args[0]) {
-            case "reload":
+            case "reload" -> {
                 ConfigsManager.reload(logger, dataFolder);
                 Message.COMMANDS_RELOAD_SUCCESS.send(audience);
-                break;
-
-            case "check":
+                server.getPlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
+            }
+            case "check" -> {
                 try {
                     ProxiedPlayer player = server.getPlayer(args[1]);
                     HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
@@ -58,10 +58,9 @@ public class CommandsManager extends Command {
                 } catch (Exception exception) {
 
                 }
-                break;
-
-            default:
-                break;
+            }
+            default -> {
+            }
         }
     }
 }
