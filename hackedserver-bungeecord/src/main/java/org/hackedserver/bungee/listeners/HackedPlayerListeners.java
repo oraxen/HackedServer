@@ -11,8 +11,7 @@ public class HackedPlayerListeners implements Listener {
 
     @EventHandler
     public void onPlayerJoin(LoginEvent event) {
-        HackedServer.registerPlayer(event.getConnection().getUniqueId(),
-                new HackedPlayer(event.getConnection().getUniqueId()));
+        HackedServer.registerPlayer(event.getConnection().getUniqueId());
     }
 
     @EventHandler

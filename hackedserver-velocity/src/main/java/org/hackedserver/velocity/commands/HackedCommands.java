@@ -6,6 +6,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
@@ -20,11 +21,13 @@ public class HackedCommands {
     private final Logger logger;
     private final File dataFolder;
     private final CommandManager commandManager;
+    private final ProxyServer server;
 
-    public HackedCommands(Logger logger, File dataFolder, CommandManager commandManager) {
+    public HackedCommands(Logger logger, File dataFolder, CommandManager commandManager, ProxyServer server) {
         this.logger = logger;
         this.dataFolder = dataFolder;
         this.commandManager = commandManager;
+        this.server = server;
     }
 
     public BrigadierCommand createBrigadierCommand() {
@@ -32,15 +35,14 @@ public class HackedCommands {
                 .<CommandSource>literal("hackedserver")
                 .executes(context -> {
                     try {
-
                         String arg = context.getArgument("type", String.class);
                         switch (arg) {
-                            case "reload":
+                            case "reload" -> {
                                 ConfigsManager.reload(logger, dataFolder);
+                                server.getAllPlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
                                 Message.COMMANDS_RELOAD_SUCCESS.send(context.getSource());
-                                return 1;
-
-                            case "check":
+                            }
+                            case "check" -> {
                                 try {
                                     Player player = context.getArgument("player", Player.class);
                                     HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
@@ -56,15 +58,14 @@ public class HackedCommands {
                                 } catch (Exception exception) {
 
                                 }
-                                return 1;
-
-                            default:
-                                return 1;
+                            }
+                            default -> {
+                            }
                         }
                     } catch (IllegalArgumentException e) {
                         Message.COMMANDS_HELP.send(context.getSource());
-                        return 0;
                     }
+                    return 0;
                 })
                 .build();
 

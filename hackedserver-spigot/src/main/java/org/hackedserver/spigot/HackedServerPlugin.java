@@ -8,6 +8,8 @@ import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.hackedserver.core.HackedPlayer;
+import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.commands.CommandsManager;
@@ -45,11 +47,14 @@ public class HackedServerPlugin extends JavaPlugin {
         customPayloadListener.register();
         new CommandsManager(this, audiences).loadCommands();
         Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
+
+        Bukkit.getOnlinePlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId(), new HackedPlayer(player.getUniqueId())));
     }
 
     @Override
     public void onDisable() {
         customPayloadListener.unregister();
+        HackedServer.clear();
     }
 
     public BukkitAudiences getAudiences() {

@@ -21,6 +21,10 @@ public class HackedServer {
         players.put(uuid, player);
     }
 
+    public static void registerPlayer(UUID uuid) {
+        registerPlayer(uuid, new HackedPlayer(uuid));
+    }
+
     public static void removePlayer(UUID uuid) {
         players.remove(uuid);
     }
@@ -30,7 +34,7 @@ public class HackedServer {
     }
 
     public static HackedPlayer getPlayer(UUID uuid) {
-        return players.get(uuid);
+        return players.computeIfAbsent(uuid, key -> new HackedPlayer(uuid));
     }
 
     public static Collection<HackedPlayer> getPlayers() {

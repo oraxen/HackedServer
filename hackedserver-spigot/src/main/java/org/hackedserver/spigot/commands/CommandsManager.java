@@ -29,12 +29,10 @@ public class CommandsManager {
         new CommandAPICommand("hackedserver")
                 .withAliases("hs")
                 .withPermission("hackedserver.command")
-                .withSubcommand(getReloadCommand())
-                .withSubcommand(getCheckCommand())
+                .withSubcommands(getReloadCommand(), getCheckCommand(), getListCommand())
                 .executes((sender, args) -> {
                     Message.COMMANDS_HELP.send(audiences.sender(sender));
-                })
-                .register();
+                }).register();
     }
 
     private CommandAPICommand getReloadCommand() {
@@ -42,6 +40,7 @@ public class CommandsManager {
                 .withPermission("hackedserver.command.reload")
                 .executes((sender, args) -> {
                     ConfigsManager.reload(Logs.getLogger(), plugin.getDataFolder());
+                    Bukkit.getOnlinePlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId(), new HackedPlayer(player.getUniqueId())));
                     Message.COMMANDS_RELOAD_SUCCESS.send(audiences.sender(sender));
                 });
     }

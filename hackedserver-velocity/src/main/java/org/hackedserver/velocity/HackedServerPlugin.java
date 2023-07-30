@@ -27,7 +27,7 @@ public class HackedServerPlugin {
         this.server = server;
         Logs.onEnable(logger, server);
         ConfigsManager.init(logger, dataDirectory.toFile());
-        commands = new HackedCommands(logger, dataDirectory.toFile(), server.getCommandManager());
+        commands = new HackedCommands(logger, dataDirectory.toFile(), server.getCommandManager(), server);
     }
 
     @Subscribe
