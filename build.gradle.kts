@@ -33,7 +33,7 @@ allprojects {
 project(":hackedserver-core") {
 
     dependencies {
-        implementation("net.kyori:adventure-text-minimessage:4.13.0")
+        implementation("net.kyori:adventure-text-minimessage:4.14.0")
         implementation("io.github.xtomlj:xtomlj:1.1.0")
     }
 
@@ -42,13 +42,13 @@ project(":hackedserver-core") {
 project(":hackedserver-spigot") {
 
     dependencies {
-        compileOnly("org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT")
+        compileOnly("org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT")
         compileOnly("com.comphenix.protocol:ProtocolLib:5.0.0-SNAPSHOT")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly (project(path = ":hackedserver-core", configuration =  "shadow"))
 
-        implementation("dev.jorel:commandapi-bukkit-shade:9.0.3")
+        implementation("dev.jorel:commandapi-bukkit-shade:9.2.0")
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.0.0")
     }
