@@ -1,6 +1,5 @@
 package org.hackedserver.core.config;
 
-import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.exceptions.ExceptionHandler;
 import org.hackedserver.core.exceptions.ParsingException;
@@ -100,14 +99,14 @@ public class ConfigsManager {
                 TomlTable commandsTable = table.getTable("commands");
                 assert commandsTable != null;
                 if (commandsTable.isArray("console"))
-                    action.setConsoleCommands((List<String>) (Object)
-                            Objects.requireNonNull(commandsTable.getArray("console")).toList());
+                    action.setConsoleCommands(
+                            (List<String>) (Object) Objects.requireNonNull(commandsTable.getArray("console")).toList());
                 if (commandsTable.isArray("player"))
-                    action.setPlayerCommands((List<String>) (Object)
-                            Objects.requireNonNull(commandsTable.getArray("player")).toList());
+                    action.setPlayerCommands(
+                            (List<String>) (Object) Objects.requireNonNull(commandsTable.getArray("player")).toList());
                 if (commandsTable.isArray("opped_player"))
-                    action.setOppedPlayerCommands((List<String>) (Object)
-                            Objects.requireNonNull(commandsTable.getArray("opped_player")).toList());
+                    action.setOppedPlayerCommands((List<String>) (Object) Objects
+                            .requireNonNull(commandsTable.getArray("opped_player")).toList());
             }
             HackedServer.registerAction(action);
         }
@@ -134,8 +133,7 @@ public class ConfigsManager {
                     table.getString("name"),
                     (List<String>) (Object) table.getArray("channels").toList(),
                     table.getString("message_has"),
-                    actions)
-            );
+                    actions));
         }
     }
 

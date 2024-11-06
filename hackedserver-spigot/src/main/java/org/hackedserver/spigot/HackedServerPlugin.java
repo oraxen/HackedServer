@@ -8,7 +8,6 @@ import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
@@ -32,12 +31,19 @@ public class HackedServerPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        System.out.println("alpha");
+
         CommandAPI.onLoad(new CommandAPIBukkitConfig(this).silentLogs(true));
+        System.out.println("just broke");
+
     }
 
     @Override
     public void onEnable() {
+        System.out.println("just loading commandAPI");
         CommandAPI.onEnable();
+        System.out.println("just broke");
+
         audiences = BukkitAudiences.create(this);
         Logs.onEnable(audiences);
         new Metrics(this, 2008);
@@ -54,6 +60,7 @@ public class HackedServerPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         customPayloadListener.unregister();
+        CommandAPI.onDisable();
         HackedServer.clear();
     }
 

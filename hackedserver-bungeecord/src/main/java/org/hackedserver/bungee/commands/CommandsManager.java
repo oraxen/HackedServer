@@ -14,6 +14,7 @@ import org.hackedserver.core.config.Message;
 
 import java.io.File;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class CommandsManager extends Command {
 
@@ -58,6 +59,23 @@ public class CommandsManager extends Command {
                 } catch (Exception exception) {
 
                 }
+            }
+            case "list" -> {
+                var playersWithChecks = HackedServer.getPlayers().stream()
+                        .filter(player -> !player.getGenericChecks().isEmpty())
+                        .collect(Collectors.toList());
+
+                if (playersWithChecks.isEmpty()) {
+                    Message.CHECK_PLAYERS_EMPTY.send(audience);
+                    return;
+                }
+
+                Message.CHECK_PLAYERS.send(audience);
+                playersWithChecks.forEach(hackedPlayer -> {
+                    Message.PLAYER_LIST_FORMAT.send(audience,
+                            Placeholder.parsed("player",
+                                    server.getPlayer(hackedPlayer.getUuid()).getName()));
+                });
             }
             default -> {
             }

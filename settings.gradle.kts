@@ -1,16 +1,5 @@
-rootProject.name = "HackedServer"
-
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven("https://repo.papermc.io/repository/maven-public/")
-    }
-}
-
-include(
-    "hackedserver-core",
-    "hackedserver-spigot",
-    "hackedserver-bungeecord",
-    "hackedserver-velocity",
-)
-
+rootProject.name = "hackedserver"
+include("hackedserver-core")
+include("hackedserver-spigot")
+include("hackedserver-bungeecord")
+include("hackedserver-velocity")

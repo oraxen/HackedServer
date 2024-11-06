@@ -15,6 +15,7 @@ import org.hackedserver.core.config.Message;
 
 import java.io.File;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class HackedCommands {
 
@@ -39,7 +40,8 @@ public class HackedCommands {
                         switch (arg) {
                             case "reload" -> {
                                 ConfigsManager.reload(logger, dataFolder);
-                                server.getAllPlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
+                                server.getAllPlayers()
+                                        .forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
                                 Message.COMMANDS_RELOAD_SUCCESS.send(context.getSource());
                             }
                             case "check" -> {
@@ -52,12 +54,32 @@ public class HackedCommands {
                                         Message.CHECK_MODS.send(context.getSource());
                                         for (String checkId : hackedPlayer.getGenericChecks()) {
                                             Message.MOD_LIST_FORMAT.send(context.getSource(),
-                                                    Placeholder.parsed("mod", HackedServer.getCheck(checkId).getName()));
+                                                    Placeholder.parsed("mod",
+                                                            HackedServer.getCheck(checkId).getName()));
                                         }
                                     }
                                 } catch (Exception exception) {
 
                                 }
+                            }
+                            case "list" -> {
+                                var playersWithChecks = HackedServer.getPlayers().stream()
+                                        .filter(player -> !player.getGenericChecks().isEmpty())
+                                        .collect(Collectors.toList());
+
+                                if (playersWithChecks.isEmpty()) {
+                                    Message.CHECK_PLAYERS_EMPTY.send(context.getSource());
+                                    return 0;
+                                }
+
+                                Message.CHECK_PLAYERS.send(context.getSource());
+                                playersWithChecks.forEach(hackedPlayer -> {
+                                    Message.PLAYER_LIST_FORMAT.send(context.getSource(),
+                                            Placeholder.parsed("player",
+                                                    server.getPlayer(hackedPlayer.getUuid())
+                                                            .map(Player::getUsername)
+                                                            .orElse("Unknown")));
+                                });
                             }
                             default -> {
                             }
