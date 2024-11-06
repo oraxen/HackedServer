@@ -11,11 +11,20 @@ help = """
 <#b8bbc2>reload</click></hover>  <#6f737d>»<#b8bbc2> reload the plugin<reset>
 <hover:show_text:\"<gray>fill give command\"><click:SUGGEST_COMMAND:/hackedserver check ><#6f737d>/hs \
 <#b8bbc2>check <#43c9fa>target</click></hover>  <#6f737d>»<#b8bbc2> check player detected mods<reset>
-<hover:show_text:\"<gray>fill inv command\"><click:SUGGEST_COMMAND:/hackedserver inv ><#6f737d>/hs \
-<#b8bbc2>inv</click></hover>  <#6f737d>»<#b8bbc2> open detected mods viewer<reset>
 <hover:show_text:\"<gray>fill list command\"><click:SUGGEST_COMMAND:/hackedserver list ><#6f737d>/hs \
 <#b8bbc2>list</click></hover>  <#6f737d>»<#b8bbc2> list all spotted players<reset>
 """
+
+help_spigot = """
+<prefix><#b8bbc2>Available commands
+<hover:show_text:\"<gray>fill reload command\"><click:SUGGEST_COMMAND:/hackedserver reload ><#6f737d>/hs \
+<#b8bbc2>reload</click></hover>  <#6f737d>»<#b8bbc2> reload the plugin<reset>
+<hover:show_text:\"<gray>fill give command\"><click:SUGGEST_COMMAND:/hackedserver check ><#6f737d>/hs \
+<#b8bbc2>check <#43c9fa>target</click></hover>  <#6f737d>»<#b8bbc2> check player detected mods<reset>
+<hover:show_text:\"<gray>fill list command\"><click:SUGGEST_COMMAND:/hackedserver list ><#6f737d>/hs \
+<#b8bbc2>list</click></hover>  <#6f737d>»<#b8bbc2> list all spotted players<reset>
+"""
+
 reload_success = "<prefix><#55ffa4>Successfully reloaded"
 check_no_mods = "<prefix><#55ffa4> No mods detected"
 check_mods = "<prefix><#55ffa4> Detected mods:"

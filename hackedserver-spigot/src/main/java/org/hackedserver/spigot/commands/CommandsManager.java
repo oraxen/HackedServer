@@ -42,7 +42,7 @@ public class CommandsManager {
                 .withPermission("hackedserver.command")
                 .withSubcommands(getReloadCommand(), getCheckCommand(), getListCommand(), getInvCommand())
                 .executes((sender, args) -> {
-                    Message.COMMANDS_HELP.send(audiences.sender(sender));
+                    Message.COMMANDS_HELP_SPIGOT.send(audiences.sender(sender));
                 }).register();
     }
 
