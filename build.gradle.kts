@@ -66,7 +66,7 @@ project(":hackedserver-spigot") {
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
 
-        implementation("dev.jorel:commandapi-bukkit-shade:9.2.0")
+        implementation("dev.jorel:commandapi-bukkit-shade:9.6.1")
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.0.0")
     }
