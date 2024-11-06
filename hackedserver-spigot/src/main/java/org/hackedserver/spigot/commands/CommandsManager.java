@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class CommandsManager {
 
@@ -76,12 +77,22 @@ public class CommandsManager {
         return new CommandAPICommand("list")
                 .withPermission("hackedserver.command.list")
                 .executes((sender, args) -> {
+                    var playersWithChecks = HackedServer.getPlayers().stream()
+                            .filter(player -> !player.getGenericChecks().isEmpty())
+                            .collect(Collectors.toList());
+
+                    if (playersWithChecks.isEmpty()) {
+                        Message.CHECK_PLAYERS_EMPTY.send(audiences.sender(sender));
+                        return;
+                    }
+
                     Message.CHECK_PLAYERS.send(audiences.sender(sender));
-                    HackedServer.getPlayers()
-                            .forEach(hackedPlayer -> Message.PLAYER_LIST_FORMAT.send(audiences.sender(sender),
-                                    Placeholder.parsed("player",
-                                            Objects.requireNonNull(
-                                                    Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName()))));
+                    playersWithChecks.forEach(hackedPlayer -> {
+                        Message.PLAYER_LIST_FORMAT.send(audiences.sender(sender),
+                                Placeholder.parsed("player",
+                                        Objects.requireNonNull(
+                                                Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName())));
+                    });
                 });
     }
 

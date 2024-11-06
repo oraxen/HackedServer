@@ -1,6 +1,5 @@
 package org.hackedserver.core.config;
 
-
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -24,6 +23,7 @@ public enum Message {
     CHECK_MODS("commands.check_mods"),
     MOD_LIST_FORMAT("commands.mod_list_format"),
     CHECK_PLAYERS("commands.check_players"),
+    CHECK_PLAYERS_EMPTY("commands.check_players_empty"),
     PLAYER_LIST_FORMAT("commands.player_list_format");
 
     private static TomlParseResult result;
@@ -46,8 +46,7 @@ public enum Message {
         return result.getString(path);
     }
 
-    public @NotNull
-    final Component toComponent(final TagResolver.Single... placeholders) {
+    public @NotNull final Component toComponent(final TagResolver.Single... placeholders) {
         List<TagResolver.Single> outputPlaceholders = new ArrayList<>(Arrays.asList(placeholders));
         if (this != PREFIX)
             outputPlaceholders.add(Placeholder.component("prefix", Message.PREFIX.toComponent()));
