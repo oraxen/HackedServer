@@ -126,7 +126,7 @@ tasks {
                     "Created-By" to "Gradle ${gradle.gradleVersion}",
                     "Build-Jdk" to "${System.getProperty("java.version")} ${System.getProperty("java.vendor")} ${System.getProperty("java.vm.version")}",
                     "Build-OS" to "${System.getProperty("os.name")} ${System.getProperty("os.arch")} ${System.getProperty("os.version")}",
-                    "Compiled" to (project.findProperty("oraxen_compiled")?.toString() ?: "true").toBoolean()
+                    "Compiled" to (project.findProperty("hackedserver_compiled")?.toString() ?: "true").toBoolean()
                 )
             )
         }
@@ -149,7 +149,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 }
 
-val pluginPath = project.findProperty("oraxen_plugin_path")
+val pluginPath = project.findProperty("hackedserver_plugin_path")
 val velocityPluginPath = project.findProperty("velocity_plugin_path")
 val bungeePluginPath = project.findProperty("bungee_plugin_path")
 
