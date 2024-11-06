@@ -3,8 +3,8 @@ import java.time.Instant
 import java.util.*
 
 plugins {
+    id("java")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    kotlin("jvm") version "1.9.0"
 }
 
 val pluginVersion: String by project
@@ -43,7 +43,7 @@ project(":hackedserver-spigot") {
 
     dependencies {
         compileOnly("org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT")
-        compileOnly("com.comphenix.protocol:ProtocolLib:5.0.0-SNAPSHOT")
+        compileOnly("com.comphenix.protocol:ProtocolLib:5.3.0")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly (project(path = ":hackedserver-core", configuration =  "shadow"))
