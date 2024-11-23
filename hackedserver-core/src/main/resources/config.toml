@@ -1,3 +1,6 @@
 [settings]
 # Name of a language file without extension, english.toml by default
 language = "english"
+
+# Enable logging of all CustomPayload packets for debugging purposes
+debug = false

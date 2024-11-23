@@ -42,7 +42,8 @@ public class CustomPayloadListener implements Listener {
                     HackedServerPlugin.get().getAudiences().player(admin)
                             .sendMessage(action.getAlert(templates));
         }
-        if (player.hasPermission("hackedserver.bypass")) return;
+        if (player.hasPermission("hackedserver.bypass"))
+            return;
         for (String command : action.getConsoleCommands())
             ProxyServer.getInstance().getPluginManager().dispatchCommand(ProxyServer.getInstance().getConsole(),
                     command.replace("<player>",

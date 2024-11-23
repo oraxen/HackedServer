@@ -17,6 +17,8 @@ public enum Message {
 
     PREFIX("general.prefix"),
     PLUGIN_LOADED("logs.loaded"),
+    DEBUG_MESSAGE("logs.debug_message"),
+
     COMMANDS_HELP("commands.help"),
     COMMANDS_HELP_SPIGOT("commands.help_spigot"),
     COMMANDS_RELOAD_SUCCESS("commands.reload_success"),

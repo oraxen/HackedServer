@@ -5,7 +5,7 @@ import org.tomlj.TomlParseResult;
 public enum Config {
 
     LANG_FILE("settings.language"),
-    HARD_LOGGING("settings.hard_logging");
+    DEBUG("settings.debug");
 
     private static TomlParseResult result;
 
@@ -28,8 +28,7 @@ public enum Config {
     }
 
     public boolean toBool() {
-        return
-                Boolean.TRUE.equals(result.getBoolean(path));
+        return Boolean.TRUE.equals(result.getBoolean(path));
     }
 
 }
