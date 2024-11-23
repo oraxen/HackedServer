@@ -68,7 +68,11 @@ project(":hackedserver-spigot") {
 
         implementation("dev.jorel:commandapi-bukkit-shade:9.6.1")
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
-        implementation("org.bstats:bstats-bukkit:3.0.0")
+        implementation("org.bstats:bstats-bukkit:3.1.0")
+    }
+
+    tasks.shadowJar {
+        relocate("net.kyori", "org.hackedserver.shaded.kyori")
     }
 }
 
@@ -78,12 +82,12 @@ project(":hackedserver-bungeecord") {
     }
 
     dependencies {
-        compileOnly("net.md-5:bungeecord-api:1.19-R0.1-SNAPSHOT")
+        compileOnly("net.md-5:bungeecord-api:1.20-R0.2")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
 
         implementation("net.kyori:adventure-platform-bungeecord:4.3.0")
-        implementation("org.bstats:bstats-bungeecord:2.2.1")
+        implementation("org.bstats:bstats-bungeecord:3.1.0")
     }
 }
 
@@ -95,17 +99,16 @@ project(":hackedserver-velocity") {
     dependencies {
         compileOnly("net.kyori:adventure-text-minimessage:4.13.0")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
-        compileOnly("com.velocitypowered:velocity-api:3.1.1")
-        annotationProcessor("com.velocitypowered:velocity-api:3.1.1")
+        compileOnly("com.velocitypowered:velocity-api:3.1.0")
+        annotationProcessor("com.velocitypowered:velocity-api:3.1.0")
 
-        implementation("org.bstats:bstats-velocity:2.2.1")
+        implementation("org.bstats:bstats-velocity:3.1.0")
     }
 }
 
 tasks.shadowJar {
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
     relocate("org.tomlj", "org.hackedserver.shaded.tomlj")
-    relocate("net.kyori", "org.hackedserver.shaded.kyori")
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
     manifest {
         attributes(
