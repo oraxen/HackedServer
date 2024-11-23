@@ -15,8 +15,6 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
-@Plugin(id = "hackedserver", name = "HackedServer", version = "${projectVersion}",
-        url = "https://hackedserver.org/", description = "Detect forge, fabric, alert your staff and punish cheaters automatically", authors = {"Th0rgal"})
 public class HackedServerPlugin {
 
     private final ProxyServer server;
