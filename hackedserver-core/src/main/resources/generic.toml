@@ -151,3 +151,9 @@ name = "InventoryTweaks"
 actions = ["alert"]
 channels = ["WECUI"]
 name = "World Edit CUI"
+
+[optifine]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "optifine"
+name = "Optifine"
