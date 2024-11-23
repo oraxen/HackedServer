@@ -12,6 +12,8 @@ import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 import java.io.File;
 import java.util.logging.Logger;
@@ -32,25 +34,36 @@ public class HackedCommands {
     }
 
     public BrigadierCommand createBrigadierCommand() {
-        LiteralCommandNode<CommandSource> node = LiteralArgumentBuilder
+        LiteralCommandNode<CommandSource> hackedServerNode = LiteralArgumentBuilder
                 .<CommandSource>literal("hackedserver")
                 .executes(context -> {
-                    try {
-                        String arg = context.getArgument("type", String.class);
-                        switch (arg) {
-                            case "reload" -> {
-                                ConfigsManager.reload(logger, dataFolder);
-                                server.getAllPlayers()
-                                        .forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
-                                Message.COMMANDS_RELOAD_SUCCESS.send(context.getSource());
-                            }
-                            case "check" -> {
-                                try {
-                                    Player player = context.getArgument("player", Player.class);
+                    Message.COMMANDS_HELP.send(context.getSource());
+                    return 1;
+                })
+                .then(LiteralArgumentBuilder.<CommandSource>literal("reload")
+                        .executes(context -> {
+                            ConfigsManager.reload(logger, dataFolder);
+                            server.getAllPlayers()
+                                    .forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
+                            Message.COMMANDS_RELOAD_SUCCESS.send(context.getSource());
+                            return 1;
+                        }))
+                .then(LiteralArgumentBuilder.<CommandSource>literal("check")
+                        .requires(source -> source.hasPermission("hackedserver.check"))
+                        .then(RequiredArgumentBuilder
+                                .<CommandSource, String>argument("player", StringArgumentType.string())
+                                .suggests((context, builder) -> {
+                                    server.getAllPlayers().forEach(player -> builder.suggest(player.getUsername()));
+                                    return builder.buildFuture();
+                                })
+                                .executes(context -> {
+                                    String playerName = context.getArgument("player", String.class);
+                                    Player player = server.getPlayer(playerName).orElse(null);
+                                    // todo: check if player is null and emit an error
                                     HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
-                                    if (hackedPlayer.getGenericChecks().isEmpty())
+                                    if (hackedPlayer.getGenericChecks().isEmpty()) {
                                         Message.CHECK_NO_MODS.send(context.getSource());
-                                    else {
+                                    } else {
                                         Message.CHECK_MODS.send(context.getSource());
                                         for (String checkId : hackedPlayer.getGenericChecks()) {
                                             Message.MOD_LIST_FORMAT.send(context.getSource(),
@@ -58,40 +71,32 @@ public class HackedCommands {
                                                             HackedServer.getCheck(checkId).getName()));
                                         }
                                     }
-                                } catch (Exception exception) {
+                                    return 1;
+                                })))
+                .then(LiteralArgumentBuilder.<CommandSource>literal("list")
+                        .executes(context -> {
+                            var playersWithChecks = HackedServer.getPlayers().stream()
+                                    .filter(player -> !player.getGenericChecks().isEmpty())
+                                    .collect(Collectors.toList());
 
-                                }
+                            if (playersWithChecks.isEmpty()) {
+                                Message.CHECK_PLAYERS_EMPTY.send(context.getSource());
+                                return 0;
                             }
-                            case "list" -> {
-                                var playersWithChecks = HackedServer.getPlayers().stream()
-                                        .filter(player -> !player.getGenericChecks().isEmpty())
-                                        .collect(Collectors.toList());
 
-                                if (playersWithChecks.isEmpty()) {
-                                    Message.CHECK_PLAYERS_EMPTY.send(context.getSource());
-                                    return 0;
-                                }
-
-                                Message.CHECK_PLAYERS.send(context.getSource());
-                                playersWithChecks.forEach(hackedPlayer -> {
-                                    Message.PLAYER_LIST_FORMAT.send(context.getSource(),
-                                            Placeholder.parsed("player",
-                                                    server.getPlayer(hackedPlayer.getUuid())
-                                                            .map(Player::getUsername)
-                                                            .orElse("Unknown")));
-                                });
-                            }
-                            default -> {
-                            }
-                        }
-                    } catch (IllegalArgumentException e) {
-                        Message.COMMANDS_HELP.send(context.getSource());
-                    }
-                    return 0;
-                })
+                            Message.CHECK_PLAYERS.send(context.getSource());
+                            playersWithChecks.forEach(hackedPlayer -> {
+                                Message.PLAYER_LIST_FORMAT.send(context.getSource(),
+                                        Placeholder.parsed("player",
+                                                server.getPlayer(hackedPlayer.getUuid())
+                                                        .map(Player::getUsername)
+                                                        .orElse("Unknown")));
+                            });
+                            return 0;
+                        }))
                 .build();
 
-        return new BrigadierCommand(node);
+        return new BrigadierCommand(hackedServerNode);
     }
 
     public void create() {
