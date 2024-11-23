@@ -10,11 +10,13 @@ public class HackedServer {
     private final static Map<UUID, HackedPlayer> players = new HashMap<>();
     private final static Map<String, Action> actions = new HashMap<>();
     private final static Map<String, GenericCheck> genericChecks = new HashMap<>();
+    private final static Map<HackedPlayer, Set<MessagePayload>> messageHistory = new HashMap<>();
 
     public static void clear() {
         players.clear();
         actions.clear();
         genericChecks.clear();
+        messageHistory.clear();
     }
 
     public static void registerPlayer(UUID uuid, HackedPlayer player) {
@@ -26,6 +28,10 @@ public class HackedServer {
     }
 
     public static void removePlayer(UUID uuid) {
+        HackedPlayer player = players.get(uuid);
+        if (player != null) {
+            messageHistory.remove(player);
+        }
         players.remove(uuid);
     }
 
@@ -57,7 +63,6 @@ public class HackedServer {
         return actions.get(id);
     }
 
-
     public static void registerCheck(GenericCheck check) {
         genericChecks.put(check.getId(), check);
     }
@@ -76,5 +81,11 @@ public class HackedServer {
 
     public static Collection<GenericCheck> getChecks() {
         return genericChecks.values();
+    }
+
+    public static boolean isMessageDuplicate(HackedPlayer player, String channel, String message) {
+        MessagePayload payload = new MessagePayload(channel, message);
+        Set<MessagePayload> playerHistory = messageHistory.computeIfAbsent(player, k -> new HashSet<>());
+        return !playerHistory.add(payload);
     }
 }

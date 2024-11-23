@@ -12,7 +12,9 @@ import org.hackedserver.bungee.logs.Logs;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.Action;
+import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
+import org.hackedserver.core.config.Message;
 
 import java.nio.charset.StandardCharsets;
 
@@ -24,8 +26,16 @@ public class CustomPayloadListener implements Listener {
             String channel = event.getTag();
             HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
             String message = new String(event.getData(), StandardCharsets.UTF_8);
+
+            if (Config.DEBUG.toBool()) {
+                Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
+                        Placeholder.unparsed("player", player.getName()),
+                        Placeholder.unparsed("channel", channel),
+                        Placeholder.unparsed("message", message)));
+            }
+
             for (GenericCheck check : HackedServer.getChecks())
-                if (check.pass(channel, message)) {
+                if (check.pass(hackedPlayer, channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions())
                         performActions(action, player, Placeholder.unparsed("player",

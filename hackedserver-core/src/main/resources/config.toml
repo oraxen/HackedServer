@@ -4,3 +4,6 @@ language = "english"
 
 # Enable logging of all CustomPayload packets for debugging purposes
 debug = false
+
+# If the same payload is sent twice, only the first triggers a check
+skip_duplicates = false

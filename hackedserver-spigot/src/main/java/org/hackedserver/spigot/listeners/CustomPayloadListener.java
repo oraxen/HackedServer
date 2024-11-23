@@ -14,8 +14,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
-import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.Action;
+import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.HackedServerPlugin;
@@ -30,7 +30,11 @@ public class CustomPayloadListener {
 
     public CustomPayloadListener(ProtocolManager protocolManager, HackedServerPlugin plugin) {
         this.protocolManager = protocolManager;
-        this.adapter = new PacketAdapter(plugin, ListenerPriority.NORMAL, PacketType.Play.Client.CUSTOM_PAYLOAD) {
+        this.adapter = new PacketAdapter(plugin, ListenerPriority.NORMAL,
+                PacketType.Login.Client.CUSTOM_PAYLOAD,
+                PacketType.Configuration.Client.CUSTOM_PAYLOAD,
+                PacketType.Play.Client.CUSTOM_PAYLOAD) {
+
             @Override
             public void onPacketReceiving(PacketEvent event) {
                 Player player = event.getPlayer();
@@ -39,7 +43,7 @@ public class CustomPayloadListener {
 
                 // Get the first field which contains the DiscardedPayload
                 Object value = modifier.read(0);
-                if (value != null && value.toString().contains("DiscardedPayload")) {
+                if (value != null) {
                     try {
                         // Get the channel/id field directly
                         java.lang.reflect.Field idField = value.getClass().getDeclaredField("id");
@@ -57,8 +61,16 @@ public class CustomPayloadListener {
                                 java.nio.charset.Charset.class);
                         String message = (String) toString.invoke(byteBuf, StandardCharsets.UTF_8);
                         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+
+                        if (Config.DEBUG.toBool()) {
+                            Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
+                                    Placeholder.unparsed("player", player.getName()),
+                                    Placeholder.unparsed("channel", channel),
+                                    Placeholder.unparsed("message", message)));
+                        }
+
                         for (GenericCheck check : HackedServer.getChecks())
-                            if (check.pass(channel, message)) {
+                            if (check.pass(hackedPlayer, channel, message)) {
                                 hackedPlayer.addGenericCheck(check);
                                 for (Action action : check.getActions())
                                     performActions(action, player, Placeholder.unparsed("player",

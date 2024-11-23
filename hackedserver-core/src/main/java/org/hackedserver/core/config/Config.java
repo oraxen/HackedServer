@@ -5,7 +5,8 @@ import org.tomlj.TomlParseResult;
 public enum Config {
 
     LANG_FILE("settings.language"),
-    DEBUG("settings.debug");
+    DEBUG("settings.debug"),
+    SKIP_DUPLICATES("settings.skip_duplicates");
 
     private static TomlParseResult result;
 

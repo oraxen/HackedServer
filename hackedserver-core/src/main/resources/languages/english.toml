@@ -3,7 +3,7 @@ prefix = "<gradient:#2F80ED:#FFCAC9>HackedServer <#282B3F>| "
 
 [logs]
 loaded = "<prefix><#55ffa4>Successfully enabled"
-debug_message = "<prefix><#55ffa4>Received payload from <#facc43><player><#55ffa4> on channel <#facc43><channel><#55ffa4> with message <#facc43><message>"
+debug_message = "<#93291E>HS-Debug <#282B3F>| <#facc43><player> <#b8bbc2>channel<#6f737d>: \"<#facc43><channel><#6f737d>\", <#b8bbc2>message<#6f737d>: \"<#facc43><message><#6f737d>\""
 
 [commands]
 help = """

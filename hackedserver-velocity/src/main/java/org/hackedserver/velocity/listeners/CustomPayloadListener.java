@@ -9,7 +9,9 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.Action;
+import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
+import org.hackedserver.core.config.Message;
 import org.hackedserver.velocity.logs.Logs;
 
 import java.nio.charset.StandardCharsets;
@@ -29,8 +31,16 @@ public class CustomPayloadListener {
             String channel = event.getIdentifier().getId();
             HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
             String message = new String(event.getData(), StandardCharsets.UTF_8);
+
+            if (Config.DEBUG.toBool()) {
+                Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
+                        Placeholder.unparsed("player", player.getUsername()),
+                        Placeholder.unparsed("channel", channel),
+                        Placeholder.unparsed("message", message)));
+            }
+
             for (GenericCheck check : HackedServer.getChecks())
-                if (check.pass(channel, message)) {
+                if (check.pass(hackedPlayer, channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions())
                         performActions(action, player, Placeholder.unparsed("player",
@@ -46,7 +56,8 @@ public class CustomPayloadListener {
                 if (admin.hasPermission("hackedserver.alert"))
                     admin.sendMessage(action.getAlert(templates));
         }
-        if (player.hasPermission("hackedserver.bypass")) return;
+        if (player.hasPermission("hackedserver.bypass"))
+            return;
         for (String command : action.getConsoleCommands())
             server.getCommandManager().executeAsync(server.getConsoleCommandSource(),
                     command.replace("<player>",
