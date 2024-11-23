@@ -95,7 +95,7 @@ public class HackedCommands {
     }
 
     public void create() {
-        commandManager.register(createBrigadierCommand());
+        commandManager.register("hs", createBrigadierCommand());
     }
 
 }
