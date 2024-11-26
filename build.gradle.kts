@@ -6,7 +6,7 @@ plugins {
     id("java")
 }
 
-val pluginVersion = "3.3.1"
+val pluginVersion = "3.4.0"
 
 allprojects {
     apply(plugin = "idea")
