@@ -70,10 +70,6 @@ project(":hackedserver-spigot") {
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.1.0")
     }
-
-    tasks.shadowJar {
-        relocate("net.kyori", "org.hackedserver.shaded.kyori")
-    }
 }
 
 project(":hackedserver-bungeecord") {
@@ -110,6 +106,7 @@ tasks.shadowJar {
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
     relocate("org.tomlj", "org.hackedserver.shaded.tomlj")
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
+    relocate("net.kyori.adventure.platform.bukkit", "org.hackedserver.shaded.kyori.adventure.platform.bukkit")
     manifest {
         attributes(
             "Built-By" to System.getProperty("user.name"),
