@@ -41,44 +41,49 @@ public class CustomPayloadListener {
                 PacketContainer packet = event.getPacket();
                 StructureModifier<?> modifier = packet.getModifier();
 
-                // Get the first field which contains the DiscardedPayload
                 Object value = modifier.read(0);
-                if (value != null) {
-                    try {
-                        // Get the channel/id field directly
-                        java.lang.reflect.Field idField = value.getClass().getDeclaredField("id");
-                        idField.setAccessible(true);
-                        Object minecraftKey = idField.get(value);
-                        String channel = minecraftKey.toString(); // MinecraftKey has a proper toString()
+                if (value == null)
+                    return;
 
-                        // Get the data field from DiscardedPayload
-                        java.lang.reflect.Field dataField = value.getClass().getDeclaredField("data");
-                        dataField.setAccessible(true);
-                        Object byteBuf = dataField.get(value);
+                String channel;
+                String message;
 
-                        // Get the array field from ByteBuf
-                        java.lang.reflect.Method toString = byteBuf.getClass().getMethod("toString",
-                                java.nio.charset.Charset.class);
-                        String message = (String) toString.invoke(byteBuf, StandardCharsets.UTF_8);
-                        HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+                try {
+                    // Get the channel/id field directly
+                    java.lang.reflect.Field idField = value.getClass().getDeclaredField("id");
+                    idField.setAccessible(true);
+                    Object minecraftKey = idField.get(value);
+                    channel = minecraftKey.toString();
 
-                        if (Config.DEBUG.toBool()) {
-                            Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
-                                    Placeholder.unparsed("player", player.getName()),
-                                    Placeholder.unparsed("channel", channel),
-                                    Placeholder.unparsed("message", message)));
-                        }
+                    // Get the data field from DiscardedPayload
+                    java.lang.reflect.Field dataField = value.getClass().getDeclaredField("data");
+                    dataField.setAccessible(true);
+                    Object byteBuf = dataField.get(value);
+                    message = readByteBuf(byteBuf);
 
-                        for (GenericCheck check : HackedServer.getChecks())
-                            if (check.pass(hackedPlayer, channel, message)) {
-                                hackedPlayer.addGenericCheck(check);
-                                for (Action action : check.getActions())
-                                    performActions(action, player, Placeholder.unparsed("player",
-                                            player.getName()), Placeholder.parsed("name", check.getName()));
-                            }
+                } catch (NoSuchFieldException e) {
+                    channel = value.toString();
+                    message = readByteBuf(modifier.read(1));
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                    return;
+                }
 
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                if (Config.DEBUG.toBool()) {
+                    Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
+                            Placeholder.unparsed("player", player.getName()),
+                            Placeholder.unparsed("channel", channel),
+                            Placeholder.unparsed("message", message)));
+                }
+
+                // Generic checks
+                HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+                for (GenericCheck check : HackedServer.getChecks()) {
+                    if (check.pass(hackedPlayer, channel, message)) {
+                        hackedPlayer.addGenericCheck(check);
+                        for (Action action : check.getActions())
+                            performActions(action, player, Placeholder.unparsed("player",
+                                    player.getName()), Placeholder.parsed("name", check.getName()));
                     }
                 }
             }
@@ -122,6 +127,21 @@ public class CustomPayloadListener {
                             command.replace("<player>",
                                     player.getName())));
             player.setOp(op);
+        }
+    }
+
+    private String readByteBuf(Object byteBuf) {
+        if (byteBuf == null)
+            return "unknown";
+
+        try {
+            java.lang.reflect.Method toString = byteBuf.getClass().getMethod("toString",
+                    java.nio.charset.Charset.class);
+            return (String) toString.invoke(byteBuf, StandardCharsets.UTF_8);
+        } catch (NoSuchMethodException | java.lang.reflect.InvocationTargetException
+                | IllegalAccessException ex) {
+            ex.printStackTrace();
+            return byteBuf.toString();
         }
     }
 
