@@ -90,6 +90,7 @@ project(":hackedserver-bungeecord") {
 project(":hackedserver-velocity") {
     repositories {
         maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
+        maven { url = uri("https://mvn.exceptionflug.de/repository/exceptionflug-public/") }
     }
 
     dependencies {
@@ -97,6 +98,7 @@ project(":hackedserver-velocity") {
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
         compileOnly("com.velocitypowered:velocity-api:3.1.0")
         annotationProcessor("com.velocitypowered:velocity-api:3.1.0")
+        compileOnly("dev.simplix:protocolize-api:2.4.1")
 
         implementation("org.bstats:bstats-velocity:3.1.0")
     }
