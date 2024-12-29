@@ -38,6 +38,9 @@ allprojects {
         maven { url = uri("https://nexus.velocitypowered.com/repository/maven-public/") }
         // BStats
         maven { url = uri("https://repo.codemc.org/repository/maven-public") }
+        // Packet Events
+        maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+        maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
         // ProtocolLib
         maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
         // JitPack
@@ -98,8 +101,7 @@ project(":hackedserver-velocity") {
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
         compileOnly("com.velocitypowered:velocity-api:3.1.0")
         annotationProcessor("com.velocitypowered:velocity-api:3.1.0")
-        compileOnly("dev.simplix:protocolize-api:2.4.1")
-
+        compileOnly("com.github.retrooper:packetevents-velocity:2.7.0")
         implementation("org.bstats:bstats-velocity:3.1.0")
     }
 }

@@ -39,7 +39,7 @@ public class CommandsManager extends Command {
 
         switch (args[0]) {
             case "reload" -> {
-                ConfigsManager.reload(logger, dataFolder);
+                ConfigsManager.reload(dataFolder);
                 Message.COMMANDS_RELOAD_SUCCESS.send(audience);
                 server.getPlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
             }

@@ -19,7 +19,7 @@ public class HackedServerPlugin extends Plugin {
         instance = this;
         audiences = BungeeAudiences.create(this);
         Logs.onEnable(getLogger(), audiences);
-        ConfigsManager.init(getLogger(), getDataFolder());
+        ConfigsManager.init(getDataFolder());
         PluginManager pluginManager = this.getProxy().getPluginManager();
         pluginManager.registerListener(this, new HackedPlayerListeners());
         pluginManager.registerListener(this, new CustomPayloadListener());

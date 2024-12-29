@@ -16,7 +16,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import java.io.File;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 import java.util.stream.Collectors;
 
 public class HackedCommands {
@@ -42,7 +42,7 @@ public class HackedCommands {
                 })
                 .then(LiteralArgumentBuilder.<CommandSource>literal("reload")
                         .executes(context -> {
-                            ConfigsManager.reload(logger, dataFolder);
+                            ConfigsManager.reload(dataFolder);
                             server.getAllPlayers()
                                     .forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
                             Message.COMMANDS_RELOAD_SUCCESS.send(context.getSource());

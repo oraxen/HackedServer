@@ -2,9 +2,7 @@ package org.hackedserver.velocity.logs;
 
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 
 public class Logs {
 
@@ -17,15 +15,15 @@ public class Logs {
     }
 
     public static void logInfo(String message) {
-        LOGGER.log(Level.INFO, message);
+        LOGGER.info(message);
     }
 
     public static void logError(String message) {
-        LOGGER.log(Level.SEVERE, message);
+        LOGGER.error(message);
     }
 
     public static void logWarning(String message) {
-        LOGGER.log(Level.WARNING, message);
+        LOGGER.warn(message);
     }
 
     public static void logComponent(Component message) {

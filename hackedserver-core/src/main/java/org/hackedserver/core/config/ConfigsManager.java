@@ -24,8 +24,7 @@ public class ConfigsManager {
     private static final ClassLoader classLoader = ConfigsManager.class.getClassLoader();
     private static Logger logger;
 
-    public static void init(Logger logger, File folder) {
-        ConfigsManager.logger = logger;
+    public static void init(File folder) {
         folder.mkdirs();
         try {
             Config.setParseResult(getConfig("config.toml", new File(folder, "config.toml")));
@@ -41,8 +40,7 @@ public class ConfigsManager {
         }
     }
 
-    public static void reload(Logger logger, File folder) {
-        ConfigsManager.logger = logger;
+    public static void reload(File folder) {
         HackedServer.clear();
         folder.mkdirs();
         try {

@@ -26,7 +26,7 @@ public class HackedServerPlugin extends JavaPlugin {
     public HackedServerPlugin() throws NoSuchFieldException, IllegalAccessException {
         instance = this;
         Logs.enableFilter(this);
-        ConfigsManager.init(Logs.getLogger(), getDataFolder());
+        ConfigsManager.init(getDataFolder());
     }
 
     @Override
