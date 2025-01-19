@@ -109,23 +109,30 @@ public class CustomPayloadListener {
         }
         if (player.hasPermission("hackedserver.bypass"))
             return;
+
+        String checkName = java.util.Arrays.stream(templates)
+                .filter(t -> t.key().equals("name"))
+                .findFirst()
+                .map(t -> t.tag().toString())
+                .orElse("<name>");
+
         for (String command : action.getConsoleCommands())
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
                     () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                             command.replace("<player>",
-                                    player.getName())));
+                                    player.getName()).replace("<name>", checkName)));
         for (String command : action.getPlayerCommands())
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
                     () -> Bukkit.dispatchCommand(player,
                             command.replace("<player>",
-                                    player.getName())));
+                                    player.getName()).replace("<name>", checkName)));
         for (String command : action.getOppedPlayerCommands()) {
             boolean op = player.isOp();
             player.setOp(true);
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
                     () -> Bukkit.dispatchCommand(player,
                             command.replace("<player>",
-                                    player.getName())));
+                                    player.getName()).replace("<name>", checkName)));
             player.setOp(op);
         }
     }

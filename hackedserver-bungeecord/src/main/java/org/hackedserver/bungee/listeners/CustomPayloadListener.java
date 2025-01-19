@@ -54,14 +54,21 @@ public class CustomPayloadListener implements Listener {
         }
         if (player.hasPermission("hackedserver.bypass"))
             return;
+
+        String checkName = java.util.Arrays.stream(templates)
+                .filter(t -> t.key().equals("name"))
+                .findFirst()
+                .map(t -> t.tag().toString())
+                .orElse("<name>");
+
         for (String command : action.getConsoleCommands())
             ProxyServer.getInstance().getPluginManager().dispatchCommand(ProxyServer.getInstance().getConsole(),
                     command.replace("<player>",
-                            player.getName()));
+                            player.getName()).replace("<name>", checkName));
         for (String command : action.getPlayerCommands())
             ProxyServer.getInstance().getPluginManager().dispatchCommand(player,
                     command.replace("<player>",
-                            player.getName()));
+                            player.getName()).replace("<name>", checkName));
     }
 
 }

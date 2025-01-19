@@ -84,10 +84,14 @@ public class CustomPayloadListener implements PacketListener {
     }
 
     private void performActions(Action action, Player player, TagResolver.Single... templates) {
+        // Logs.logWarning("perform actions triggered for " + player.getUsername());
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : server.getAllPlayers()) {
+                // Logs.logWarning("user name:" + admin.getUsername() + " permission:"
+                // + admin.hasPermission("hackedserver.alert"));
                 if (admin.hasPermission("hackedserver.alert")) {
+                    // Logs.logWarning("user permission check passed for " + admin.getUsername());
                     admin.sendMessage(action.getAlert(templates));
                 }
             }
@@ -97,14 +101,22 @@ public class CustomPayloadListener implements PacketListener {
             return;
         }
 
+        String checkName = java.util.Arrays.stream(templates)
+                .filter(t -> t.key().equals("name"))
+                .findFirst()
+                .map(t -> t.tag().toString())
+                .orElse("<name>");
+
         for (String command : action.getConsoleCommands()) {
             server.getCommandManager().executeAsync(server.getConsoleCommandSource(),
-                    command.replace("<player>", player.getUsername()));
+                    command.replace("<player>", player.getUsername())
+                            .replace("<name>", checkName));
         }
 
         for (String command : action.getPlayerCommands()) {
             server.getCommandManager().executeAsync(player,
-                    command.replace("<player>", player.getUsername()));
+                    command.replace("<player>", player.getUsername())
+                            .replace("<name>", checkName));
         }
     }
 }
