@@ -59,7 +59,9 @@ public class HackedServerPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        customPayloadListener.unregister();
+        if (customPayloadListener != null) {
+            customPayloadListener.unregister();
+        }
         CommandAPI.onDisable();
         HackedServer.clear();
     }

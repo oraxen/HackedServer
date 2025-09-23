@@ -1,0 +1,85 @@
+---
+alwaysApply: true
+---
+
+## HackedServer Project Overview
+
+HackedServer is a multi-platform Minecraft cheat-detection plugin for Spigot/Paper, BungeeCord, and Velocity. The project is split into a small core and thin platform adapters.
+
+### Modules
+
+- `hackedserver-core`: Core detection logic, configuration (TOML), shared models and messages.
+- `hackedserver-spigot`: Bukkit/Paper adapter. Entry point: `org.hackedserver.spigot.HackedServerPlugin`. Integrates ProtocolLib, CommandAPI, Adventure.
+- `hackedserver-bungeecord`: BungeeCord adapter. Entry point: `org.hackedserver.bungee.HackedServerPlugin`.
+- `hackedserver-velocity`: Velocity adapter. Entry point: `org.hackedserver.velocity.HackedServerPlugin`.
+
+### Build System
+
+- Gradle (Kotlin DSL) with Java toolchain 17.
+- Plugins:
+  - `com.github.johnrengelman.shadow`: produces shaded artifacts.
+  - `java`, `idea`.
+- Repositories: Maven Central plus Spigot/Paper, Sonatype snapshots, Velocity, CodeMC, ProtocolLib, JitPack.
+- Versioning: `pluginVersion` in root `build.gradle.kts` (e.g., 3.7.0). `${projectVersion}` is expanded in descriptors.
+- Outputs:
+  - Root `shadowJar` builds `build/libs/hackedserver-<pluginVersion>.jar` and relocates dependencies.
+  - Each platform subproject also produces a shaded `*-all.jar` for its target platform.
+
+### Runtime Architecture
+
+- Core provides packet/message parsing, checks, and actions.
+- Platform modules:
+  - Initialize core and register commands and listeners.
+  - Bridge platform events/packets into core.
+  - Expose metrics via bStats.
+- Spigot/Paper:
+  - Hard-depends on ProtocolLib (defined in `plugin.yml`).
+  - Uses Adventure Platform and CommandAPI at runtime.
+- BungeeCord/Velocity:
+  - Use their respective platform APIs; Velocity uses annotation processing for the plugin description.
+
+### Configuration & Content
+
+- TOML configuration in `hackedserver-core/src/main/resources`:
+  - `config.toml`, `generic.toml`, `forge.toml`, `actions.toml`
+  - `languages/english.toml`
+
+### Dependencies
+
+- Core:
+  - `net.kyori:adventure-text-minimessage:4.14.0`
+  - `io.github.xtomlj:xtomlj:1.1.0`
+- Spigot:
+  - compileOnly: `org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT`, `com.comphenix.protocol:ProtocolLib:5.3.0`, `io.netty:netty-all:4.1.68.Final`, `adventure-text-minimessage:4.14.0`
+  - implementation: `dev.jorel:commandapi-bukkit-shade:10.0.0`, `net.kyori:adventure-platform-bukkit:4.3.0`, `org.bstats:bstats-bukkit:3.1.0`
+- BungeeCord:
+  - compileOnly: `net.md-5:bungeecord-api:1.20-R0.2`, `adventure-text-minimessage:4.14.0`
+  - implementation: `net.kyori:adventure-platform-bungeecord:4.3.0`, `org.bstats:bstats-bungeecord:3.1.0`
+- Velocity:
+  - compileOnly: `com.velocitypowered:velocity-api:3.1.0`, `com.github.retrooper:packetevents-velocity:2.7.0`, `adventure-text-minimessage:4.13.0`
+  - annotationProcessor: `com.velocitypowered:velocity-api:3.1.0`
+  - implementation: `org.bstats:bstats-velocity:3.1.0`
+- Root:
+  - `org.yaml:snakeyaml:1.30`, `adventure-text-minimessage:4.13.0`
+- Relocations (root `shadowJar`): `org.bstats`, `org.tomlj`, `net.kyori.adventure.platform.bukkit` → `org.hackedserver.shaded.*`
+
+### Commands & Plugin Descriptors
+
+- Spigot: `hackedserver-spigot/src/main/resources/plugin.yml`
+  - `main: org.hackedserver.spigot.HackedServerPlugin`
+  - `depend: [ProtocolLib]`
+  - `api-version: 1.18`
+- BungeeCord: `hackedserver-bungeecord/src/main/resources/bungee.yml`
+- Velocity: `hackedserver-velocity/src/main/resources/velocity-plugin.json`
+
+### Development Workflow
+
+- Build: `./gradlew build` (root wires `build` to `shadowJar`).
+- Final artifact: `build/libs/hackedserver-<pluginVersion>.jar`.
+- Optional copy: enable `copyJar=true` in `gradle.properties` and set `hacked_server_plugin_path`, `velocity_plugin_path`, `bungee_plugin_path`.
+
+### Maintenance Triggers
+
+- Bump platform APIs or dependencies.
+- Update descriptors and ProtocolLib requirement for new Minecraft versions.
+- Keep Java toolchain at 17 unless migrating all targets.

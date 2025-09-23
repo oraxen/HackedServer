@@ -142,6 +142,27 @@ public class CustomPayloadListener {
             return "unknown";
 
         try {
+            // Handle common buffer representations across MC versions
+            if (byteBuf instanceof io.netty.buffer.ByteBuf nettyBuf) {
+                int readable = nettyBuf.readableBytes();
+                byte[] bytes = new byte[readable];
+                nettyBuf.getBytes(nettyBuf.readerIndex(), bytes);
+                return new String(bytes, StandardCharsets.UTF_8);
+            }
+
+            if (byteBuf instanceof byte[] bytes) {
+                return new String(bytes, StandardCharsets.UTF_8);
+            }
+
+            if (byteBuf instanceof java.nio.ByteBuffer nioBuf) {
+                java.nio.ByteBuffer duplicate = nioBuf.asReadOnlyBuffer();
+                duplicate.rewind();
+                byte[] bytes = new byte[duplicate.remaining()];
+                duplicate.get(bytes);
+                return new String(bytes, StandardCharsets.UTF_8);
+            }
+
+            // Fallback to reflective toString(Charset) for older representations
             java.lang.reflect.Method toString = byteBuf.getClass().getMethod("toString",
                     java.nio.charset.Charset.class);
             return (String) toString.invoke(byteBuf, StandardCharsets.UTF_8);

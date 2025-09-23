@@ -1,0 +1,45 @@
+---
+alwaysApply: true
+---
+
+## Guiding Principles
+
+- **Simplicity and Clarity**: Strive for simple, well-designed code.
+- **Naming Over Comments**: Prefer clear, descriptive naming for classes, methods, and variables. Only add Javadoc to public APIs or when behavior is complex and cannot be conveyed by the name alone.
+
+### Java Conventions
+
+- **Language & Tooling**: Java 17 via the Gradle toolchain. Builds must succeed with `./gradlew build` and produce the shaded plugin.
+- **Nullability**: Use `@NotNull`/`@Nullable` (org.jetbrains) where helpful on public APIs.
+- **Exceptions**: Fail fast with guard clauses. Do not swallow exceptions; use platform/logging utilities and keep stack traces for debug builds. Surface user-facing issues via the `Message` enum when appropriate.
+- **Logging & Messages**: Use the project logging utilities per module (e.g., platform loggers) and the `Message` enum for user-visible strings.
+- **Immutability**: Prefer `final` for fields/locals where practical. Avoid mutable public state.
+- **Collections**: Prefer standard Java collections; avoid exposing mutable internals. Avoid excessive `Optional` for fields; prefer null + annotations.
+- **Dependencies**: Keep external dependencies shaded and relocated through Shadow as configured in the root build.
+
+### Code Organization
+
+- **Modules**: Keep shared detection logic in `hackedserver-core`. Platform-specific glue in `hackedserver-spigot`, `hackedserver-bungeecord`, and `hackedserver-velocity`.
+- **Entry Points**: `HackedServerPlugin` classes per platform handle lifecycle and wire the core.
+- **Subsystems**: Commands, listeners, and metrics live in platform modules; checks/config/messages live in core.
+- **Naming**: Classes UpperCamelCase, methods/fields lowerCamelCase, constants UPPER_SNAKE_CASE. Match existing package structure.
+
+### Testing Strategy
+
+- **Unit Tests**: For pure logic (e.g., helpers/serialization-free code), place tests under `src/test/java` within the same module. Keep tests deterministic.
+- **Integration/Manual**: Use `runServer` tasks (Paper dev server) for manual verification of plugin behavior across supported versions. Document steps in PRs for reproducibility.
+
+### Development Environment
+
+- **Java Toolchain**: Java 17. Ensure local JDK matches Gradle’s configured toolchain.
+- **Gradle**: Use the provided wrapper. Do not change plugin versions or repos without updating `build.gradle.kts` and `settings.gradle.kts` coherently.
+- **Docker Dev Server**: A Paper test server is pre-installed in the container at `/home/appuser/minecraft` (Paper 1.21.8 build #35 with ProtocolLib 5.4.0). Build with `./gradlew build`, copy `build/libs/hackedserver-*.jar` to `/home/appuser/minecraft/plugins/`, then run:
+  - `java -Xms1G -Xmx1G -jar /home/appuser/minecraft/paper.jar --nogui`
+- **Optional Copy**: Set `copyJar=true` and paths in `gradle.properties` to automatically copy built jars to server plugin directories.
+
+### Style & Formatting
+
+- Match the existing code style and line wrapping. Do not reformat unrelated code in edits.
+- Prefer early returns over deep nesting. Keep methods focused and readable.
+- Avoid catching generic `Exception` unless necessary and always handle meaningfully.
+- Keep imports explicit; avoid wildcard imports.
