@@ -1,7 +1,7 @@
 package org.hackedserver.spigot.commands;
 
 import dev.jorel.commandapi.CommandAPICommand;
-import dev.jorel.commandapi.arguments.PlayerArgument;
+import dev.jorel.commandapi.arguments.EntitySelectorArgument;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
@@ -59,7 +59,7 @@ public class CommandsManager {
     private CommandAPICommand getCheckCommand() {
         return new CommandAPICommand("check")
                 .withPermission("hackedserver.command.check")
-                .withArguments(new PlayerArgument("player"))
+                .withArguments(new EntitySelectorArgument.OnePlayer("player"))
                 .executes((sender, args) -> {
                     HackedPlayer hackedPlayer = HackedServer.getPlayer(((Player) args.get("player")).getUniqueId());
                     if (hackedPlayer.getGenericChecks().isEmpty())

@@ -6,7 +6,7 @@ plugins {
     id("java")
 }
 
-val pluginVersion = "3.8.0"
+val pluginVersion = "3.9.0"
 
 allprojects {
     apply(plugin = "idea")
@@ -32,6 +32,8 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        // PaperMC repository for Paper API
+        maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
         // server software
         maven { url = uri("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
@@ -63,13 +65,15 @@ project(":hackedserver-core") {
 
 project(":hackedserver-spigot") {
     dependencies {
-        compileOnly("org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT")
+        // Use Paper API (Java 17-compatible) instead of Spigot to support CommandAPI Paper integration
+        compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
         compileOnly("com.comphenix.protocol:ProtocolLib:5.3.0")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
 
-        implementation("dev.jorel:commandapi-bukkit-shade:10.1.2")
+        implementation("dev.jorel:commandapi-spigot-shade:11.0.0")
+        implementation("dev.jorel:commandapi-paper-shade:11.0.0")
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.1.0")
     }
@@ -110,6 +114,7 @@ tasks.shadowJar {
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
     relocate("org.tomlj", "org.hackedserver.shaded.tomlj")
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
+    relocate("dev.jorel.commandapi", "org.hackedserver.shaded.commandapi")
     relocate("net.kyori.adventure.platform.bukkit", "org.hackedserver.shaded.kyori.adventure.platform.bukkit")
     manifest {
         attributes(
@@ -118,7 +123,8 @@ tasks.shadowJar {
             "Build-Timestamp" to SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss.SSSZ").format(Date()),
             "Created-By" to "Gradle ${gradle.gradleVersion}",
             "Build-Jdk" to "${System.getProperty("java.version")} (${System.getProperty("java.vendor")} ${System.getProperty("java.vm.version")})",
-            "Build-OS" to "${System.getProperty("os.name")} ${System.getProperty("os.arch")} ${System.getProperty("os.version")}"
+            "Build-OS" to "${System.getProperty("os.name")} ${System.getProperty("os.arch")} ${System.getProperty("os.version")}",
+            "paperweight-mappings-namespace" to "mojang"
         )
     }
     archiveFileName.set("hackedserver-${pluginVersion}.jar")
