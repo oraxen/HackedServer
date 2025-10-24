@@ -6,7 +6,7 @@ plugins {
     id("java")
 }
 
-val pluginVersion = "3.9.0"
+val pluginVersion = "3.9.1"
 
 allprojects {
     apply(plugin = "idea")
@@ -70,10 +70,11 @@ project(":hackedserver-spigot") {
         compileOnly("com.comphenix.protocol:ProtocolLib:5.3.0")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
+        compileOnly("dev.jorel:commandapi-bukkit-core:11.0.0")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
 
-        implementation("dev.jorel:commandapi-spigot-shade:11.0.0")
-        implementation("dev.jorel:commandapi-paper-shade:11.0.0")
+        // implementation("dev.jorel:commandapi-spigot-shade:11.0.0")
+        // implementation("dev.jorel:commandapi-paper-shade:11.0.0")
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.1.0")
     }
@@ -114,7 +115,7 @@ tasks.shadowJar {
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
     relocate("org.tomlj", "org.hackedserver.shaded.tomlj")
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
-    relocate("dev.jorel.commandapi", "org.hackedserver.shaded.commandapi")
+    // relocate("dev.jorel.commandapi", "org.hackedserver.shaded.commandapi")
     relocate("net.kyori.adventure.platform.bukkit", "org.hackedserver.shaded.kyori.adventure.platform.bukkit")
     manifest {
         attributes(

@@ -31,15 +31,12 @@ public class HackedServerPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        CommandAPI.onLoad(BukkitWrapper.createCommandApiConfig(this));
+        // CommandAPI.onLoad(BukkitWrapper.createCommandApiConfig(this));
     }
 
     @Override
     public void onEnable() {
-        System.out.println("just loading commandAPI");
-        CommandAPI.onEnable();
-        System.out.println("just broke");
-
+        // CommandAPI.onEnable();
         audiences = BukkitAudiences.create(this);
         Logs.onEnable(audiences);
         new Metrics(this, 2008);
@@ -58,7 +55,7 @@ public class HackedServerPlugin extends JavaPlugin {
         if (customPayloadListener != null) {
             customPayloadListener.unregister();
         }
-        CommandAPI.onDisable();
+        // CommandAPI.onDisable();
         HackedServer.clear();
     }
 
