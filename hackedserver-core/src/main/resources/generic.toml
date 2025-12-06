@@ -157,3 +157,9 @@ actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "optifine"
 name = "Optifine"
+
+[badlion_client]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "badlion"
+name = "Badlion Client"
