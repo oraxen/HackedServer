@@ -129,8 +129,8 @@ public class CustomPayloadListener {
     private boolean isPlayerFullyOnline(Player player) {
         // During login/config phase, the player object exists but isn't fully joined
         // Check if the player can be found in the online players list
-        return Bukkit.getPlayer(player.getUniqueId()) != null 
-                && Bukkit.getPlayer(player.getUniqueId()).isOnline();
+        Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
+        return onlinePlayer != null && onlinePlayer.isOnline();
     }
 
     private void executeCommands(Action action, Player player, String checkName) {
