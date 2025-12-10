@@ -4,13 +4,14 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.GenericCheck;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HackedServer {
 
-    private final static Map<UUID, HackedPlayer> players = new HashMap<>();
+    private final static Map<UUID, HackedPlayer> players = new ConcurrentHashMap<>();
     private final static Map<String, Action> actions = new HashMap<>();
     private final static Map<String, GenericCheck> genericChecks = new HashMap<>();
-    private final static Map<HackedPlayer, Set<MessagePayload>> messageHistory = new HashMap<>();
+    private final static Map<HackedPlayer, Set<MessagePayload>> messageHistory = new ConcurrentHashMap<>();
 
     public static void clear() {
         players.clear();
@@ -19,12 +20,11 @@ public class HackedServer {
         messageHistory.clear();
     }
 
-    public static void registerPlayer(UUID uuid, HackedPlayer player) {
-        players.put(uuid, player);
-    }
-
     public static void registerPlayer(UUID uuid) {
-        registerPlayer(uuid, new HackedPlayer(uuid));
+        // Use computeIfAbsent to avoid replacing an existing player that may have
+        // been created by getPlayer() during packet handling, which would lose
+        // any pending actions that were queued.
+        players.computeIfAbsent(uuid, HackedPlayer::new);
     }
 
     public static void removePlayer(UUID uuid) {

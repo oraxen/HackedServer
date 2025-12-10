@@ -3,15 +3,13 @@ package org.hackedserver.velocity.listeners;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
-import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 
 public class HackedPlayerListeners {
 
     @Subscribe
     public void onPlayerJoin(LoginEvent event) {
-        HackedServer.registerPlayer(event.getPlayer().getUniqueId(),
-                new HackedPlayer(event.getPlayer().getUniqueId()));
+        HackedServer.registerPlayer(event.getPlayer().getUniqueId());
     }
 
     @Subscribe
