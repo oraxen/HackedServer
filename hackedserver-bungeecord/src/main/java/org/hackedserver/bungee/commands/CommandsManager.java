@@ -42,7 +42,8 @@ public class CommandsManager extends Command {
             }
             case "check" -> {
                 if (args.length < 2) {
-                    audience.sendMessage(net.kyori.adventure.text.Component.text("Usage: /hackedserver check <player>"));
+                    audience.sendMessage(
+                            net.kyori.adventure.text.Component.text("Usage: /hackedserver check <player>"));
                     return;
                 }
                 ProxiedPlayer player = server.getPlayer(args[1]);
@@ -56,8 +57,9 @@ public class CommandsManager extends Command {
                 } else {
                     Message.CHECK_MODS.send(audience);
                     for (String checkId : hackedPlayer.getGenericChecks()) {
-                        Message.MOD_LIST_FORMAT.send(audience,
-                                Placeholder.parsed("mod", HackedServer.getCheck(checkId).getName()));
+                        var check = HackedServer.getCheck(checkId);
+                        String modName = check != null ? check.getName() : checkId;
+                        Message.MOD_LIST_FORMAT.send(audience, Placeholder.parsed("mod", modName));
                     }
                 }
             }

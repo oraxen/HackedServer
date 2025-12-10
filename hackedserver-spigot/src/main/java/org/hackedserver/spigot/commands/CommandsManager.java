@@ -67,9 +67,12 @@ public class CommandsManager {
                         Message.CHECK_NO_MODS.send(audiences.sender(sender));
                     else {
                         Message.CHECK_MODS.send(audiences.sender(sender));
-                        hackedPlayer.getGenericChecks()
-                                .forEach(checkId -> Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
-                                        Placeholder.parsed("mod", HackedServer.getCheck(checkId).getName())));
+                        hackedPlayer.getGenericChecks().forEach(checkId -> {
+                            var check = HackedServer.getCheck(checkId);
+                            String modName = check != null ? check.getName() : checkId;
+                            Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
+                                    Placeholder.parsed("mod", modName));
+                        });
                     }
                 });
     }

@@ -67,9 +67,10 @@ public class HackedCommands {
                                     } else {
                                         Message.CHECK_MODS.send(context.getSource());
                                         for (String checkId : hackedPlayer.getGenericChecks()) {
+                                            var check = HackedServer.getCheck(checkId);
+                                            String modName = check != null ? check.getName() : checkId;
                                             Message.MOD_LIST_FORMAT.send(context.getSource(),
-                                                    Placeholder.parsed("mod",
-                                                            HackedServer.getCheck(checkId).getName()));
+                                                    Placeholder.parsed("mod", modName));
                                         }
                                     }
                                     return 1;
