@@ -1,7 +1,6 @@
 package org.hackedserver.core.config;
 
 import org.hackedserver.core.HackedServer;
-import org.hackedserver.core.exceptions.ExceptionHandler;
 import org.hackedserver.core.exceptions.ParsingException;
 import org.jetbrains.annotations.NotNull;
 import org.tomlj.Toml;
@@ -17,31 +16,21 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 public class ConfigsManager {
 
     private static final ClassLoader classLoader = ConfigsManager.class.getClassLoader();
-    private static Logger logger;
 
     public static void init(File folder) {
-        folder.mkdirs();
-        try {
-            Config.setParseResult(getConfig("config.toml", new File(folder, "config.toml")));
-            Message.setParseResult(getConfig("languages/" + Config.LANG_FILE + ".toml",
-                    new File(new File(folder, "languages"), Config.LANG_FILE + ".toml")));
-            loadActions(Objects.requireNonNull(
-                    getConfig("actions.toml", new File(folder, "actions.toml"))));
-            loadGenericChecks(Objects.requireNonNull(
-                    getConfig("generic.toml", new File(folder, "generic.toml"))));
-            getConfig("actions.toml", new File(folder, "actions.toml"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        loadConfigs(folder);
     }
 
     public static void reload(File folder) {
         HackedServer.clear();
+        loadConfigs(folder);
+    }
+
+    private static void loadConfigs(File folder) {
         folder.mkdirs();
         try {
             Config.setParseResult(getConfig("config.toml", new File(folder, "config.toml")));
@@ -51,7 +40,6 @@ public class ConfigsManager {
                     getConfig("actions.toml", new File(folder, "actions.toml"))));
             loadGenericChecks(Objects.requireNonNull(
                     getConfig("generic.toml", new File(folder, "generic.toml"))));
-            getConfig("actions.toml", new File(folder, "actions.toml"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -80,7 +68,7 @@ public class ConfigsManager {
                 throw new ParsingException(error.toString());
             return result;
         } catch (IOException | ParsingException exception) {
-            new ExceptionHandler(exception).fire(logger);
+            exception.printStackTrace();
             return null;
         }
     }

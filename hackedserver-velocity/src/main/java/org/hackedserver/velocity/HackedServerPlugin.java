@@ -5,11 +5,9 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
-import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.plugin.PluginContainer;
-import com.velocitypowered.api.plugin.PluginDescription;
 
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
 
@@ -38,9 +36,8 @@ public class HackedServerPlugin {
         this.folder = dataDirectory.toFile();
         Logs.onEnable(logger, server);
         ConfigsManager.init(folder);
-        commands = new HackedCommands(logger, folder, server.getCommandManager(), server);
+        commands = new HackedCommands(folder, server.getCommandManager(), server);
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(server, pluginContainer, logger, dataDirectory));
-
     }
 
     @Subscribe

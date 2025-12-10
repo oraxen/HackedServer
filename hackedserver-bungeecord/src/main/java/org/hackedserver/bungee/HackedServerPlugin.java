@@ -23,8 +23,7 @@ public class HackedServerPlugin extends Plugin {
         PluginManager pluginManager = this.getProxy().getPluginManager();
         pluginManager.registerListener(this, new HackedPlayerListeners());
         pluginManager.registerListener(this, new CustomPayloadListener());
-        pluginManager.registerCommand(this, new CommandsManager(this.getProxy(),
-                getLogger(), getDataFolder()));
+        pluginManager.registerCommand(this, new CommandsManager(this.getProxy(), getDataFolder()));
     }
 
     public static HackedServerPlugin get() {

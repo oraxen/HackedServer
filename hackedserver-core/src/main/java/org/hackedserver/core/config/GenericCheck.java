@@ -1,10 +1,6 @@
 package org.hackedserver.core.config;
 
 import java.util.List;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
@@ -16,7 +12,6 @@ public class GenericCheck {
     private final List<String> channels;
     private final String messageHas;
     private final List<Action> actions;
-    private final Map<HackedPlayer, Set<Integer>> messageHistory = new HashMap<>();
 
     public GenericCheck(String id, String name, List<String> channels, String messageHas, List<Action> actions) {
         this.id = id;

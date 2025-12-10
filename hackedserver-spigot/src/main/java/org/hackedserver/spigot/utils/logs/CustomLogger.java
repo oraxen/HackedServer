@@ -15,11 +15,7 @@ public class CustomLogger extends PluginLogger {
     @Override
     public void log(LogRecord logRecord) {
         if (logRecord != null && logRecord.getLevel() != Level.INFO) {
-            try {
-                logRecord.setMessage("HackedServer |" + " " + logRecord.getMessage());
-            } catch (NullPointerException exception) {
-                logRecord.setMessage("HackedServer | " + logRecord.getMessage());
-            }
+            logRecord.setMessage("HackedServer | " + logRecord.getMessage());
             super.log(logRecord);
         }
     }
