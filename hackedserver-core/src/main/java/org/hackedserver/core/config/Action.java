@@ -3,14 +3,15 @@ package org.hackedserver.core.config;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
+import java.util.Collections;
 import java.util.List;
 
 public class Action {
 
     private final String id;
-    private List<String> consoleCommands;
-    private List<String> playerCommands;
-    private List<String> oppedPlayerCommands;
+    private List<String> consoleCommands = Collections.emptyList();
+    private List<String> playerCommands = Collections.emptyList();
+    private List<String> oppedPlayerCommands = Collections.emptyList();
     private String alert;
 
     public Action(String id) {

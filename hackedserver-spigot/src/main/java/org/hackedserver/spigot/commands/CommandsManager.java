@@ -4,8 +4,10 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -18,7 +20,6 @@ import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.HackedHolder;
-import org.hackedserver.spigot.utils.logs.Logs;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -114,23 +115,27 @@ public class CommandsManager {
                         sortedChecks.remove(HackedServer.getCheck("fabric"));
                         sortedChecks.remove(HackedServer.getCheck("forge"));
 
-                        lore.add(ChatColor.GOLD + "Fabric: "
-                                + (hackedPlayer.getGenericChecks().contains("fabric") ? ChatColor.GREEN + "true"
-                                        : ChatColor.RED + "false"));
-                        lore.add(ChatColor.GOLD + "Forge: "
-                                + (hackedPlayer.getGenericChecks().contains("forge") ? ChatColor.GREEN + "true"
-                                        : ChatColor.RED + "false"));
-                        lore.add(ChatColor.BLUE + "--------------------");
+                        lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)
+                                .append(hackedPlayer.getGenericChecks().contains("fabric")
+                                        ? Component.text("true", NamedTextColor.GREEN)
+                                        : Component.text("false", NamedTextColor.RED))));
+                        lore.add(toLegacy(Component.text("Forge: ", NamedTextColor.GOLD)
+                                .append(hackedPlayer.getGenericChecks().contains("forge")
+                                        ? Component.text("true", NamedTextColor.GREEN)
+                                        : Component.text("false", NamedTextColor.RED))));
+                        lore.add(toLegacy(Component.text("--------------------", NamedTextColor.BLUE)));
 
                         for (GenericCheck check : sortedChecks.stream()
                                 .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId())).toList()) {
-                            lore.add(ChatColor.GOLD + check.getName() + ": " + ChatColor.GREEN + "true");
+                            lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
+                                    .append(Component.text("true", NamedTextColor.GREEN))));
                             sortedChecks.remove(check);
                         }
 
                         for (GenericCheck check : sortedChecks.stream()
                                 .filter(check -> !hackedPlayer.getGenericChecks().contains(check.getId())).toList()) {
-                            lore.add(ChatColor.GOLD + check.getName() + ": " + ChatColor.RED + "false");
+                            lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
+                                    .append(Component.text("false", NamedTextColor.RED))));
                         }
                         meta.setLore(lore);
                         head.setItemMeta(meta);
@@ -138,6 +143,10 @@ public class CommandsManager {
                     });
                     player.openInventory(inv);
                 });
+    }
+
+    private static String toLegacy(Component component) {
+        return LegacyComponentSerializer.legacySection().serialize(component);
     }
 
 }

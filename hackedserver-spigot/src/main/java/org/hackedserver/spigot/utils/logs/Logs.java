@@ -12,10 +12,8 @@ public class Logs {
 
     private static CustomLogger LOGGER;
     private static BukkitAudiences audiences;
-    private static JavaPlugin plugin;
 
-    public static void enableFilter(JavaPlugin currentPlugin) throws NoSuchFieldException, IllegalAccessException {
-        plugin = currentPlugin;
+    public static void enableFilter(JavaPlugin plugin) throws NoSuchFieldException, IllegalAccessException {
         Field field = JavaPlugin.class.getDeclaredField("logger");
         field.setAccessible(true);
         LOGGER = new CustomLogger(plugin);

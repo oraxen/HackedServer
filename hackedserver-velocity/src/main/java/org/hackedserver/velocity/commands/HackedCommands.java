@@ -16,18 +16,15 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import java.io.File;
-import org.slf4j.Logger;
 import java.util.stream.Collectors;
 
 public class HackedCommands {
 
-    private final Logger logger;
     private final File dataFolder;
     private final CommandManager commandManager;
     private final ProxyServer server;
 
-    public HackedCommands(Logger logger, File dataFolder, CommandManager commandManager, ProxyServer server) {
-        this.logger = logger;
+    public HackedCommands(File dataFolder, CommandManager commandManager, ProxyServer server) {
         this.dataFolder = dataFolder;
         this.commandManager = commandManager;
         this.server = server;
@@ -59,7 +56,11 @@ public class HackedCommands {
                                 .executes(context -> {
                                     String playerName = context.getArgument("player", String.class);
                                     Player player = server.getPlayer(playerName).orElse(null);
-                                    // todo: check if player is null and emit an error
+                                    if (player == null) {
+                                        context.getSource().sendMessage(
+                                                net.kyori.adventure.text.Component.text("Player not found: " + playerName));
+                                        return 0;
+                                    }
                                     HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
                                     if (hackedPlayer.getGenericChecks().isEmpty()) {
                                         Message.CHECK_NO_MODS.send(context.getSource());

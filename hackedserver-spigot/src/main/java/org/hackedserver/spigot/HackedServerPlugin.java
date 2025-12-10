@@ -2,8 +2,6 @@ package org.hackedserver.spigot;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import dev.jorel.commandapi.CommandAPI;
-import org.hackedserver.spigot.utils.BukkitWrapper;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
