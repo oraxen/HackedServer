@@ -116,24 +116,48 @@ public class CustomPayloadListener {
                 .map(t -> t.tag().toString())
                 .orElse("<name>");
 
+        // Check if player is fully online - if not, defer the actions
+        HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+        if (!isPlayerFullyOnline(player)) {
+            hackedPlayer.queuePendingAction(() -> executeCommands(action, player, checkName));
+            return;
+        }
+
+        executeCommands(action, player, checkName);
+    }
+
+    private boolean isPlayerFullyOnline(Player player) {
+        // During login/config phase, the player object exists but isn't fully joined
+        // Check if the player can be found in the online players list
+        return Bukkit.getPlayer(player.getUniqueId()) != null 
+                && Bukkit.getPlayer(player.getUniqueId()).isOnline();
+    }
+
+    private void executeCommands(Action action, Player player, String checkName) {
+        // Re-fetch the player to ensure we have the current online instance
+        Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
+        if (onlinePlayer == null || !onlinePlayer.isOnline()) {
+            return; // Player logged out before we could execute
+        }
+
         for (String command : action.getConsoleCommands())
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
                     () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                             command.replace("<player>",
-                                    player.getName()).replace("<name>", checkName)));
+                                    onlinePlayer.getName()).replace("<name>", checkName)));
         for (String command : action.getPlayerCommands())
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
-                    () -> Bukkit.dispatchCommand(player,
+                    () -> Bukkit.dispatchCommand(onlinePlayer,
                             command.replace("<player>",
-                                    player.getName()).replace("<name>", checkName)));
+                                    onlinePlayer.getName()).replace("<name>", checkName)));
         for (String command : action.getOppedPlayerCommands()) {
-            boolean op = player.isOp();
-            player.setOp(true);
+            boolean op = onlinePlayer.isOp();
+            onlinePlayer.setOp(true);
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
-                    () -> Bukkit.dispatchCommand(player,
+                    () -> Bukkit.dispatchCommand(onlinePlayer,
                             command.replace("<player>",
-                                    player.getName()).replace("<name>", checkName)));
-            player.setOp(op);
+                                    onlinePlayer.getName()).replace("<name>", checkName)));
+            onlinePlayer.setOp(op);
         }
     }
 
