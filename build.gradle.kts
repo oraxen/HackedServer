@@ -67,7 +67,8 @@ project(":hackedserver-spigot") {
     dependencies {
         // Use Paper API (Java 17-compatible) instead of Spigot to support CommandAPI Paper integration
         compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
-        compileOnly("com.comphenix.protocol:ProtocolLib:5.3.0")
+        // 1.21.11 support requires ProtocolLib dev snapshots (5.4.0 is not published as a stable release yet)
+        compileOnly("com.comphenix.protocol:ProtocolLib:5.4.0-SNAPSHOT")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly("dev.jorel:commandapi-bukkit-core:11.0.0")
@@ -106,7 +107,7 @@ project(":hackedserver-velocity") {
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
         compileOnly("com.velocitypowered:velocity-api:3.1.0")
         annotationProcessor("com.velocitypowered:velocity-api:3.1.0")
-        compileOnly("com.github.retrooper:packetevents-velocity:2.7.0")
+        compileOnly("com.github.retrooper:packetevents-velocity:2.11.0")
         implementation("org.bstats:bstats-velocity:3.1.0")
     }
 }
@@ -149,9 +150,9 @@ tasks.build {
 }
 
 val copyJar: Boolean = project.findProperty("copyJar")?.toString()?.toBoolean() ?: false
-val pluginPath: String? = project.findProperty("hacked_server_plugin_path")?.toString()
-val velocityPluginPath: String? = project.findProperty("velocity_plugin_path")?.toString()
-val bungeePluginPath: String? = project.findProperty("bungee_plugin_path")?.toString()
+val pluginPath: String? = project.findProperty("hacked_server_plugin_path")?.toString()?.takeIf { it.isNotBlank() }
+val velocityPluginPath: String? = project.findProperty("velocity_plugin_path")?.toString()?.takeIf { it.isNotBlank() }
+val bungeePluginPath: String? = project.findProperty("bungee_plugin_path")?.toString()?.takeIf { it.isNotBlank() }
 
 if (copyJar) {
     val copyJarTask = tasks.register<Copy>("copyJarTask") {
