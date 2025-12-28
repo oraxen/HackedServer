@@ -1,7 +1,5 @@
 package org.hackedserver.spigot;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -11,17 +9,18 @@ import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.spigot.hopper.HackedServerHopper;
-import org.hackedserver.spigot.listeners.CustomPayloadListener;
 import org.hackedserver.spigot.listeners.HackedPlayerListeners;
+import org.hackedserver.spigot.protocol.ProtocolLibIntegration;
 import org.hackedserver.spigot.utils.logs.Logs;
+import org.jetbrains.annotations.Nullable;
 
 public class HackedServerPlugin extends JavaPlugin {
 
-    private ProtocolManager protocolManager;
-    private CustomPayloadListener customPayloadListener;
     private BukkitAudiences audiences;
     private static HackedServerPlugin instance;
     private boolean protocolLibAvailable = false;
+    @Nullable
+    private ProtocolLibIntegration protocolLibIntegration;
 
     public HackedServerPlugin() throws NoSuchFieldException, IllegalAccessException {
         instance = this;
@@ -64,9 +63,10 @@ public class HackedServerPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new HackedPlayerListeners(), this);
 
         if (protocolLibAvailable) {
-            protocolManager = ProtocolLibrary.getProtocolManager();
-            customPayloadListener = new CustomPayloadListener(protocolManager, this);
-            customPayloadListener.register();
+            // Load ProtocolLib integration in a separate class to avoid NoClassDefFoundError
+            // when ProtocolLib is not installed
+            protocolLibIntegration = new ProtocolLibIntegration(this);
+            protocolLibIntegration.register();
         }
 
         new CommandsManager(this, audiences).loadCommands();
@@ -77,8 +77,8 @@ public class HackedServerPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (customPayloadListener != null) {
-            customPayloadListener.unregister();
+        if (protocolLibIntegration != null) {
+            protocolLibIntegration.unregister();
         }
         // CommandAPI.onDisable();
         HackedServer.clear();
