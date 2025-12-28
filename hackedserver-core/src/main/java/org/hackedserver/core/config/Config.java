@@ -7,7 +7,8 @@ public enum Config {
     LANG_FILE("settings.language"),
     DEBUG("settings.debug"),
     SKIP_DUPLICATES("settings.skip_duplicates"),
-    AUTO_DOWNLOAD_DEPENDENCIES("settings.auto_download_dependencies");
+    AUTO_DOWNLOAD_DEPENDENCIES("settings.auto_download_dependencies"),
+    ACTION_DELAY_TICKS("settings.action_delay_ticks");
 
     private static TomlParseResult result;
 
@@ -31,6 +32,11 @@ public enum Config {
 
     public boolean toBool() {
         return Boolean.TRUE.equals(result.getBoolean(path));
+    }
+
+    public long toLong() {
+        Long value = result.getLong(path);
+        return value != null ? value : 0L;
     }
 
 }

@@ -1,6 +1,28 @@
+# Actions are executed when a check is triggered
+# Each action can have:
+#   - send_alert: Message sent to players with hackedserver.alert permission
+#   - delay_ticks: Ticks to wait before executing commands (overrides global action_delay_ticks)
+#   - commands.console: Commands executed by console
+#   - commands.player: Commands executed as the player
+#   - commands.opped_player: Commands executed as the player with OP
+
 [alert]
 send_alert = "<red><player> <gray>just logged in using <red><name><gray> !"
 [alert.commands]
 console = []
 player = []
 opped_player = []
+
+# Example action with kick command - uses global delay from config.toml
+#[kick]
+#send_alert = "<red><player> <gray>was kicked for using <red><name><gray> !"
+#[kick.commands]
+#console = ["kick <player> You are not allowed to use <name>"]
+
+# Example action with custom delay (40 ticks = 2 seconds)
+# Use higher delay if kicks fail on certain server software
+#[kick_delayed]
+#send_alert = "<red><player> <gray>was kicked for using <red><name><gray> !"
+#delay_ticks = 40
+#[kick_delayed.commands]
+#console = ["kick <player> You are not allowed to use <name>"]
