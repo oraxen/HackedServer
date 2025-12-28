@@ -6,7 +6,8 @@ public enum Config {
 
     LANG_FILE("settings.language"),
     DEBUG("settings.debug"),
-    SKIP_DUPLICATES("settings.skip_duplicates");
+    SKIP_DUPLICATES("settings.skip_duplicates"),
+    AUTO_DOWNLOAD_DEPENDENCIES("settings.auto_download_dependencies");
 
     private static TomlParseResult result;
 

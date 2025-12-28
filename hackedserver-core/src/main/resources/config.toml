@@ -7,3 +7,7 @@ debug = false
 
 # If the same payload is sent twice, only the first triggers a check
 skip_duplicates = false
+
+# Automatically download required dependencies (like ProtocolLib) if not installed
+# Can also be disabled via JVM property: -Dhackedserver.autoDownloadDependencies=false
+auto_download_dependencies = true

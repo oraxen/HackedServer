@@ -2,6 +2,5 @@ main: org.hackedserver.spigot.HackedServerPlugin
 name: HackedServer
 version: ${projectVersion}
 author: Th0rgal
-softdepend: [ ViaVersion, ProtocolSupport ]
-depend: [ ProtocolLib ]
+softdepend: [ ViaVersion, ProtocolSupport, ProtocolLib ]
 api-version: 1.18
