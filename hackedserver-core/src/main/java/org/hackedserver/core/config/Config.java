@@ -31,7 +31,12 @@ public enum Config {
     }
 
     public boolean toBool() {
-        return Boolean.TRUE.equals(result.getBoolean(path));
+        return toBool(false);
+    }
+
+    public boolean toBool(boolean defaultValue) {
+        Boolean value = result.getBoolean(path);
+        return value != null ? value : defaultValue;
     }
 
     public long toLong() {

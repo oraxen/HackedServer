@@ -56,8 +56,8 @@ public final class HackedServerHopper {
             return;
         }
 
-        // Check if auto-download is disabled via config
-        if (!Config.AUTO_DOWNLOAD_DEPENDENCIES.toBool()) {
+        // Check if auto-download is disabled via config (defaults to enabled)
+        if (!Config.AUTO_DOWNLOAD_DEPENDENCIES.toBool(true)) {
             enabled = false;
             logger.info("Auto-download of dependencies is disabled (via config)");
             return;
