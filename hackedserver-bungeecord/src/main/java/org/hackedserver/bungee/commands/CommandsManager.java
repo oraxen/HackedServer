@@ -10,7 +10,9 @@ import org.hackedserver.bungee.HackedServerPlugin;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
+import org.hackedserver.core.config.LunarConfig;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.lunar.LunarModInfo;
 
 import java.io.File;
 import java.util.stream.Collectors;
@@ -52,14 +54,32 @@ public class CommandsManager extends Command {
                     return;
                 }
                 HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
-                if (hackedPlayer.getGenericChecks().isEmpty()) {
-                    Message.CHECK_NO_MODS.send(audience);
-                } else {
+                boolean hasGenericChecks = !hackedPlayer.getGenericChecks().isEmpty();
+                boolean showLunarMods = LunarConfig.isEnabled()
+                        && LunarConfig.shouldShowModsInCheck()
+                        && hackedPlayer.hasLunarModsData();
+                boolean hasLunarMods = showLunarMods && !hackedPlayer.getLunarMods().isEmpty();
+
+                if (hasGenericChecks) {
                     Message.CHECK_MODS.send(audience);
                     for (String checkId : hackedPlayer.getGenericChecks()) {
                         var check = HackedServer.getCheck(checkId);
                         String modName = check != null ? check.getName() : checkId;
                         Message.MOD_LIST_FORMAT.send(audience, Placeholder.parsed("mod", modName));
+                    }
+                } else if (!showLunarMods) {
+                    Message.CHECK_NO_MODS.send(audience);
+                }
+
+                if (showLunarMods) {
+                    if (hasLunarMods) {
+                        Message.CHECK_LUNAR_MODS.send(audience);
+                        for (LunarModInfo mod : hackedPlayer.getLunarMods()) {
+                            Message.LUNAR_MOD_LIST_FORMAT.send(audience,
+                                    Placeholder.parsed("mod", LunarConfig.formatMod(mod)));
+                        }
+                    } else {
+                        Message.CHECK_LUNAR_NO_MODS.send(audience);
                     }
                 }
             }

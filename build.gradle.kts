@@ -29,13 +29,15 @@ allprojects {
         expand(mapOf("projectVersion" to pluginVersion))
     }
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        // Hopper (runtime dependency loader) - must be before other repos
-        maven("https://repo.oraxen.com/releases") {
-            content { includeGroup("md.thomas.hopper") }
-        }
+        repositories {
+            mavenLocal()
+            mavenCentral()
+            // Lunar Client Apollo API
+            maven("https://repo.lunarclient.dev")
+            // Hopper (runtime dependency loader) - must be before other repos
+            maven("https://repo.oraxen.com/releases") {
+                content { includeGroup("md.thomas.hopper") }
+            }
         maven("https://repo.oraxen.com/snapshots") {
             content { includeGroup("md.thomas.hopper") }
         }
@@ -84,6 +86,7 @@ project(":hackedserver-core") {
     dependencies {
         implementation("net.kyori:adventure-text-minimessage:4.14.0")
         implementation("io.github.xtomlj:xtomlj:1.1.0")
+        implementation("com.lunarclient:apollo-protos:0.0.5")
     }
 }
 

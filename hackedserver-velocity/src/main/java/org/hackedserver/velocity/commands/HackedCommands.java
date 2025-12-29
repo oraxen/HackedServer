@@ -11,7 +11,9 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
+import org.hackedserver.core.config.LunarConfig;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.lunar.LunarModInfo;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
@@ -62,15 +64,33 @@ public class HackedCommands {
                                         return 0;
                                     }
                                     HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
-                                    if (hackedPlayer.getGenericChecks().isEmpty()) {
-                                        Message.CHECK_NO_MODS.send(context.getSource());
-                                    } else {
+                                    boolean hasGenericChecks = !hackedPlayer.getGenericChecks().isEmpty();
+                                    boolean showLunarMods = LunarConfig.isEnabled()
+                                            && LunarConfig.shouldShowModsInCheck()
+                                            && hackedPlayer.hasLunarModsData();
+                                    boolean hasLunarMods = showLunarMods && !hackedPlayer.getLunarMods().isEmpty();
+
+                                    if (hasGenericChecks) {
                                         Message.CHECK_MODS.send(context.getSource());
                                         for (String checkId : hackedPlayer.getGenericChecks()) {
                                             var check = HackedServer.getCheck(checkId);
                                             String modName = check != null ? check.getName() : checkId;
                                             Message.MOD_LIST_FORMAT.send(context.getSource(),
                                                     Placeholder.parsed("mod", modName));
+                                        }
+                                    } else if (!showLunarMods) {
+                                        Message.CHECK_NO_MODS.send(context.getSource());
+                                    }
+
+                                    if (showLunarMods) {
+                                        if (hasLunarMods) {
+                                            Message.CHECK_LUNAR_MODS.send(context.getSource());
+                                            for (LunarModInfo mod : hackedPlayer.getLunarMods()) {
+                                                Message.LUNAR_MOD_LIST_FORMAT.send(context.getSource(),
+                                                        Placeholder.parsed("mod", LunarConfig.formatMod(mod)));
+                                            }
+                                        } else {
+                                            Message.CHECK_LUNAR_NO_MODS.send(context.getSource());
                                         }
                                     }
                                     return 1;

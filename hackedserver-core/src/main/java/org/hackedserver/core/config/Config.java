@@ -30,6 +30,14 @@ public enum Config {
         return result.getString(path);
     }
 
+    public String getStringOrDefault(String defaultValue) {
+        if (result == null) {
+            return defaultValue;
+        }
+        String value = result.getString(path);
+        return value != null ? value : defaultValue;
+    }
+
     public boolean toBool() {
         return toBool(false);
     }

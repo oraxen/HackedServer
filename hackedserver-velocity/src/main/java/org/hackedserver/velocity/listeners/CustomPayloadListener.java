@@ -16,9 +16,15 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.lunar.LunarActionTrigger;
+import org.hackedserver.core.lunar.LunarApolloHandshakeParser;
+import org.hackedserver.core.lunar.LunarHandshakeProcessor;
+import org.hackedserver.core.lunar.LunarHandshakeResult;
 import org.hackedserver.velocity.logs.Logs;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.UUID;
 
 import com.github.retrooper.packetevents.wrapper.configuration.client.WrapperConfigClientPluginMessage;
 import com.github.retrooper.packetevents.wrapper.login.client.WrapperLoginClientPluginResponse;
@@ -80,6 +86,32 @@ public class CustomPayloadListener implements PacketListener {
                     }
                 }
             }
+
+            if (LunarApolloHandshakeParser.CHANNEL.equalsIgnoreCase(channel)) {
+                handleLunarApollo(player, data);
+            }
+        }
+    }
+
+    private void handleLunarApollo(Player player, byte[] data) {
+        LunarApolloHandshakeParser.parseMods(data).ifPresent(mods -> {
+            HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+            LunarHandshakeResult result = LunarHandshakeProcessor.process(hackedPlayer, mods);
+            if (!result.hasTriggers()) {
+                return;
+            }
+            for (LunarActionTrigger trigger : result.getTriggers()) {
+                runActions(trigger.getActions(), player.getUniqueId(), player.getUsername(), trigger.getName());
+            }
+        });
+    }
+
+    private void runActions(List<Action> actions, UUID uuid, String playerName, String checkName) {
+        if (actions == null || actions.isEmpty()) {
+            return;
+        }
+        for (Action action : actions) {
+            performActions(action, uuid, playerName, checkName);
         }
     }
 
@@ -119,4 +151,54 @@ public class CustomPayloadListener implements PacketListener {
                             .replace("<name>", checkName));
         }
     }
+
+    private void performActions(Action action, UUID uuid, String playerName, String checkName) {
+        TagResolver.Single[] templates = new TagResolver.Single[]{
+                Placeholder.unparsed("player", playerName),
+                Placeholder.parsed("name", checkName)
+        };
+        if (action.hasAlert()) {
+            Logs.logComponent(action.getAlert(templates));
+            for (Player admin : server.getAllPlayers()) {
+                if (admin.hasPermission("hackedserver.alert")) {
+                    admin.sendMessage(action.getAlert(templates));
+                }
+            }
+        }
+
+        Player player = server.getPlayer(uuid).orElse(null);
+        if (player == null || !player.isActive()) {
+            HackedServer.getPlayer(uuid).queuePendingAction(() -> executeCommands(action, uuid, checkName));
+            return;
+        }
+
+        if (player.hasPermission("hackedserver.bypass")) {
+            return;
+        }
+
+        executeCommands(action, uuid, checkName);
+    }
+
+    private void executeCommands(Action action, UUID uuid, String checkName) {
+        Player player = server.getPlayer(uuid).orElse(null);
+        if (player == null || !player.isActive()) {
+            return;
+        }
+        if (player.hasPermission("hackedserver.bypass")) {
+            return;
+        }
+
+        for (String command : action.getConsoleCommands()) {
+            server.getCommandManager().executeAsync(server.getConsoleCommandSource(),
+                    command.replace("<player>", player.getUsername())
+                            .replace("<name>", checkName));
+        }
+
+        for (String command : action.getPlayerCommands()) {
+            server.getCommandManager().executeAsync(player,
+                    command.replace("<player>", player.getUsername())
+                            .replace("<name>", checkName));
+        }
+    }
+
 }

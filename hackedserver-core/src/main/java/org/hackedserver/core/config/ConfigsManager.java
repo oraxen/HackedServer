@@ -34,12 +34,15 @@ public class ConfigsManager {
         folder.mkdirs();
         try {
             Config.setParseResult(getConfig("config.toml", new File(folder, "config.toml")));
-            Message.setParseResult(getConfig("languages/" + Config.LANG_FILE + ".toml",
-                    new File(new File(folder, "languages"), Config.LANG_FILE + ".toml")));
+            String langFile = Config.LANG_FILE.getStringOrDefault("english");
+            Message.setFallbackParseResult(loadFallbackMessages(langFile));
+            Message.setParseResult(getConfig("languages/" + langFile + ".toml",
+                    new File(new File(folder, "languages"), langFile + ".toml")));
             loadActions(Objects.requireNonNull(
                     getConfig("actions.toml", new File(folder, "actions.toml"))));
             loadGenericChecks(Objects.requireNonNull(
                     getConfig("generic.toml", new File(folder, "generic.toml"))));
+            LunarConfig.load(getConfig("lunar.toml", new File(folder, "lunar.toml")));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -64,6 +67,31 @@ public class ConfigsManager {
                         StandardCopyOption.REPLACE_EXISTING);
             }
             TomlParseResult result = Toml.parse(Path.of(target.toURI()));
+            for (TomlParseError error : result.errors())
+                throw new ParsingException(error.toString());
+            return result;
+        } catch (IOException | ParsingException exception) {
+            exception.printStackTrace();
+            return null;
+        }
+    }
+
+    private static TomlParseResult loadFallbackMessages(String langFile) {
+        if (langFile == null || langFile.isBlank()) {
+            langFile = "english";
+        }
+        TomlParseResult fallback = getResourceConfig("languages/" + langFile + ".toml");
+        if (fallback == null && !"english".equalsIgnoreCase(langFile)) {
+            fallback = getResourceConfig("languages/english.toml");
+        }
+        return fallback;
+    }
+
+    private static TomlParseResult getResourceConfig(@NotNull String name) {
+        try (InputStream input = getResource(name)) {
+            if (input == null)
+                return null;
+            TomlParseResult result = Toml.parse(input);
             for (TomlParseError error : result.errors())
                 throw new ParsingException(error.toString());
             return result;

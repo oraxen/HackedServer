@@ -7,6 +7,8 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.messages.ChannelRegistrar;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.plugin.PluginContainer;
 
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
@@ -47,6 +49,9 @@ public class HackedServerPlugin {
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
         PacketEvents.getAPI().init();
         commands.create();
+
+        ChannelRegistrar channelRegistrar = server.getChannelRegistrar();
+        channelRegistrar.register(MinecraftChannelIdentifier.create("lunar", "apollo"));
     }
 
     @Subscribe

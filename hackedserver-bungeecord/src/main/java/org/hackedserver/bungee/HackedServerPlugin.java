@@ -8,6 +8,7 @@ import org.hackedserver.bungee.listeners.CustomPayloadListener;
 import org.hackedserver.bungee.listeners.HackedPlayerListeners;
 import org.hackedserver.bungee.logs.Logs;
 import org.hackedserver.core.config.ConfigsManager;
+import org.hackedserver.core.lunar.LunarApolloHandshakeParser;
 
 public class HackedServerPlugin extends Plugin {
 
@@ -24,6 +25,12 @@ public class HackedServerPlugin extends Plugin {
         pluginManager.registerListener(this, new HackedPlayerListeners());
         pluginManager.registerListener(this, new CustomPayloadListener());
         pluginManager.registerCommand(this, new CommandsManager(this.getProxy(), getDataFolder()));
+        this.getProxy().registerChannel(LunarApolloHandshakeParser.CHANNEL);
+    }
+
+    @Override
+    public void onDisable() {
+        this.getProxy().unregisterChannel(LunarApolloHandshakeParser.CHANNEL);
     }
 
     public static HackedServerPlugin get() {

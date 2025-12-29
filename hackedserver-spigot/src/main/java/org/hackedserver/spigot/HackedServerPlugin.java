@@ -10,6 +10,7 @@ import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.spigot.hopper.HackedServerHopper;
 import org.hackedserver.spigot.listeners.HackedPlayerListeners;
+import org.hackedserver.spigot.listeners.LunarApolloListener;
 import org.hackedserver.spigot.protocol.ProtocolLibIntegration;
 import org.hackedserver.spigot.utils.logs.Logs;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,8 @@ public class HackedServerPlugin extends JavaPlugin {
     private boolean protocolLibAvailable = false;
     @Nullable
     private ProtocolLibIntegration protocolLibIntegration;
+    @Nullable
+    private LunarApolloListener lunarApolloListener;
 
     public HackedServerPlugin() throws NoSuchFieldException, IllegalAccessException {
         instance = this;
@@ -69,6 +72,8 @@ public class HackedServerPlugin extends JavaPlugin {
             protocolLibIntegration.register();
         }
 
+        lunarApolloListener = new LunarApolloListener(this);
+
         new CommandsManager(this, audiences).loadCommands();
         Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
 
@@ -79,6 +84,9 @@ public class HackedServerPlugin extends JavaPlugin {
     public void onDisable() {
         if (protocolLibIntegration != null) {
             protocolLibIntegration.unregister();
+        }
+        if (lunarApolloListener != null) {
+            lunarApolloListener.unregister();
         }
         // CommandAPI.onDisable();
         HackedServer.clear();
