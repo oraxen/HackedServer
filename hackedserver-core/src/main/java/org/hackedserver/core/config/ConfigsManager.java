@@ -40,6 +40,7 @@ public class ConfigsManager {
                     getConfig("actions.toml", new File(folder, "actions.toml"))));
             loadGenericChecks(Objects.requireNonNull(
                     getConfig("generic.toml", new File(folder, "generic.toml"))));
+            LunarConfig.load(getConfig("lunar.toml", new File(folder, "lunar.toml")));
         } catch (IOException e) {
             e.printStackTrace();
         }

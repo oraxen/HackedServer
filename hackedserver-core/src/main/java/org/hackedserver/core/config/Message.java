@@ -25,6 +25,9 @@ public enum Message {
     CHECK_NO_MODS("commands.check_no_mods"),
     CHECK_MODS("commands.check_mods"),
     MOD_LIST_FORMAT("commands.mod_list_format"),
+    CHECK_LUNAR_MODS("commands.check_lunar_mods"),
+    CHECK_LUNAR_NO_MODS("commands.check_lunar_no_mods"),
+    LUNAR_MOD_LIST_FORMAT("commands.lunar_mod_list_format"),
     CHECK_PLAYERS("commands.check_players"),
     CHECK_PLAYERS_EMPTY("commands.check_players_empty"),
     PLAYER_LIST_FORMAT("commands.player_list_format");

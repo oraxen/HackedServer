@@ -2,13 +2,24 @@ package org.hackedserver.core;
 
 import org.hackedserver.core.config.GenericCheck;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.hackedserver.core.lunar.LunarModInfo;
 
 public class HackedPlayer {
 
     private final UUID uuid;
     private final Set<String> genericChecks = new HashSet<>();
+    private final Map<String, LunarModInfo> lunarMods = new LinkedHashMap<>();
+    private boolean lunarModsKnown = false;
     private final Queue<Runnable> pendingActions = new ConcurrentLinkedQueue<>();
 
     public HackedPlayer(UUID uuid) {
@@ -37,6 +48,34 @@ public class HackedPlayer {
 
     public Set<String> getGenericChecks() {
         return genericChecks;
+    }
+
+    public void setLunarMods(Collection<LunarModInfo> mods) {
+        lunarMods.clear();
+        if (mods != null) {
+            for (LunarModInfo mod : mods) {
+                if (mod == null || mod.getId() == null) {
+                    continue;
+                }
+                lunarMods.put(mod.getId().toLowerCase(Locale.ROOT), mod);
+            }
+        }
+        lunarModsKnown = true;
+    }
+
+    public Collection<LunarModInfo> getLunarMods() {
+        return Collections.unmodifiableCollection(lunarMods.values());
+    }
+
+    public boolean hasLunarModsData() {
+        return lunarModsKnown;
+    }
+
+    public boolean hasLunarMod(String modId) {
+        if (modId == null) {
+            return false;
+        }
+        return lunarMods.containsKey(modId.toLowerCase(Locale.ROOT));
     }
 
     /**

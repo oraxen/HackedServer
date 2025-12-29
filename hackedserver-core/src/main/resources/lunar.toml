@@ -1,0 +1,24 @@
+# Lunar Client Apollo integration
+enabled = true
+
+[settings]
+# Mark generic checks when Apollo reports them
+mark_lunar_client = true
+mark_fabric = true
+mark_forge = true
+
+# Include Lunar mod list in /hackedserver check output
+show_mods_in_check = true
+show_mod_versions = false
+show_mod_types = false
+
+[actions]
+# Optional actions when Apollo confirms Lunar Client / Fabric / Forge
+lunar_client = []
+fabric = []
+forge = []
+
+[mod_actions]
+# Optional per-mod actions (keys are Lunar mod IDs)
+# sodium = ["alert"]
+# iris = ["alert"]
