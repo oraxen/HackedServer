@@ -62,12 +62,14 @@ public class Action {
     /**
      * Gets the delay in ticks before executing this action.
      * Returns the action-specific delay if set, otherwise the global setting.
+     * Default is 20 ticks (1 second) if not configured.
      */
     public long getDelayTicks() {
         if (delayTicks >= 0) {
             return delayTicks;
         }
-        return Config.ACTION_DELAY_TICKS.toLong();
+        // Default to 20 ticks (1 second) if not configured in config.toml
+        return Config.ACTION_DELAY_TICKS.toLong(20L);
     }
 
     /**

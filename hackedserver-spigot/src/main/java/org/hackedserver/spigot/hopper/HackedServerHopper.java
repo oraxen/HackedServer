@@ -45,6 +45,9 @@ public final class HackedServerHopper {
     public static void register(@NotNull Plugin plugin) {
         Logger logger = plugin.getLogger();
 
+        // Reset enabled flag to support plugin reload
+        enabled = true;
+
         // Check if auto-download is disabled via system property (takes precedence)
         String prop = System.getProperty("hackedserver.autoDownloadDependencies");
         if ("false".equalsIgnoreCase(prop)) {

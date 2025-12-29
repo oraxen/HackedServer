@@ -35,8 +35,12 @@ public enum Config {
     }
 
     public long toLong() {
+        return toLong(0L);
+    }
+
+    public long toLong(long defaultValue) {
         Long value = result.getLong(path);
-        return value != null ? value : 0L;
+        return value != null ? value : defaultValue;
     }
 
 }
