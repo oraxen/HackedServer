@@ -72,9 +72,7 @@ public class CustomPayloadListener implements Listener {
             return;
         }
         for (Action action : actions) {
-            performActions(action, uuid,
-                    Placeholder.unparsed("player", playerName),
-                    Placeholder.parsed("name", checkName));
+            performActions(action, uuid, playerName, checkName);
         }
     }
 
@@ -105,7 +103,11 @@ public class CustomPayloadListener implements Listener {
                             player.getName()).replace("<name>", checkName));
     }
 
-    private void performActions(Action action, UUID uuid, TagResolver.Single... templates) {
+    private void performActions(Action action, UUID uuid, String playerName, String checkName) {
+        TagResolver.Single[] templates = new TagResolver.Single[]{
+                Placeholder.unparsed("player", playerName),
+                Placeholder.parsed("name", checkName)
+        };
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (ProxiedPlayer admin : ProxyServer.getInstance().getPlayers()) {
@@ -118,7 +120,7 @@ public class CustomPayloadListener implements Listener {
 
         ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
         if (player == null || !player.isConnected()) {
-            HackedServer.getPlayer(uuid).queuePendingAction(() -> executeCommands(action, uuid, checkNameFromTemplates(templates)));
+            HackedServer.getPlayer(uuid).queuePendingAction(() -> executeCommands(action, uuid, checkName));
             return;
         }
 
@@ -126,7 +128,7 @@ public class CustomPayloadListener implements Listener {
             return;
         }
 
-        executeCommands(action, uuid, checkNameFromTemplates(templates));
+        executeCommands(action, uuid, checkName);
     }
 
     private void executeCommands(Action action, UUID uuid, String checkName) {
@@ -150,14 +152,6 @@ public class CustomPayloadListener implements Listener {
                     command.replace("<player>", player.getName())
                             .replace("<name>", checkName));
         }
-    }
-
-    private String checkNameFromTemplates(TagResolver.Single... templates) {
-        return java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
     }
 
 }

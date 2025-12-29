@@ -60,13 +60,15 @@ public final class LunarApolloListener implements PluginMessageListener {
             return;
         }
         for (Action action : actions) {
-            performActions(action, player,
-                    Placeholder.unparsed("player", player.getName()),
-                    Placeholder.parsed("name", checkName));
+            performActions(action, player, checkName);
         }
     }
 
-    private void performActions(Action action, Player player, TagResolver.Single... templates) {
+    private void performActions(Action action, Player player, String checkName) {
+        TagResolver.Single[] templates = new TagResolver.Single[]{
+                Placeholder.unparsed("player", player.getName()),
+                Placeholder.parsed("name", checkName)
+        };
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : Bukkit.getOnlinePlayers()) {
@@ -79,12 +81,6 @@ public final class LunarApolloListener implements PluginMessageListener {
         if (player.hasPermission("hackedserver.bypass")) {
             return;
         }
-
-        String checkName = java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
 
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
         if (!isPlayerFullyOnline(player)) {

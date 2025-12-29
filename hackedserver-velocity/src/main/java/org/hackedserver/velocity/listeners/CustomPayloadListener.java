@@ -111,9 +111,7 @@ public class CustomPayloadListener implements PacketListener {
             return;
         }
         for (Action action : actions) {
-            performActions(action, uuid,
-                    Placeholder.unparsed("player", playerName),
-                    Placeholder.parsed("name", checkName));
+            performActions(action, uuid, playerName, checkName);
         }
     }
 
@@ -154,7 +152,11 @@ public class CustomPayloadListener implements PacketListener {
         }
     }
 
-    private void performActions(Action action, UUID uuid, TagResolver.Single... templates) {
+    private void performActions(Action action, UUID uuid, String playerName, String checkName) {
+        TagResolver.Single[] templates = new TagResolver.Single[]{
+                Placeholder.unparsed("player", playerName),
+                Placeholder.parsed("name", checkName)
+        };
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : server.getAllPlayers()) {
@@ -166,7 +168,7 @@ public class CustomPayloadListener implements PacketListener {
 
         Player player = server.getPlayer(uuid).orElse(null);
         if (player == null || !player.isActive()) {
-            HackedServer.getPlayer(uuid).queuePendingAction(() -> executeCommands(action, uuid, checkNameFromTemplates(templates)));
+            HackedServer.getPlayer(uuid).queuePendingAction(() -> executeCommands(action, uuid, checkName));
             return;
         }
 
@@ -174,7 +176,7 @@ public class CustomPayloadListener implements PacketListener {
             return;
         }
 
-        executeCommands(action, uuid, checkNameFromTemplates(templates));
+        executeCommands(action, uuid, checkName);
     }
 
     private void executeCommands(Action action, UUID uuid, String checkName) {
@@ -199,11 +201,4 @@ public class CustomPayloadListener implements PacketListener {
         }
     }
 
-    private String checkNameFromTemplates(TagResolver.Single... templates) {
-        return java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
-    }
 }
