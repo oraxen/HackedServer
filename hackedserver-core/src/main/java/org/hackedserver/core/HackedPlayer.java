@@ -61,8 +61,8 @@ public class HackedPlayer {
                     lunarMods.put(mod.getId().toLowerCase(Locale.ROOT), mod);
                 }
             }
+            lunarModsKnown = true;
         }
-        lunarModsKnown = true;
     }
 
     public Collection<LunarModInfo> getLunarMods() {

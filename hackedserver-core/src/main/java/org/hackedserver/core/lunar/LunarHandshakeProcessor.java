@@ -1,6 +1,7 @@
 package org.hackedserver.core.lunar;
 
 import org.hackedserver.core.HackedPlayer;
+import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.LunarConfig;
 
 import java.util.ArrayList;
@@ -39,7 +40,10 @@ public final class LunarHandshakeProcessor {
                 player.addGenericCheck("lunar_client");
             }
             if (!hadLunarCheck && !hadLunarData) {
-                triggers.add(new LunarActionTrigger("Lunar Client", LunarConfig.getLunarClientActions()));
+                List<Action> actions = LunarConfig.getLunarClientActions();
+                if (!actions.isEmpty()) {
+                    triggers.add(new LunarActionTrigger("Lunar Client", actions));
+                }
             }
         }
 
@@ -48,7 +52,10 @@ public final class LunarHandshakeProcessor {
                 player.addGenericCheck("fabric");
             }
             if (!hadFabricCheck && !hadFabric) {
-                triggers.add(new LunarActionTrigger("Fabric", LunarConfig.getFabricActions()));
+                List<Action> actions = LunarConfig.getFabricActions();
+                if (!actions.isEmpty()) {
+                    triggers.add(new LunarActionTrigger("Fabric", actions));
+                }
             }
         }
 
@@ -57,7 +64,10 @@ public final class LunarHandshakeProcessor {
                 player.addGenericCheck("forge");
             }
             if (!hadForgeCheck && !hadForge) {
-                triggers.add(new LunarActionTrigger("Forge", LunarConfig.getForgeActions()));
+                List<Action> actions = LunarConfig.getForgeActions();
+                if (!actions.isEmpty()) {
+                    triggers.add(new LunarActionTrigger("Forge", actions));
+                }
             }
         }
 
@@ -71,7 +81,7 @@ public final class LunarHandshakeProcessor {
                 if (modId.isEmpty() || previousIds.contains(modId)) {
                     continue;
                 }
-                List<org.hackedserver.core.config.Action> actions = LunarConfig.getModActions(modId);
+                List<Action> actions = LunarConfig.getModActions(modId);
                 if (!actions.isEmpty()) {
                     triggers.add(new LunarActionTrigger(LunarConfig.formatMod(mod), actions));
                 }
