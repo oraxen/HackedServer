@@ -57,7 +57,6 @@ public final class ApolloIntegration implements ApolloListener {
 
         boolean hasFabric = containsFabric(mods);
         boolean hasForge = containsForge(mods);
-        ProxiedPlayer player = server.getPlayer(uuid);
         String playerName = event.getPlayer().getName();
 
         boolean hadLunarCheck = hackedPlayer.hasGenericCheck("lunar_client");
@@ -66,7 +65,7 @@ public final class ApolloIntegration implements ApolloListener {
                 hackedPlayer.addGenericCheck("lunar_client");
             }
             if (!hadLunarCheck && !hadLunarData) {
-                runActions(LunarConfig.getLunarClientActions(), player, playerName, "Lunar Client");
+                runActions(LunarConfig.getLunarClientActions(), uuid, playerName, "Lunar Client");
             }
         }
 
@@ -76,7 +75,7 @@ public final class ApolloIntegration implements ApolloListener {
                 hackedPlayer.addGenericCheck("fabric");
             }
             if (!hadFabricCheck && !hadFabric) {
-                runActions(LunarConfig.getFabricActions(), player, playerName, "Fabric");
+                runActions(LunarConfig.getFabricActions(), uuid, playerName, "Fabric");
             }
         }
 
@@ -86,7 +85,7 @@ public final class ApolloIntegration implements ApolloListener {
                 hackedPlayer.addGenericCheck("forge");
             }
             if (!hadForgeCheck && !hadForge) {
-                runActions(LunarConfig.getForgeActions(), player, playerName, "Forge");
+                runActions(LunarConfig.getForgeActions(), uuid, playerName, "Forge");
             }
         }
 
@@ -100,7 +99,7 @@ public final class ApolloIntegration implements ApolloListener {
                 if (modId.isEmpty() || previousIds.contains(modId)) {
                     continue;
                 }
-                runActions(LunarConfig.getModActions(modId), player, playerName,
+                runActions(LunarConfig.getModActions(modId), uuid, playerName,
                         LunarConfig.formatMod(mod));
             }
         }
@@ -139,16 +138,16 @@ public final class ApolloIntegration implements ApolloListener {
         return false;
     }
 
-    private void runActions(List<Action> actions, ProxiedPlayer player, String playerName, String checkName) {
-        if (actions == null || actions.isEmpty() || player == null) {
+    private void runActions(List<Action> actions, UUID uuid, String playerName, String checkName) {
+        if (actions == null || actions.isEmpty()) {
             return;
         }
         for (Action action : actions) {
-            performActions(action, player, playerName, checkName);
+            performActions(action, uuid, playerName, checkName);
         }
     }
 
-    private void performActions(Action action, ProxiedPlayer player, String playerName, String checkName) {
+    private void performActions(Action action, UUID uuid, String playerName, String checkName) {
         TagResolver.Single[] templates = new TagResolver.Single[]{
                 Placeholder.unparsed("player", playerName),
                 Placeholder.parsed("name", checkName)
@@ -163,7 +162,22 @@ public final class ApolloIntegration implements ApolloListener {
             }
         }
 
+        ProxiedPlayer player = server.getPlayer(uuid);
+        if (player == null) {
+            HackedServer.getPlayer(uuid).queuePendingAction(() -> executeCommands(action, uuid, checkName));
+            return;
+        }
+
         if (player.hasPermission("hackedserver.bypass")) {
+            return;
+        }
+
+        executeCommands(action, uuid, checkName);
+    }
+
+    private void executeCommands(Action action, UUID uuid, String checkName) {
+        ProxiedPlayer player = server.getPlayer(uuid);
+        if (player == null) {
             return;
         }
 
