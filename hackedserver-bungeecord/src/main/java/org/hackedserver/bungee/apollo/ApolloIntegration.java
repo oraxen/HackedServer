@@ -180,6 +180,9 @@ public final class ApolloIntegration implements ApolloListener {
         if (player == null) {
             return;
         }
+        if (player.hasPermission("hackedserver.bypass")) {
+            return;
+        }
 
         for (String command : action.getConsoleCommands()) {
             ProxyServer.getInstance().getPluginManager().dispatchCommand(
