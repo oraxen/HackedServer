@@ -60,15 +60,15 @@ public class CommandsManager extends Command {
                         && hackedPlayer.hasLunarModsData();
                 boolean hasLunarMods = showLunarMods && !hackedPlayer.getLunarMods().isEmpty();
 
-                if (!hasGenericChecks && !hasLunarMods) {
-                    Message.CHECK_NO_MODS.send(audience);
-                } else if (hasGenericChecks) {
+                if (hasGenericChecks) {
                     Message.CHECK_MODS.send(audience);
                     for (String checkId : hackedPlayer.getGenericChecks()) {
                         var check = HackedServer.getCheck(checkId);
                         String modName = check != null ? check.getName() : checkId;
                         Message.MOD_LIST_FORMAT.send(audience, Placeholder.parsed("mod", modName));
                     }
+                } else if (!showLunarMods) {
+                    Message.CHECK_NO_MODS.send(audience);
                 }
 
                 if (showLunarMods) {

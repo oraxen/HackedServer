@@ -3,9 +3,9 @@ package org.hackedserver.core;
 import org.hackedserver.core.config.GenericCheck;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
@@ -19,7 +19,7 @@ public class HackedPlayer {
     private final UUID uuid;
     private final Set<String> genericChecks = new HashSet<>();
     private final Map<String, LunarModInfo> lunarMods = new LinkedHashMap<>();
-    private boolean lunarModsKnown = false;
+    private volatile boolean lunarModsKnown = false;
     private final Queue<Runnable> pendingActions = new ConcurrentLinkedQueue<>();
 
     public HackedPlayer(UUID uuid) {
@@ -51,20 +51,24 @@ public class HackedPlayer {
     }
 
     public void setLunarMods(Collection<LunarModInfo> mods) {
-        lunarMods.clear();
-        if (mods != null) {
-            for (LunarModInfo mod : mods) {
-                if (mod == null || mod.getId() == null) {
-                    continue;
+        synchronized (lunarMods) {
+            lunarMods.clear();
+            if (mods != null) {
+                for (LunarModInfo mod : mods) {
+                    if (mod == null || mod.getId() == null) {
+                        continue;
+                    }
+                    lunarMods.put(mod.getId().toLowerCase(Locale.ROOT), mod);
                 }
-                lunarMods.put(mod.getId().toLowerCase(Locale.ROOT), mod);
             }
         }
         lunarModsKnown = true;
     }
 
     public Collection<LunarModInfo> getLunarMods() {
-        return Collections.unmodifiableCollection(lunarMods.values());
+        synchronized (lunarMods) {
+            return List.copyOf(lunarMods.values());
+        }
     }
 
     public boolean hasLunarModsData() {
@@ -75,7 +79,9 @@ public class HackedPlayer {
         if (modId == null) {
             return false;
         }
-        return lunarMods.containsKey(modId.toLowerCase(Locale.ROOT));
+        synchronized (lunarMods) {
+            return lunarMods.containsKey(modId.toLowerCase(Locale.ROOT));
+        }
     }
 
     /**

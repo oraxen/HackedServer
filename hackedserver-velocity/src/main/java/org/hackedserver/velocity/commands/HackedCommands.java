@@ -70,9 +70,7 @@ public class HackedCommands {
                                             && hackedPlayer.hasLunarModsData();
                                     boolean hasLunarMods = showLunarMods && !hackedPlayer.getLunarMods().isEmpty();
 
-                                    if (!hasGenericChecks && !hasLunarMods) {
-                                        Message.CHECK_NO_MODS.send(context.getSource());
-                                    } else if (hasGenericChecks) {
+                                    if (hasGenericChecks) {
                                         Message.CHECK_MODS.send(context.getSource());
                                         for (String checkId : hackedPlayer.getGenericChecks()) {
                                             var check = HackedServer.getCheck(checkId);
@@ -80,6 +78,8 @@ public class HackedCommands {
                                             Message.MOD_LIST_FORMAT.send(context.getSource(),
                                                     Placeholder.parsed("mod", modName));
                                         }
+                                    } else if (!showLunarMods) {
+                                        Message.CHECK_NO_MODS.send(context.getSource());
                                     }
 
                                     if (showLunarMods) {
