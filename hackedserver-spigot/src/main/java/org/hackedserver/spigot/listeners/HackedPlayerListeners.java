@@ -11,7 +11,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
-import org.hackedserver.core.config.Config;
 import org.hackedserver.spigot.HackedHolder;
 import org.hackedserver.spigot.HackedServerPlugin;
 

@@ -29,9 +29,9 @@ public final class HackedServerHopper {
     private static boolean enabled = true;
 
     // Pattern to match ProtocolLib jar files
-    // Matches: ProtocolLib.jar, ProtocolLib-5.4.0.jar, ProtocolLib-5.4.0-SNAPSHOT.jar
+    // Matches: ProtocolLib.jar, ProtocolLib-5.4.0.jar, ProtocolLib-SNAPSHOT.jar, ProtocolLib-beta.jar
     private static final Pattern PROTOCOLLIB_PATTERN = Pattern.compile(
-        "(?i)^protocollib([-_][\\d][\\w.-]*)?\\.jar$"
+        "(?i)^protocollib([-_][\\w.-]+)?\\.jar$"
     );
 
     private HackedServerHopper() {}
