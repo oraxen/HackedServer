@@ -56,6 +56,9 @@ HackedServer is a premium Minecraft plugin that uses packet-based analysis to de
 
 Full documentation is available at [docs.hackedserver.org](https://docs.hackedserver.org/)
 
+Local docs:
+- [Lunar Client configuration](docs/lunar-config.md)
+
 ## License
 
 This project is licensed under the [HackedServer License](LICENSE.md) - see the license file for details.
