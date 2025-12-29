@@ -103,7 +103,7 @@ project(":hackedserver-spigot") {
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.1.0")
         // Hopper - Runtime dependency loader for auto-downloading ProtocolLib
-        implementation("md.thomas.hopper:hopper-bukkit:1.4.0")
+        implementation("md.thomas.hopper:hopper-bukkit:1.4.1")
     }
 }
 
