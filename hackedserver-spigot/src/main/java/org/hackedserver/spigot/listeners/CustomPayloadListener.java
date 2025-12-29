@@ -134,30 +134,39 @@ public class CustomPayloadListener {
     }
 
     private void executeCommands(Action action, Player player, String checkName) {
-        // Re-fetch the player to ensure we have the current online instance
-        Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
-        if (onlinePlayer == null || !onlinePlayer.isOnline()) {
-            return; // Player logged out before we could execute
-        }
+        long delayTicks = action.getDelayTicks();
 
-        for (String command : action.getConsoleCommands())
-            Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
-                    () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                            command.replace("<player>",
-                                    onlinePlayer.getName()).replace("<name>", checkName)));
-        for (String command : action.getPlayerCommands())
-            Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
-                    () -> Bukkit.dispatchCommand(onlinePlayer,
-                            command.replace("<player>",
-                                    onlinePlayer.getName()).replace("<name>", checkName)));
-        for (String command : action.getOppedPlayerCommands()) {
-            boolean op = onlinePlayer.isOp();
-            onlinePlayer.setOp(true);
-            Bukkit.getScheduler().runTask(HackedServerPlugin.get(),
-                    () -> Bukkit.dispatchCommand(onlinePlayer,
-                            command.replace("<player>",
-                                    onlinePlayer.getName()).replace("<name>", checkName)));
-            onlinePlayer.setOp(op);
+        // Schedule the commands with the configured delay
+        // This ensures the player is fully connected before executing actions like kick
+        Runnable commandRunner = () -> {
+            // Re-fetch the player to ensure we have the current online instance
+            Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
+            if (onlinePlayer == null || !onlinePlayer.isOnline()) {
+                return; // Player logged out before we could execute
+            }
+
+            for (String command : action.getConsoleCommands())
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                        command.replace("<player>",
+                                onlinePlayer.getName()).replace("<name>", checkName));
+            for (String command : action.getPlayerCommands())
+                Bukkit.dispatchCommand(onlinePlayer,
+                        command.replace("<player>",
+                                onlinePlayer.getName()).replace("<name>", checkName));
+            for (String command : action.getOppedPlayerCommands()) {
+                boolean op = onlinePlayer.isOp();
+                onlinePlayer.setOp(true);
+                Bukkit.dispatchCommand(onlinePlayer,
+                        command.replace("<player>",
+                                onlinePlayer.getName()).replace("<name>", checkName));
+                onlinePlayer.setOp(op);
+            }
+        };
+
+        if (delayTicks > 0) {
+            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), commandRunner, delayTicks);
+        } else {
+            Bukkit.getScheduler().runTask(HackedServerPlugin.get(), commandRunner);
         }
     }
 

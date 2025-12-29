@@ -18,8 +18,17 @@ This Docker container is configured as a development environment for creating an
 
 - **Location**: `/home/appuser/minecraft`
 - **Server**: Paper 1.21.8 (build #35) at `/home/appuser/minecraft/paper.jar`
-- **Plugins**: `/home/appuser/minecraft/plugins` contains ProtocolLib 5.4.0
+- **Plugins**: `/home/appuser/minecraft/plugins` (ProtocolLib is auto-downloaded by Hopper if not present)
 - **EULA**: Pre-accepted in `/home/appuser/minecraft/eula.txt`
+
+### Testing Hopper Auto-Download
+
+To test the auto-download feature:
+1. Ensure ProtocolLib is NOT in the plugins folder
+2. Start the server - HackedServer should auto-download ProtocolLib via Hopper
+3. To disable auto-download, either:
+   - Set `auto_download_dependencies = false` in `plugins/HackedServer/config.toml`
+   - Add JVM argument: `-Dhackedserver.autoDownloadDependencies=false`
 
 ### Workflow for Building and Running
 

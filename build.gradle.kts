@@ -32,23 +32,47 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        // Hopper (runtime dependency loader) - must be before other repos
+        maven("https://repo.oraxen.com/releases") {
+            content { includeGroup("md.thomas.hopper") }
+        }
+        maven("https://repo.oraxen.com/snapshots") {
+            content { includeGroup("md.thomas.hopper") }
+        }
         // PaperMC repository for Paper API
-        maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
+        maven("https://repo.papermc.io/repository/maven-public/") {
+            content {
+                includeGroup("io.papermc.paper")
+                includeGroup("net.md-5")
+                includeGroup("com.mojang")
+            }
+        }
         // server software
         maven { url = uri("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
-        maven { url = uri("https://nexus.velocitypowered.com/repository/maven-public/") }
+        // Velocity API (via PaperMC repo as primary since velocity nexus is often down)
+        maven("https://repo.papermc.io/repository/maven-public/") {
+            content { includeGroup("com.velocitypowered") }
+        }
         // BStats
-        maven { url = uri("https://repo.codemc.org/repository/maven-public") }
+        maven("https://repo.codemc.org/repository/maven-public") {
+            content { includeGroup("org.bstats") }
+        }
         // Packet Events
-        maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
-        maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
+        maven("https://repo.codemc.io/repository/maven-releases/") {
+            content { includeGroup("com.github.retrooper") }
+        }
+        maven("https://repo.codemc.io/repository/maven-snapshots/") {
+            content { includeGroup("com.github.retrooper") }
+        }
         // ProtocolLib
-        maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
+        maven("https://repo.dmulloy2.net/repository/public/") {
+            content { includeGroup("com.comphenix.protocol") }
+        }
         // JitPack
-        maven { url = uri("https://jitpack.io") }
-        // nbt api (used by command api)
-        maven { url = uri("https://repo.codemc.org/repository/maven-public/") }
+        maven("https://jitpack.io") {
+            content { includeGroupByRegex("com\\.github\\..*") }
+        }
         // adventure
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
         // commandAPI snapshots
@@ -78,6 +102,8 @@ project(":hackedserver-spigot") {
         // implementation("dev.jorel:commandapi-paper-shade:11.0.0")
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.1.0")
+        // Hopper - Runtime dependency loader for auto-downloading ProtocolLib
+        implementation("md.thomas.hopper:hopper-bukkit:1.4.0")
     }
 }
 
@@ -115,9 +141,9 @@ project(":hackedserver-velocity") {
 tasks.shadowJar {
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
     relocate("org.tomlj", "org.hackedserver.shaded.tomlj")
-    relocate("org.bstats", "org.hackedserver.shaded.bstats")
     // relocate("dev.jorel.commandapi", "org.hackedserver.shaded.commandapi")
     relocate("net.kyori.adventure.platform.bukkit", "org.hackedserver.shaded.kyori.adventure.platform.bukkit")
+    relocate("md.thomas.hopper", "org.hackedserver.shaded.hopper")
     manifest {
         attributes(
             "Built-By" to System.getProperty("user.name"),

@@ -25,8 +25,10 @@ public class HackedPlayerListeners implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         HackedPlayer hackedPlayer = HackedServer.getPlayer(event.getPlayer().getUniqueId());
         if (hackedPlayer.hasPendingActions()) {
-            // Execute pending actions on the next tick to ensure player is fully initialized
-            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), 
+            // Execute pending actions after a short delay to ensure player is fully initialized
+            // Use at least 1 tick to ensure the join event completes
+            // Each action will then apply its own configured delay before executing commands
+            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(),
                     hackedPlayer::executePendingActions, 1L);
         }
     }

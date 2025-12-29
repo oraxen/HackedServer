@@ -33,10 +33,21 @@ HackedServer is a multi-platform Minecraft cheat-detection plugin for Spigot/Pap
   - Bridge platform events/packets into core.
   - Expose metrics via bStats.
 - Spigot/Paper:
-  - Hard-depends on ProtocolLib (defined in `plugin.yml`).
-  - Uses Adventure Platform and CommandAPI at runtime.
+  - Soft-depends on ProtocolLib (defined in `plugin.yml`).
+  - Uses Hopper to auto-download ProtocolLib if not installed.
+  - Uses Adventure Platform at runtime.
 - BungeeCord/Velocity:
   - Use their respective platform APIs; Velocity uses annotation processing for the plugin description.
+
+### Hopper Integration (Auto-Download Dependencies)
+
+HackedServer uses Hopper (`md.thomas.hopper:hopper-bukkit`) to automatically download ProtocolLib if not installed:
+
+- **Registration**: Called in plugin constructor after config is loaded.
+- **Download**: Triggered in `onLoad()` to download and auto-load dependencies.
+- **Sources**: Tries Hangar first, falls back to GitHub releases.
+- **Config**: Can be disabled via `settings.auto_download_dependencies = false` in `config.toml`.
+- **System Property**: Can also be disabled via JVM property `-Dhackedserver.autoDownloadDependencies=false`.
 
 ### Configuration & Content
 
@@ -67,7 +78,7 @@ HackedServer is a multi-platform Minecraft cheat-detection plugin for Spigot/Pap
 
 - Spigot: `hackedserver-spigot/src/main/resources/plugin.yml`
   - `main: org.hackedserver.spigot.HackedServerPlugin`
-  - `depend: [ProtocolLib]`
+  - `softdepend: [ViaVersion, ProtocolSupport, ProtocolLib]`
   - `api-version: 1.18`
 - BungeeCord: `hackedserver-bungeecord/src/main/resources/bungee.yml`
 - Velocity: `hackedserver-velocity/src/main/resources/velocity-plugin.json`

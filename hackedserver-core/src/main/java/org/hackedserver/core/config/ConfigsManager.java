@@ -81,6 +81,8 @@ public class ConfigsManager {
             Action action = new Action(key);
             if (table.isString("send_alert"))
                 action.setAlert(table.getString("send_alert"));
+            if (table.isLong("delay_ticks"))
+                action.setDelayTicks(table.getLong("delay_ticks"));
             if (table.isTable("commands")) {
                 TomlTable commandsTable = table.getTable("commands");
                 assert commandsTable != null;

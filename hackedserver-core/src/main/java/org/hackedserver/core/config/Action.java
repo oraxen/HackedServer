@@ -13,6 +13,7 @@ public class Action {
     private List<String> playerCommands = Collections.emptyList();
     private List<String> oppedPlayerCommands = Collections.emptyList();
     private String alert;
+    private long delayTicks = -1; // -1 means use global setting
 
     public Action(String id) {
         this.id = id;
@@ -34,6 +35,10 @@ public class Action {
         this.alert = alert;
     }
 
+    public void setDelayTicks(long delayTicks) {
+        this.delayTicks = delayTicks;
+    }
+
     public boolean hasAlert() {
         return alert != null;
     }
@@ -52,6 +57,26 @@ public class Action {
 
     public List<String> getOppedPlayerCommands() {
         return oppedPlayerCommands;
+    }
+
+    /**
+     * Gets the delay in ticks before executing this action.
+     * Returns the action-specific delay if set, otherwise the global setting.
+     * Default is 20 ticks (1 second) if not configured.
+     */
+    public long getDelayTicks() {
+        if (delayTicks >= 0) {
+            return delayTicks;
+        }
+        // Default to 20 ticks (1 second) if not configured in config.toml
+        return Config.ACTION_DELAY_TICKS.toLong(20L);
+    }
+
+    /**
+     * Returns true if this action has a custom delay set (not using global).
+     */
+    public boolean hasCustomDelay() {
+        return delayTicks >= 0;
     }
 
     public Component getAlert(TagResolver.Single... placeholders) {
