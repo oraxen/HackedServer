@@ -33,9 +33,14 @@ public enum Message {
     PLAYER_LIST_FORMAT("commands.player_list_format");
 
     private static TomlParseResult result;
+    private static TomlParseResult fallbackResult;
 
     public static void setParseResult(TomlParseResult newResult) {
         result = newResult;
+    }
+
+    public static void setFallbackParseResult(TomlParseResult newResult) {
+        fallbackResult = newResult;
     }
 
     private final String path;
@@ -49,7 +54,11 @@ public enum Message {
     }
 
     public String toString() {
-        return result.getString(path);
+        String value = result != null ? result.getString(path) : null;
+        if (value == null && fallbackResult != null) {
+            value = fallbackResult.getString(path);
+        }
+        return value != null ? value : "";
     }
 
     public @NotNull final Component toComponent(final TagResolver.Single... placeholders) {
