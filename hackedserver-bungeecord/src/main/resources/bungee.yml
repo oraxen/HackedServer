@@ -2,3 +2,4 @@ name: HackedServer
 main: org.hackedserver.bungee.HackedServerPlugin
 version: ${projectVersion}
 author: Th0rgal
+softDepends: [Apollo]

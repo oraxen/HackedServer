@@ -29,13 +29,15 @@ allprojects {
         expand(mapOf("projectVersion" to pluginVersion))
     }
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        // Hopper (runtime dependency loader) - must be before other repos
-        maven("https://repo.oraxen.com/releases") {
-            content { includeGroup("md.thomas.hopper") }
-        }
+        repositories {
+            mavenLocal()
+            mavenCentral()
+            // Lunar Client Apollo API
+            maven("https://repo.lunarclient.dev")
+            // Hopper (runtime dependency loader) - must be before other repos
+            maven("https://repo.oraxen.com/releases") {
+                content { includeGroup("md.thomas.hopper") }
+            }
         maven("https://repo.oraxen.com/snapshots") {
             content { includeGroup("md.thomas.hopper") }
         }
@@ -93,6 +95,7 @@ project(":hackedserver-spigot") {
         compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
         // 1.21.11 support requires ProtocolLib dev snapshots (5.4.0 is not published as a stable release yet)
         compileOnly("com.comphenix.protocol:ProtocolLib:5.4.0-SNAPSHOT")
+        compileOnly("com.lunarclient:apollo-api:1.2.1")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly("dev.jorel:commandapi-bukkit-core:11.0.0")
@@ -115,6 +118,7 @@ project(":hackedserver-bungeecord") {
     dependencies {
         compileOnly("net.md-5:bungeecord-api:1.20-R0.2")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
+        compileOnly("com.lunarclient:apollo-api:1.2.1")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
 
         implementation("net.kyori:adventure-platform-bungeecord:4.3.0")
@@ -134,6 +138,7 @@ project(":hackedserver-velocity") {
         compileOnly("com.velocitypowered:velocity-api:3.1.0")
         annotationProcessor("com.velocitypowered:velocity-api:3.1.0")
         compileOnly("com.github.retrooper:packetevents-velocity:2.11.0")
+        compileOnly("com.lunarclient:apollo-api:1.2.1")
         implementation("org.bstats:bstats-velocity:3.1.0")
     }
 }

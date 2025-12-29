@@ -17,8 +17,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
+import org.hackedserver.core.config.LunarConfig;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.lunar.LunarModInfo;
 import org.hackedserver.spigot.HackedHolder;
 
 import java.util.ArrayList;
@@ -63,9 +65,15 @@ public class CommandsManager {
                 .withArguments(new EntitySelectorArgument.OnePlayer("player"))
                 .executes((sender, args) -> {
                     HackedPlayer hackedPlayer = HackedServer.getPlayer(((Player) args.get("player")).getUniqueId());
-                    if (hackedPlayer.getGenericChecks().isEmpty())
+                    boolean hasGenericChecks = !hackedPlayer.getGenericChecks().isEmpty();
+                    boolean showLunarMods = LunarConfig.isEnabled()
+                            && LunarConfig.shouldShowModsInCheck()
+                            && hackedPlayer.hasLunarModsData();
+                    boolean hasLunarMods = showLunarMods && !hackedPlayer.getLunarMods().isEmpty();
+
+                    if (!hasGenericChecks && !hasLunarMods) {
                         Message.CHECK_NO_MODS.send(audiences.sender(sender));
-                    else {
+                    } else if (hasGenericChecks) {
                         Message.CHECK_MODS.send(audiences.sender(sender));
                         hackedPlayer.getGenericChecks().forEach(checkId -> {
                             var check = HackedServer.getCheck(checkId);
@@ -73,6 +81,18 @@ public class CommandsManager {
                             Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
                                     Placeholder.parsed("mod", modName));
                         });
+                    }
+
+                    if (showLunarMods) {
+                        if (hasLunarMods) {
+                            Message.CHECK_LUNAR_MODS.send(audiences.sender(sender));
+                            for (LunarModInfo mod : hackedPlayer.getLunarMods()) {
+                                Message.LUNAR_MOD_LIST_FORMAT.send(audiences.sender(sender),
+                                        Placeholder.parsed("mod", LunarConfig.formatMod(mod)));
+                            }
+                        } else {
+                            Message.CHECK_LUNAR_NO_MODS.send(audiences.sender(sender));
+                        }
                     }
                 });
     }
