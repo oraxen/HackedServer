@@ -34,9 +34,10 @@ public class ConfigsManager {
         folder.mkdirs();
         try {
             Config.setParseResult(getConfig("config.toml", new File(folder, "config.toml")));
-            Message.setFallbackParseResult(loadFallbackMessages());
-            Message.setParseResult(getConfig("languages/" + Config.LANG_FILE + ".toml",
-                    new File(new File(folder, "languages"), Config.LANG_FILE + ".toml")));
+            String langFile = Config.LANG_FILE.getStringOrDefault("english");
+            Message.setFallbackParseResult(loadFallbackMessages(langFile));
+            Message.setParseResult(getConfig("languages/" + langFile + ".toml",
+                    new File(new File(folder, "languages"), langFile + ".toml")));
             loadActions(Objects.requireNonNull(
                     getConfig("actions.toml", new File(folder, "actions.toml"))));
             loadGenericChecks(Objects.requireNonNull(
@@ -75,8 +76,7 @@ public class ConfigsManager {
         }
     }
 
-    private static TomlParseResult loadFallbackMessages() {
-        String langFile = Config.LANG_FILE.toString();
+    private static TomlParseResult loadFallbackMessages(String langFile) {
         if (langFile == null || langFile.isBlank()) {
             langFile = "english";
         }
