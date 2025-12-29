@@ -10,10 +10,6 @@
     {
       "id": "packetevents",
       "optional": false
-    },
-    {
-      "id": "apollo",
-      "optional": true
     }
   ]
 }

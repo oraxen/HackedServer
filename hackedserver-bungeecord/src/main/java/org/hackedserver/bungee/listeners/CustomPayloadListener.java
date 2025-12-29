@@ -15,8 +15,14 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.lunar.LunarActionTrigger;
+import org.hackedserver.core.lunar.LunarApolloHandshakeParser;
+import org.hackedserver.core.lunar.LunarHandshakeProcessor;
+import org.hackedserver.core.lunar.LunarHandshakeResult;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.UUID;
 
 public class CustomPayloadListener implements Listener {
 
@@ -41,6 +47,34 @@ public class CustomPayloadListener implements Listener {
                         performActions(action, player, Placeholder.unparsed("player",
                                 player.getName()), Placeholder.parsed("name", check.getName()));
                 }
+
+            if (LunarApolloHandshakeParser.CHANNEL.equalsIgnoreCase(channel)) {
+                handleLunarApollo(player, event.getData());
+            }
+        }
+    }
+
+    private void handleLunarApollo(ProxiedPlayer player, byte[] data) {
+        LunarApolloHandshakeParser.parseMods(data).ifPresent(mods -> {
+            HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+            LunarHandshakeResult result = LunarHandshakeProcessor.process(hackedPlayer, mods);
+            if (!result.hasTriggers()) {
+                return;
+            }
+            for (LunarActionTrigger trigger : result.getTriggers()) {
+                runActions(trigger.getActions(), player.getUniqueId(), player.getName(), trigger.getName());
+            }
+        });
+    }
+
+    private void runActions(List<Action> actions, UUID uuid, String playerName, String checkName) {
+        if (actions == null || actions.isEmpty()) {
+            return;
+        }
+        for (Action action : actions) {
+            performActions(action, uuid,
+                    Placeholder.unparsed("player", playerName),
+                    Placeholder.parsed("name", checkName));
         }
     }
 
@@ -69,6 +103,61 @@ public class CustomPayloadListener implements Listener {
             ProxyServer.getInstance().getPluginManager().dispatchCommand(player,
                     command.replace("<player>",
                             player.getName()).replace("<name>", checkName));
+    }
+
+    private void performActions(Action action, UUID uuid, TagResolver.Single... templates) {
+        if (action.hasAlert()) {
+            Logs.logComponent(action.getAlert(templates));
+            for (ProxiedPlayer admin : ProxyServer.getInstance().getPlayers()) {
+                if (admin.hasPermission("hackedserver.alert")) {
+                    HackedServerPlugin.get().getAudiences().player(admin)
+                            .sendMessage(action.getAlert(templates));
+                }
+            }
+        }
+
+        ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
+        if (player == null || !player.isConnected()) {
+            HackedServer.getPlayer(uuid).queuePendingAction(() -> executeCommands(action, uuid, checkNameFromTemplates(templates)));
+            return;
+        }
+
+        if (player.hasPermission("hackedserver.bypass")) {
+            return;
+        }
+
+        executeCommands(action, uuid, checkNameFromTemplates(templates));
+    }
+
+    private void executeCommands(Action action, UUID uuid, String checkName) {
+        ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
+        if (player == null) {
+            return;
+        }
+        if (player.hasPermission("hackedserver.bypass")) {
+            return;
+        }
+
+        for (String command : action.getConsoleCommands()) {
+            ProxyServer.getInstance().getPluginManager().dispatchCommand(
+                    ProxyServer.getInstance().getConsole(),
+                    command.replace("<player>", player.getName())
+                            .replace("<name>", checkName));
+        }
+        for (String command : action.getPlayerCommands()) {
+            ProxyServer.getInstance().getPluginManager().dispatchCommand(
+                    player,
+                    command.replace("<player>", player.getName())
+                            .replace("<name>", checkName));
+        }
+    }
+
+    private String checkNameFromTemplates(TagResolver.Single... templates) {
+        return java.util.Arrays.stream(templates)
+                .filter(t -> t.key().equals("name"))
+                .findFirst()
+                .map(t -> t.tag().toString())
+                .orElse("<name>");
     }
 
 }

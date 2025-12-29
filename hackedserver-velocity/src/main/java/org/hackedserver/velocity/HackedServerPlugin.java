@@ -7,6 +7,8 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.messages.ChannelRegistrar;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.plugin.PluginContainer;
 
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
@@ -16,7 +18,6 @@ import org.hackedserver.velocity.commands.HackedCommands;
 import org.hackedserver.velocity.listeners.CustomPayloadListener;
 import org.hackedserver.velocity.listeners.HackedPlayerListeners;
 import org.hackedserver.velocity.logs.Logs;
-import org.hackedserver.velocity.apollo.ApolloIntegration;
 
 import javax.inject.Inject;
 
@@ -29,7 +30,6 @@ public class HackedServerPlugin {
     private final ProxyServer server;
     private final HackedCommands commands;
     private final File folder;
-    private ApolloIntegration apolloIntegration;
 
     @Inject
     public HackedServerPlugin(ProxyServer server, Logger logger, final PluginContainer pluginContainer,
@@ -50,10 +50,8 @@ public class HackedServerPlugin {
         PacketEvents.getAPI().init();
         commands.create();
 
-        if (isApolloAvailable()) {
-            apolloIntegration = new ApolloIntegration(server);
-            apolloIntegration.register();
-        }
+        ChannelRegistrar channelRegistrar = server.getChannelRegistrar();
+        channelRegistrar.register(MinecraftChannelIdentifier.create("lunar", "apollo"));
     }
 
     @Subscribe
@@ -75,27 +73,6 @@ public class HackedServerPlugin {
         server.getEventManager().register(this, new HackedPlayerListeners());
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
-
-        if (apolloIntegration != null) {
-            apolloIntegration.unregister();
-            apolloIntegration = null;
-        }
-        if (isApolloAvailable()) {
-            apolloIntegration = new ApolloIntegration(server);
-            apolloIntegration.register();
-        }
-    }
-
-    private boolean isApolloAvailable() {
-        if (server.getPluginManager().getPlugin("apollo").isEmpty()) {
-            return false;
-        }
-        try {
-            Class.forName("com.lunarclient.apollo.event.EventBus");
-            return true;
-        } catch (ClassNotFoundException ex) {
-            return false;
-        }
     }
 
 }

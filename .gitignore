@@ -35,6 +35,7 @@ build/
 **/build/
 gradle-app.setting
 .gradletasknamecache
+Apollo/
 
 ### Eclipse ###
 .metadata

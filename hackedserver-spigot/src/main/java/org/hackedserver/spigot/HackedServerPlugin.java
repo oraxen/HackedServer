@@ -7,10 +7,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
-import org.hackedserver.spigot.apollo.ApolloIntegration;
 import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.spigot.hopper.HackedServerHopper;
 import org.hackedserver.spigot.listeners.HackedPlayerListeners;
+import org.hackedserver.spigot.listeners.LunarApolloListener;
 import org.hackedserver.spigot.protocol.ProtocolLibIntegration;
 import org.hackedserver.spigot.utils.logs.Logs;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ public class HackedServerPlugin extends JavaPlugin {
     @Nullable
     private ProtocolLibIntegration protocolLibIntegration;
     @Nullable
-    private ApolloIntegration apolloIntegration;
+    private LunarApolloListener lunarApolloListener;
 
     public HackedServerPlugin() throws NoSuchFieldException, IllegalAccessException {
         instance = this;
@@ -72,10 +72,7 @@ public class HackedServerPlugin extends JavaPlugin {
             protocolLibIntegration.register();
         }
 
-        if (isApolloAvailable()) {
-            apolloIntegration = new ApolloIntegration();
-            apolloIntegration.register();
-        }
+        lunarApolloListener = new LunarApolloListener(this);
 
         new CommandsManager(this, audiences).loadCommands();
         Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
@@ -88,8 +85,8 @@ public class HackedServerPlugin extends JavaPlugin {
         if (protocolLibIntegration != null) {
             protocolLibIntegration.unregister();
         }
-        if (apolloIntegration != null) {
-            apolloIntegration.unregister();
+        if (lunarApolloListener != null) {
+            lunarApolloListener.unregister();
         }
         // CommandAPI.onDisable();
         HackedServer.clear();
@@ -105,17 +102,5 @@ public class HackedServerPlugin extends JavaPlugin {
 
     public boolean isProtocolLibAvailable() {
         return protocolLibAvailable;
-    }
-
-    private boolean isApolloAvailable() {
-        if (Bukkit.getPluginManager().getPlugin("Apollo") == null) {
-            return false;
-        }
-        try {
-            Class.forName("com.lunarclient.apollo.event.EventBus");
-            return true;
-        } catch (ClassNotFoundException ex) {
-            return false;
-        }
     }
 }
