@@ -1,6 +1,8 @@
 package org.hackedserver.core;
 
 import org.hackedserver.core.config.GenericCheck;
+import org.hackedserver.core.forge.ForgeClientType;
+import org.hackedserver.core.forge.ForgeModInfo;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,6 +22,9 @@ public class HackedPlayer {
     private final Set<String> genericChecks = new HashSet<>();
     private final Map<String, LunarModInfo> lunarMods = new LinkedHashMap<>();
     private volatile boolean lunarModsKnown = false;
+    private final Map<String, ForgeModInfo> forgeMods = new LinkedHashMap<>();
+    private volatile boolean forgeModsKnown = false;
+    private volatile ForgeClientType forgeClientType = null;
     private final Queue<Runnable> pendingActions = new ConcurrentLinkedQueue<>();
 
     public HackedPlayer(UUID uuid) {
@@ -81,6 +86,48 @@ public class HackedPlayer {
         }
         synchronized (lunarMods) {
             return lunarMods.containsKey(modId.toLowerCase(Locale.ROOT));
+        }
+    }
+
+    public void setForgeClientType(ForgeClientType clientType) {
+        this.forgeClientType = clientType;
+    }
+
+    public ForgeClientType getForgeClientType() {
+        return forgeClientType;
+    }
+
+    public void setForgeMods(Collection<ForgeModInfo> mods) {
+        synchronized (forgeMods) {
+            forgeMods.clear();
+            if (mods != null) {
+                for (ForgeModInfo mod : mods) {
+                    if (mod == null || mod.getModId() == null) {
+                        continue;
+                    }
+                    forgeMods.put(mod.getModId().toLowerCase(Locale.ROOT), mod);
+                }
+            }
+            forgeModsKnown = true;
+        }
+    }
+
+    public Collection<ForgeModInfo> getForgeMods() {
+        synchronized (forgeMods) {
+            return List.copyOf(forgeMods.values());
+        }
+    }
+
+    public boolean hasForgeModsData() {
+        return forgeModsKnown;
+    }
+
+    public boolean hasForgeMod(String modId) {
+        if (modId == null) {
+            return false;
+        }
+        synchronized (forgeMods) {
+            return forgeMods.containsKey(modId.toLowerCase(Locale.ROOT));
         }
     }
 

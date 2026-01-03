@@ -18,10 +18,18 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.forge.ForgeActionTrigger;
+import org.hackedserver.core.forge.ForgeChannelParser;
+import org.hackedserver.core.forge.ForgeClientType;
+import org.hackedserver.core.forge.ForgeConfig;
+import org.hackedserver.core.forge.ForgeHandshakeProcessor;
+import org.hackedserver.core.forge.ForgeHandshakeResult;
+import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.utils.logs.Logs;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class CustomPayloadListener {
 
@@ -87,6 +95,11 @@ public class CustomPayloadListener {
                                     Placeholder.parsed("name", check.getName()));
                     }
                 }
+
+                // Forge/NeoForge detection
+                if (ForgeConfig.isEnabled()) {
+                    processForgePacket(player, hackedPlayer, channel, message);
+                }
             }
 
         };
@@ -98,6 +111,41 @@ public class CustomPayloadListener {
 
     public void unregister() {
         protocolManager.removePacketListener(adapter);
+    }
+
+    private void processForgePacket(Player player, HackedPlayer hackedPlayer, String channel, String message) {
+        // Detect client type from minecraft:brand
+        if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
+            ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
+            if (clientType != null && hackedPlayer.getForgeClientType() == null) {
+                hackedPlayer.setForgeClientType(clientType);
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processClientType(hackedPlayer, clientType);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player);
+                }
+            }
+        }
+
+        // Detect mods from minecraft:register
+        if (ForgeChannelParser.REGISTER_CHANNEL.equalsIgnoreCase(channel)) {
+            List<ForgeModInfo> mods = ForgeChannelParser.parseRegisteredChannels(message);
+            if (!mods.isEmpty()) {
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processMods(hackedPlayer, mods);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player);
+                }
+            }
+        }
+    }
+
+    private void runForgeActions(List<ForgeActionTrigger> triggers, Player player) {
+        for (ForgeActionTrigger trigger : triggers) {
+            for (Action action : trigger.getActions()) {
+                performActions(action, player, trigger.getName(),
+                        Placeholder.unparsed("player", player.getName()),
+                        Placeholder.parsed("name", trigger.getName()));
+            }
+        }
     }
 
     private void performActions(Action action, Player player, String checkName, TagResolver.Single... templates) {

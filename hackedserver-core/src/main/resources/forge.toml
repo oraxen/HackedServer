@@ -1,24 +1,49 @@
-# If enabled, HackedServer will send a fake forge handshake to your users
-# in order to retrieve the forge mod list sent by forge clients
+# Forge/NeoForge mod detection via minecraft:register channel
+# This detects mods by parsing their registered channel namespaces
 enabled = true
 
-[category]
+[settings]
+# Mark generic checks when Forge/NeoForge client is detected
+mark_forge = true
+mark_neoforge = true
+
+# Include Forge mod list in /hackedserver check output
+show_mods_in_check = true
+show_mod_versions = false
+
+[actions]
+# Optional actions when Forge/NeoForge client is confirmed
+forge = []
+neoforge = []
+
+[mod_actions]
+# Optional per-mod actions (keys are mod IDs detected from channel namespaces)
+# forgewurst = ["alert", "kick"]
+# forgehax = ["alert", "kick"]
+# wurst = ["alert", "kick"]
 
 [category.whitelisted]
+# Mods in this list are considered safe and will be shown in green
 color = "<green>"
 mods = [
-    "FML",
-    "FORGE",
-    "MCP",
-    "MINECRAFT",
-    "MERCURIUS_UPDATER",
-    "BETTERFOLIAGE"
+    "betterfoliage",
+    "sodium",
+    "iris",
+    "optifine",
+    "rubidium",
+    "oculus",
+    "embeddium"
 ]
 
 [category.blacklisted]
+# Mods in this list are considered cheats and will be shown in red
 color = "<red>"
 mods = [
-    "FORGEWURST",
-    "FORGEHAX",
-    "WURST"
+    "forgewurst",
+    "forgehax",
+    "wurst",
+    "baritone",
+    "meteor",
+    "aristois",
+    "impact"
 ]

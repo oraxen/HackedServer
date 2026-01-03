@@ -15,6 +15,13 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.forge.ForgeActionTrigger;
+import org.hackedserver.core.forge.ForgeChannelParser;
+import org.hackedserver.core.forge.ForgeClientType;
+import org.hackedserver.core.forge.ForgeConfig;
+import org.hackedserver.core.forge.ForgeHandshakeProcessor;
+import org.hackedserver.core.forge.ForgeHandshakeResult;
+import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.core.lunar.LunarActionTrigger;
 import org.hackedserver.core.lunar.LunarApolloHandshakeParser;
 import org.hackedserver.core.lunar.LunarHandshakeProcessor;
@@ -52,6 +59,42 @@ public class CustomPayloadListener implements Listener {
             if (LunarApolloHandshakeParser.CHANNEL.equalsIgnoreCase(channel)) {
                 handleLunarApollo(player, event.getData());
             }
+
+            // Forge/NeoForge detection
+            if (ForgeConfig.isEnabled()) {
+                processForgePacket(player, hackedPlayer, channel, message);
+            }
+        }
+    }
+
+    private void processForgePacket(ProxiedPlayer player, HackedPlayer hackedPlayer, String channel, String message) {
+        // Detect client type from minecraft:brand
+        if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
+            ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
+            if (clientType != null && hackedPlayer.getForgeClientType() == null) {
+                hackedPlayer.setForgeClientType(clientType);
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processClientType(hackedPlayer, clientType);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player.getUniqueId(), player.getName());
+                }
+            }
+        }
+
+        // Detect mods from minecraft:register
+        if (ForgeChannelParser.REGISTER_CHANNEL.equalsIgnoreCase(channel)) {
+            List<ForgeModInfo> mods = ForgeChannelParser.parseRegisteredChannels(message);
+            if (!mods.isEmpty()) {
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processMods(hackedPlayer, mods);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player.getUniqueId(), player.getName());
+                }
+            }
+        }
+    }
+
+    private void runForgeActions(List<ForgeActionTrigger> triggers, UUID uuid, String playerName) {
+        for (ForgeActionTrigger trigger : triggers) {
+            runActions(trigger.getActions(), uuid, playerName, trigger.getName());
         }
     }
 

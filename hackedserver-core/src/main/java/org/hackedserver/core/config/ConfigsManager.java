@@ -2,6 +2,7 @@ package org.hackedserver.core.config;
 
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.exceptions.ParsingException;
+import org.hackedserver.core.forge.ForgeConfig;
 import org.jetbrains.annotations.NotNull;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseError;
@@ -43,6 +44,7 @@ public class ConfigsManager {
             loadGenericChecks(Objects.requireNonNull(
                     getConfig("generic.toml", new File(folder, "generic.toml"))));
             LunarConfig.load(getConfig("lunar.toml", new File(folder, "lunar.toml")));
+            ForgeConfig.load(getConfig("forge.toml", new File(folder, "forge.toml")));
         } catch (IOException e) {
             e.printStackTrace();
         }
