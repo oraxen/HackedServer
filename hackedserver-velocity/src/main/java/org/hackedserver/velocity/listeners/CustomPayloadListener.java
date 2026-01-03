@@ -16,6 +16,13 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.forge.ForgeActionTrigger;
+import org.hackedserver.core.forge.ForgeChannelParser;
+import org.hackedserver.core.forge.ForgeClientType;
+import org.hackedserver.core.forge.ForgeConfig;
+import org.hackedserver.core.forge.ForgeHandshakeProcessor;
+import org.hackedserver.core.forge.ForgeHandshakeResult;
+import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.core.lunar.LunarActionTrigger;
 import org.hackedserver.core.lunar.LunarApolloHandshakeParser;
 import org.hackedserver.core.lunar.LunarHandshakeProcessor;
@@ -80,7 +87,7 @@ public class CustomPayloadListener implements PacketListener {
                 if (check.pass(hackedPlayer, channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions()) {
-                        performActions(action, player,
+                        performActions(action, player, check.getName(),
                                 Placeholder.unparsed("player", player.getUsername()),
                                 Placeholder.parsed("name", check.getName()));
                     }
@@ -90,6 +97,42 @@ public class CustomPayloadListener implements PacketListener {
             if (LunarApolloHandshakeParser.CHANNEL.equalsIgnoreCase(channel)) {
                 handleLunarApollo(player, data);
             }
+
+            // Forge/NeoForge detection
+            if (ForgeConfig.isEnabled()) {
+                processForgePacket(player, hackedPlayer, channel, message);
+            }
+        }
+    }
+
+    private void processForgePacket(Player player, HackedPlayer hackedPlayer, String channel, String message) {
+        // Detect client type from minecraft:brand
+        if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
+            ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
+            if (clientType != null && hackedPlayer.getForgeClientType() == null) {
+                hackedPlayer.setForgeClientType(clientType);
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processClientType(hackedPlayer, clientType);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player.getUniqueId(), player.getUsername());
+                }
+            }
+        }
+
+        // Detect mods from minecraft:register
+        if (ForgeChannelParser.REGISTER_CHANNEL.equalsIgnoreCase(channel)) {
+            List<ForgeModInfo> mods = ForgeChannelParser.parseRegisteredChannels(message);
+            if (!mods.isEmpty()) {
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processMods(hackedPlayer, mods);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player.getUniqueId(), player.getUsername());
+                }
+            }
+        }
+    }
+
+    private void runForgeActions(List<ForgeActionTrigger> triggers, UUID uuid, String playerName) {
+        for (ForgeActionTrigger trigger : triggers) {
+            runActions(trigger.getActions(), uuid, playerName, trigger.getName());
         }
     }
 
@@ -115,15 +158,11 @@ public class CustomPayloadListener implements PacketListener {
         }
     }
 
-    private void performActions(Action action, Player player, TagResolver.Single... templates) {
-        // Logs.logWarning("perform actions triggered for " + player.getUsername());
+    private void performActions(Action action, Player player, String checkName, TagResolver.Single... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : server.getAllPlayers()) {
-                // Logs.logWarning("user name:" + admin.getUsername() + " permission:"
-                // + admin.hasPermission("hackedserver.alert"));
                 if (admin.hasPermission("hackedserver.alert")) {
-                    // Logs.logWarning("user permission check passed for " + admin.getUsername());
                     admin.sendMessage(action.getAlert(templates));
                 }
             }
@@ -132,12 +171,6 @@ public class CustomPayloadListener implements PacketListener {
         if (player.hasPermission("hackedserver.bypass")) {
             return;
         }
-
-        String checkName = java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
 
         for (String command : action.getConsoleCommands()) {
             server.getCommandManager().executeAsync(server.getConsoleCommandSource(),

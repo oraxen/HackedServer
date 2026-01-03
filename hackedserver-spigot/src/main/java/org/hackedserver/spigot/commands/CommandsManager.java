@@ -20,6 +20,8 @@ import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.LunarConfig;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.forge.ForgeConfig;
+import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.core.lunar.LunarModInfo;
 import org.hackedserver.spigot.HackedHolder;
 
@@ -92,6 +94,24 @@ public class CommandsManager {
                             }
                         } else {
                             Message.CHECK_LUNAR_NO_MODS.send(audiences.sender(sender));
+                        }
+                    }
+
+                    // Display Forge mods
+                    boolean showForgeMods = ForgeConfig.isEnabled()
+                            && ForgeConfig.shouldShowModsInCheck()
+                            && hackedPlayer.hasForgeModsData();
+                    boolean hasForgeMods = showForgeMods && !hackedPlayer.getForgeMods().isEmpty();
+
+                    if (showForgeMods) {
+                        if (hasForgeMods) {
+                            Message.CHECK_FORGE_MODS.send(audiences.sender(sender));
+                            for (ForgeModInfo mod : hackedPlayer.getForgeMods()) {
+                                Message.FORGE_MOD_LIST_FORMAT.send(audiences.sender(sender),
+                                        Placeholder.parsed("mod", ForgeConfig.formatMod(mod)));
+                            }
+                        } else {
+                            Message.CHECK_FORGE_NO_MODS.send(audiences.sender(sender));
                         }
                     }
                 });

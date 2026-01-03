@@ -12,6 +12,8 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.LunarConfig;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.forge.ForgeConfig;
+import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.core.lunar.LunarModInfo;
 
 import java.io.File;
@@ -80,6 +82,24 @@ public class CommandsManager extends Command {
                         }
                     } else {
                         Message.CHECK_LUNAR_NO_MODS.send(audience);
+                    }
+                }
+
+                // Display Forge mods
+                boolean showForgeMods = ForgeConfig.isEnabled()
+                        && ForgeConfig.shouldShowModsInCheck()
+                        && hackedPlayer.hasForgeModsData();
+                boolean hasForgeMods = showForgeMods && !hackedPlayer.getForgeMods().isEmpty();
+
+                if (showForgeMods) {
+                    if (hasForgeMods) {
+                        Message.CHECK_FORGE_MODS.send(audience);
+                        for (ForgeModInfo mod : hackedPlayer.getForgeMods()) {
+                            Message.FORGE_MOD_LIST_FORMAT.send(audience,
+                                    Placeholder.parsed("mod", ForgeConfig.formatMod(mod)));
+                        }
+                    } else {
+                        Message.CHECK_FORGE_NO_MODS.send(audience);
                     }
                 }
             }

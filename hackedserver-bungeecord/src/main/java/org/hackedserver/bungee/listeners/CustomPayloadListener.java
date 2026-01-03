@@ -15,6 +15,13 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.config.GenericCheck;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.core.forge.ForgeActionTrigger;
+import org.hackedserver.core.forge.ForgeChannelParser;
+import org.hackedserver.core.forge.ForgeClientType;
+import org.hackedserver.core.forge.ForgeConfig;
+import org.hackedserver.core.forge.ForgeHandshakeProcessor;
+import org.hackedserver.core.forge.ForgeHandshakeResult;
+import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.core.lunar.LunarActionTrigger;
 import org.hackedserver.core.lunar.LunarApolloHandshakeParser;
 import org.hackedserver.core.lunar.LunarHandshakeProcessor;
@@ -44,13 +51,50 @@ public class CustomPayloadListener implements Listener {
                 if (check.pass(hackedPlayer, channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions())
-                        performActions(action, player, Placeholder.unparsed("player",
-                                player.getName()), Placeholder.parsed("name", check.getName()));
+                        performActions(action, player, check.getName(),
+                                Placeholder.unparsed("player", player.getName()),
+                                Placeholder.parsed("name", check.getName()));
                 }
 
             if (LunarApolloHandshakeParser.CHANNEL.equalsIgnoreCase(channel)) {
                 handleLunarApollo(player, event.getData());
             }
+
+            // Forge/NeoForge detection
+            if (ForgeConfig.isEnabled()) {
+                processForgePacket(player, hackedPlayer, channel, message);
+            }
+        }
+    }
+
+    private void processForgePacket(ProxiedPlayer player, HackedPlayer hackedPlayer, String channel, String message) {
+        // Detect client type from minecraft:brand
+        if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
+            ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
+            if (clientType != null && hackedPlayer.getForgeClientType() == null) {
+                hackedPlayer.setForgeClientType(clientType);
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processClientType(hackedPlayer, clientType);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player.getUniqueId(), player.getName());
+                }
+            }
+        }
+
+        // Detect mods from minecraft:register
+        if (ForgeChannelParser.REGISTER_CHANNEL.equalsIgnoreCase(channel)) {
+            List<ForgeModInfo> mods = ForgeChannelParser.parseRegisteredChannels(message);
+            if (!mods.isEmpty()) {
+                ForgeHandshakeResult result = ForgeHandshakeProcessor.processMods(hackedPlayer, mods);
+                if (result.hasTriggers()) {
+                    runForgeActions(result.getTriggers(), player.getUniqueId(), player.getName());
+                }
+            }
+        }
+    }
+
+    private void runForgeActions(List<ForgeActionTrigger> triggers, UUID uuid, String playerName) {
+        for (ForgeActionTrigger trigger : triggers) {
+            runActions(trigger.getActions(), uuid, playerName, trigger.getName());
         }
     }
 
@@ -76,7 +120,7 @@ public class CustomPayloadListener implements Listener {
         }
     }
 
-    private void performActions(Action action, ProxiedPlayer player, TagResolver.Single... templates) {
+    private void performActions(Action action, ProxiedPlayer player, String checkName, TagResolver.Single... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (ProxiedPlayer admin : ProxyServer.getInstance().getPlayers())
@@ -86,12 +130,6 @@ public class CustomPayloadListener implements Listener {
         }
         if (player.hasPermission("hackedserver.bypass"))
             return;
-
-        String checkName = java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
 
         for (String command : action.getConsoleCommands())
             ProxyServer.getInstance().getPluginManager().dispatchCommand(ProxyServer.getInstance().getConsole(),
