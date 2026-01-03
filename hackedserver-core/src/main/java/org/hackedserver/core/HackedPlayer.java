@@ -97,9 +97,8 @@ public class HackedPlayer {
         return forgeClientType;
     }
 
-    public void setForgeMods(Collection<ForgeModInfo> mods) {
+    public void addForgeMods(Collection<ForgeModInfo> mods) {
         synchronized (forgeMods) {
-            forgeMods.clear();
             if (mods != null) {
                 for (ForgeModInfo mod : mods) {
                     if (mod == null || mod.getModId() == null) {

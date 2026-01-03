@@ -79,7 +79,7 @@ public final class ForgeHandshakeProcessor {
             previousIds.add(ForgeConfig.normalizeModId(mod.getModId()));
         }
 
-        player.setForgeMods(mods);
+        player.addForgeMods(mods);
 
         List<ForgeActionTrigger> triggers = new ArrayList<>();
 
