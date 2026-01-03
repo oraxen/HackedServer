@@ -147,6 +147,9 @@ tasks.shadowJar {
     // relocate("dev.jorel.commandapi", "org.hackedserver.shaded.commandapi")
     relocate("net.kyori.adventure.platform.bukkit", "org.hackedserver.shaded.kyori.adventure.platform.bukkit")
     relocate("md.thomas.hopper", "org.hackedserver.shaded.hopper")
+    // Relocate protobuf to avoid conflicts with server's protobuf version
+    relocate("com.google.protobuf", "org.hackedserver.shaded.protobuf")
+    relocate("com.lunarclient.apollo", "org.hackedserver.shaded.apollo")
     manifest {
         attributes(
             "Built-By" to System.getProperty("user.name"),

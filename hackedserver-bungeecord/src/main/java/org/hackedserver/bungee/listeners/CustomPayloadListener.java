@@ -44,8 +44,9 @@ public class CustomPayloadListener implements Listener {
                 if (check.pass(hackedPlayer, channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions())
-                        performActions(action, player, Placeholder.unparsed("player",
-                                player.getName()), Placeholder.parsed("name", check.getName()));
+                        performActions(action, player, check.getName(),
+                                Placeholder.unparsed("player", player.getName()),
+                                Placeholder.parsed("name", check.getName()));
                 }
 
             if (LunarApolloHandshakeParser.CHANNEL.equalsIgnoreCase(channel)) {
@@ -76,7 +77,7 @@ public class CustomPayloadListener implements Listener {
         }
     }
 
-    private void performActions(Action action, ProxiedPlayer player, TagResolver.Single... templates) {
+    private void performActions(Action action, ProxiedPlayer player, String checkName, TagResolver.Single... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (ProxiedPlayer admin : ProxyServer.getInstance().getPlayers())
@@ -86,12 +87,6 @@ public class CustomPayloadListener implements Listener {
         }
         if (player.hasPermission("hackedserver.bypass"))
             return;
-
-        String checkName = java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
 
         for (String command : action.getConsoleCommands())
             ProxyServer.getInstance().getPluginManager().dispatchCommand(ProxyServer.getInstance().getConsole(),

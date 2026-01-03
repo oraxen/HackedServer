@@ -21,33 +21,39 @@ public final class LunarApolloHandshakeParser {
             return Optional.empty();
         }
 
-        Any any;
         try {
-            any = Any.parseFrom(payload);
-        } catch (InvalidProtocolBufferException ex) {
-            return Optional.empty();
-        }
-
-        if (!any.is(PlayerHandshakeMessage.class)) {
-            return Optional.empty();
-        }
-
-        PlayerHandshakeMessage message;
-        try {
-            message = any.unpack(PlayerHandshakeMessage.class);
-        } catch (InvalidProtocolBufferException ex) {
-            return Optional.empty();
-        }
-
-        List<LunarModInfo> mods = new ArrayList<>();
-        for (ModMessage mod : message.getInstalledModsList()) {
-            if (mod == null || mod.getId() == null || mod.getId().isBlank()) {
-                continue;
+            Any any;
+            try {
+                any = Any.parseFrom(payload);
+            } catch (InvalidProtocolBufferException ex) {
+                return Optional.empty();
             }
-            String type = mod.getType() != null ? mod.getType().name() : null;
-            mods.add(new LunarModInfo(mod.getId(), mod.getName(), mod.getVersion(), type));
-        }
 
-        return Optional.of(mods);
+            if (!any.is(PlayerHandshakeMessage.class)) {
+                return Optional.empty();
+            }
+
+            PlayerHandshakeMessage message;
+            try {
+                message = any.unpack(PlayerHandshakeMessage.class);
+            } catch (InvalidProtocolBufferException ex) {
+                return Optional.empty();
+            }
+
+            List<LunarModInfo> mods = new ArrayList<>();
+            for (ModMessage mod : message.getInstalledModsList()) {
+                if (mod == null || mod.getId() == null || mod.getId().isBlank()) {
+                    continue;
+                }
+                String type = mod.getType() != null ? mod.getType().name() : null;
+                mods.add(new LunarModInfo(mod.getId(), mod.getName(), mod.getVersion(), type));
+            }
+
+            return Optional.of(mods);
+        } catch (LinkageError e) {
+            // Protobuf version mismatch between shaded library and server runtime
+            // This can happen when the server bundles a different protobuf version
+            return Optional.empty();
+        }
     }
 }

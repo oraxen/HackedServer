@@ -82,8 +82,9 @@ public class CustomPayloadListener {
                     if (check.pass(hackedPlayer, channel, message)) {
                         hackedPlayer.addGenericCheck(check);
                         for (Action action : check.getActions())
-                            performActions(action, player, Placeholder.unparsed("player",
-                                    player.getName()), Placeholder.parsed("name", check.getName()));
+                            performActions(action, player, check.getName(),
+                                    Placeholder.unparsed("player", player.getName()),
+                                    Placeholder.parsed("name", check.getName()));
                     }
                 }
             }
@@ -99,7 +100,7 @@ public class CustomPayloadListener {
         protocolManager.removePacketListener(adapter);
     }
 
-    private void performActions(Action action, Player player, TagResolver.Single... templates) {
+    private void performActions(Action action, Player player, String checkName, TagResolver.Single... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : Bukkit.getOnlinePlayers())
@@ -109,12 +110,6 @@ public class CustomPayloadListener {
         }
         if (player.hasPermission("hackedserver.bypass"))
             return;
-
-        String checkName = java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
 
         // Check if player is fully online - if not, defer the actions
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());

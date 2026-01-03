@@ -80,7 +80,7 @@ public class CustomPayloadListener implements PacketListener {
                 if (check.pass(hackedPlayer, channel, message)) {
                     hackedPlayer.addGenericCheck(check);
                     for (Action action : check.getActions()) {
-                        performActions(action, player,
+                        performActions(action, player, check.getName(),
                                 Placeholder.unparsed("player", player.getUsername()),
                                 Placeholder.parsed("name", check.getName()));
                     }
@@ -115,15 +115,11 @@ public class CustomPayloadListener implements PacketListener {
         }
     }
 
-    private void performActions(Action action, Player player, TagResolver.Single... templates) {
-        // Logs.logWarning("perform actions triggered for " + player.getUsername());
+    private void performActions(Action action, Player player, String checkName, TagResolver.Single... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : server.getAllPlayers()) {
-                // Logs.logWarning("user name:" + admin.getUsername() + " permission:"
-                // + admin.hasPermission("hackedserver.alert"));
                 if (admin.hasPermission("hackedserver.alert")) {
-                    // Logs.logWarning("user permission check passed for " + admin.getUsername());
                     admin.sendMessage(action.getAlert(templates));
                 }
             }
@@ -132,12 +128,6 @@ public class CustomPayloadListener implements PacketListener {
         if (player.hasPermission("hackedserver.bypass")) {
             return;
         }
-
-        String checkName = java.util.Arrays.stream(templates)
-                .filter(t -> t.key().equals("name"))
-                .findFirst()
-                .map(t -> t.tag().toString())
-                .orElse("<name>");
 
         for (String command : action.getConsoleCommands()) {
             server.getCommandManager().executeAsync(server.getConsoleCommandSource(),
