@@ -1,6 +1,7 @@
 package org.hackedserver.spigot.listeners;
 
-import com.github.retrooper.packetevents.event.PacketListener;
+import com.github.retrooper.packetevents.event.PacketListenerAbstract;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.User;
@@ -37,11 +38,12 @@ import java.util.UUID;
  * This is an alternative to the ProtocolLib-based listener that works better
  * with hybrid server software like Arclight.
  */
-public class PacketEventsPayloadListener implements PacketListener {
+public class PacketEventsPayloadListener extends PacketListenerAbstract {
 
     private final HackedServerPlugin plugin;
 
     public PacketEventsPayloadListener(HackedServerPlugin plugin) {
+        super(PacketListenerPriority.NORMAL);
         this.plugin = plugin;
     }
 

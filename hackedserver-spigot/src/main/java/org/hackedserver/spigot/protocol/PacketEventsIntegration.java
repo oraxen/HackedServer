@@ -1,7 +1,6 @@
 package org.hackedserver.spigot.protocol;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.Bukkit;
 import org.hackedserver.spigot.HackedServerPlugin;
@@ -67,8 +66,8 @@ public final class PacketEventsIntegration {
         if (ownedByUs) {
             PacketEvents.getAPI().init();
         }
-        // Always register our listener
-        PacketEvents.getAPI().getEventManager().registerListener(listener, PacketListenerPriority.NORMAL);
+        // Always register our listener (priority is set in listener constructor)
+        PacketEvents.getAPI().getEventManager().registerListener(listener);
         initialized = true;
         plugin.getLogger().info("PacketEvents listener registered successfully");
     }
