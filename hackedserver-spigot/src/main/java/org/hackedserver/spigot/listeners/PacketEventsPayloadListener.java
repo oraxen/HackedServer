@@ -184,6 +184,11 @@ public class PacketEventsPayloadListener implements PacketListener {
                 return;
             }
 
+            // Re-check bypass permission now that player is fully online
+            if (onlinePlayer.hasPermission("hackedserver.bypass")) {
+                return;
+            }
+
             String playerName = onlinePlayer.getName();
 
             for (String command : action.getConsoleCommands()) {

@@ -15,6 +15,7 @@ public final class PacketEventsIntegration {
 
     private final HackedServerPlugin plugin;
     private final PacketEventsPayloadListener listener;
+    private boolean loaded = false;
     private boolean initialized = false;
     private boolean ownedByUs = false;
 
@@ -55,6 +56,7 @@ public final class PacketEventsIntegration {
                 .checkForUpdates(false);
         PacketEvents.getAPI().load();
         ownedByUs = true;
+        loaded = true;
     }
 
     /**
@@ -78,12 +80,14 @@ public final class PacketEventsIntegration {
         if (initialized) {
             // Always unregister our listener to prevent duplicates on reload
             PacketEvents.getAPI().getEventManager().unregisterListener(listener);
-            // Only terminate if we own the PacketEvents instance
-            // Otherwise the standalone plugin will handle termination
-            if (ownedByUs) {
-                PacketEvents.getAPI().terminate();
-            }
             initialized = false;
+        }
+        // Terminate if we own the PacketEvents instance, even if registration failed
+        // This handles the case where load() succeeded but register() was never called
+        // or register() threw an exception after init()
+        if (ownedByUs && loaded) {
+            PacketEvents.getAPI().terminate();
+            loaded = false;
         }
     }
 }
