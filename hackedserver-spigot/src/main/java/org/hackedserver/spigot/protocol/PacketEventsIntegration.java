@@ -80,14 +80,14 @@ public final class PacketEventsIntegration {
         if (initialized) {
             // Always unregister our listener to prevent duplicates on reload
             PacketEvents.getAPI().getEventManager().unregisterListener(listener);
+            // Only terminate if we own the PacketEvents instance AND we called init()
+            // PacketEvents lifecycle requires: load() -> init() -> terminate()
+            // Calling terminate() without init() causes errors
+            if (ownedByUs && loaded) {
+                PacketEvents.getAPI().terminate();
+                loaded = false;
+            }
             initialized = false;
-        }
-        // Terminate if we own the PacketEvents instance, even if registration failed
-        // This handles the case where load() succeeded but register() was never called
-        // or register() threw an exception after init()
-        if (ownedByUs && loaded) {
-            PacketEvents.getAPI().terminate();
-            loaded = false;
         }
     }
 }
