@@ -76,6 +76,8 @@ public final class PacketEventsIntegration {
      */
     public void unregister() {
         if (initialized) {
+            // Always unregister our listener to prevent duplicates on reload
+            PacketEvents.getAPI().getEventManager().unregisterListener(listener);
             // Only terminate if we own the PacketEvents instance
             // Otherwise the standalone plugin will handle termination
             if (ownedByUs) {
