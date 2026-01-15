@@ -86,6 +86,9 @@ project(":hackedserver-core") {
     dependencies {
         implementation("net.kyori:adventure-text-minimessage:4.14.0")
         implementation("io.github.xtomlj:xtomlj:1.1.0")
+        // Explicit ANTLR runtime dependency to ensure it gets shaded
+        // xtomlj uses 4.7.2 which has ATN v3, conflicts with Arclight's ANTLR 4.13.1 (ATN v4)
+        implementation("org.antlr:antlr4-runtime:4.7.2")
         implementation("com.lunarclient:apollo-protos:0.0.5")
     }
 }
@@ -96,6 +99,8 @@ project(":hackedserver-spigot") {
         compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
         // 1.21.11 support requires ProtocolLib dev snapshots (5.4.0 is not published as a stable release yet)
         compileOnly("com.comphenix.protocol:ProtocolLib:5.4.0-SNAPSHOT")
+        // PacketEvents as alternative to ProtocolLib (better Arclight/hybrid server compatibility)
+        compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly("dev.jorel:commandapi-bukkit-core:11.0.0")
@@ -105,7 +110,7 @@ project(":hackedserver-spigot") {
         // implementation("dev.jorel:commandapi-paper-shade:11.0.0")
         implementation("net.kyori:adventure-platform-bukkit:4.3.0")
         implementation("org.bstats:bstats-bukkit:3.1.0")
-        // Hopper - Runtime dependency loader for auto-downloading ProtocolLib
+        // Hopper - Runtime dependency loader for auto-downloading ProtocolLib or PacketEvents
         implementation("md.thomas.hopper:hopper-bukkit:1.4.1")
     }
 }
@@ -144,6 +149,8 @@ project(":hackedserver-velocity") {
 tasks.shadowJar {
     relocate("org.bstats", "org.hackedserver.shaded.bstats")
     relocate("org.tomlj", "org.hackedserver.shaded.tomlj")
+    // Relocate ANTLR runtime to avoid conflicts with server's ANTLR version (Arclight uses 4.13.1)
+    relocate("org.antlr.v4.runtime", "org.hackedserver.shaded.antlr4.runtime")
     // relocate("dev.jorel.commandapi", "org.hackedserver.shaded.commandapi")
     relocate("net.kyori.adventure.platform.bukkit", "org.hackedserver.shaded.kyori.adventure.platform.bukkit")
     relocate("md.thomas.hopper", "org.hackedserver.shaded.hopper")
