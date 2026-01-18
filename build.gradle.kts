@@ -100,7 +100,7 @@ project(":hackedserver-spigot") {
         // 1.21.11 support requires ProtocolLib dev snapshots (5.4.0 is not published as a stable release yet)
         compileOnly("com.comphenix.protocol:ProtocolLib:5.4.0-SNAPSHOT")
         // PacketEvents as alternative to ProtocolLib (better Arclight/hybrid server compatibility)
-        compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
+        compileOnly("com.github.retrooper:packetevents-spigot:2.11.1")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly("dev.jorel:commandapi-bukkit-core:11.0.0")
@@ -141,7 +141,7 @@ project(":hackedserver-velocity") {
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
         compileOnly("com.velocitypowered:velocity-api:3.1.0")
         annotationProcessor("com.velocitypowered:velocity-api:3.1.0")
-        compileOnly("com.github.retrooper:packetevents-velocity:2.11.0")
+        compileOnly("com.github.retrooper:packetevents-velocity:2.11.1")
         implementation("org.bstats:bstats-velocity:3.1.0")
     }
 }
