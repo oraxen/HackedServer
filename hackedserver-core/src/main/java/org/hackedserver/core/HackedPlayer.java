@@ -25,6 +25,7 @@ public class HackedPlayer {
     private final Map<String, ForgeModInfo> forgeMods = new LinkedHashMap<>();
     private volatile boolean forgeModsKnown = false;
     private volatile ForgeClientType forgeClientType = null;
+    private volatile boolean bedrockDetected = false;
     private final Queue<Runnable> pendingActions = new ConcurrentLinkedQueue<>();
 
     public HackedPlayer(UUID uuid) {
@@ -95,6 +96,14 @@ public class HackedPlayer {
 
     public ForgeClientType getForgeClientType() {
         return forgeClientType;
+    }
+
+    public boolean isBedrockDetected() {
+        return bedrockDetected;
+    }
+
+    public void setBedrockDetected(boolean bedrockDetected) {
+        this.bedrockDetected = bedrockDetected;
     }
 
     public void addForgeMods(Collection<ForgeModInfo> mods) {

@@ -8,28 +8,10 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.hackedserver.core.HackedPlayer;
-import org.hackedserver.core.HackedServer;
-import org.hackedserver.core.config.Action;
-import org.hackedserver.core.config.Config;
-import org.hackedserver.core.config.GenericCheck;
-import org.hackedserver.core.config.Message;
-import org.hackedserver.core.forge.ForgeActionTrigger;
-import org.hackedserver.core.forge.ForgeChannelParser;
-import org.hackedserver.core.forge.ForgeClientType;
-import org.hackedserver.core.forge.ForgeConfig;
-import org.hackedserver.core.forge.ForgeHandshakeProcessor;
-import org.hackedserver.core.forge.ForgeHandshakeResult;
-import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.spigot.HackedServerPlugin;
-import org.hackedserver.spigot.utils.logs.Logs;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 public class CustomPayloadListener {
 
@@ -46,6 +28,9 @@ public class CustomPayloadListener {
             @Override
             public void onPacketReceiving(PacketEvent event) {
                 Player player = event.getPlayer();
+                if (player == null) {
+                    return;
+                }
                 PacketContainer packet = event.getPacket();
                 StructureModifier<?> modifier = packet.getModifier();
 
@@ -77,29 +62,12 @@ public class CustomPayloadListener {
                     return;
                 }
 
-                if (Config.DEBUG.toBool()) {
-                    Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
-                            Placeholder.unparsed("player", player.getName()),
-                            Placeholder.unparsed("channel", channel),
-                            Placeholder.unparsed("message", message)));
+                if (event.isPlayerTemporary()) {
+                    PendingPayloads.queue(player, channel, message);
+                    return;
                 }
 
-                // Generic checks
-                HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
-                for (GenericCheck check : HackedServer.getChecks()) {
-                    if (check.pass(hackedPlayer, channel, message)) {
-                        hackedPlayer.addGenericCheck(check);
-                        for (Action action : check.getActions())
-                            performActions(action, player, check.getName(),
-                                    Placeholder.unparsed("player", player.getName()),
-                                    Placeholder.parsed("name", check.getName()));
-                    }
-                }
-
-                // Forge/NeoForge detection
-                if (ForgeConfig.isEnabled()) {
-                    processForgePacket(player, hackedPlayer, channel, message);
-                }
+                PayloadProcessor.process(player, channel, message);
             }
 
         };
@@ -111,106 +79,6 @@ public class CustomPayloadListener {
 
     public void unregister() {
         protocolManager.removePacketListener(adapter);
-    }
-
-    private void processForgePacket(Player player, HackedPlayer hackedPlayer, String channel, String message) {
-        // Detect client type from minecraft:brand
-        if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
-            ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
-            if (clientType != null && hackedPlayer.getForgeClientType() == null) {
-                hackedPlayer.setForgeClientType(clientType);
-                ForgeHandshakeResult result = ForgeHandshakeProcessor.processClientType(hackedPlayer, clientType);
-                if (result.hasTriggers()) {
-                    runForgeActions(result.getTriggers(), player);
-                }
-            }
-        }
-
-        // Detect mods from minecraft:register
-        if (ForgeChannelParser.REGISTER_CHANNEL.equalsIgnoreCase(channel)) {
-            List<ForgeModInfo> mods = ForgeChannelParser.parseRegisteredChannels(message);
-            if (!mods.isEmpty()) {
-                ForgeHandshakeResult result = ForgeHandshakeProcessor.processMods(hackedPlayer, mods);
-                if (result.hasTriggers()) {
-                    runForgeActions(result.getTriggers(), player);
-                }
-            }
-        }
-    }
-
-    private void runForgeActions(List<ForgeActionTrigger> triggers, Player player) {
-        for (ForgeActionTrigger trigger : triggers) {
-            for (Action action : trigger.getActions()) {
-                performActions(action, player, trigger.getName(),
-                        Placeholder.unparsed("player", player.getName()),
-                        Placeholder.parsed("name", trigger.getName()));
-            }
-        }
-    }
-
-    private void performActions(Action action, Player player, String checkName, TagResolver.Single... templates) {
-        if (action.hasAlert()) {
-            Logs.logComponent(action.getAlert(templates));
-            for (Player admin : Bukkit.getOnlinePlayers())
-                if (admin.hasPermission("hackedserver.alert"))
-                    HackedServerPlugin.get().getAudiences().player(admin)
-                            .sendMessage(action.getAlert(templates));
-        }
-        if (player.hasPermission("hackedserver.bypass"))
-            return;
-
-        // Check if player is fully online - if not, defer the actions
-        HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
-        if (!isPlayerFullyOnline(player)) {
-            hackedPlayer.queuePendingAction(() -> executeCommands(action, player, checkName));
-            return;
-        }
-
-        executeCommands(action, player, checkName);
-    }
-
-    private boolean isPlayerFullyOnline(Player player) {
-        // During login/config phase, the player object exists but isn't fully joined
-        // Check if the player can be found in the online players list
-        Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
-        return onlinePlayer != null && onlinePlayer.isOnline();
-    }
-
-    private void executeCommands(Action action, Player player, String checkName) {
-        long delayTicks = action.getDelayTicks();
-
-        // Schedule the commands with the configured delay
-        // This ensures the player is fully connected before executing actions like kick
-        Runnable commandRunner = () -> {
-            // Re-fetch the player to ensure we have the current online instance
-            Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
-            if (onlinePlayer == null || !onlinePlayer.isOnline()) {
-                return; // Player logged out before we could execute
-            }
-
-            for (String command : action.getConsoleCommands())
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        command.replace("<player>",
-                                onlinePlayer.getName()).replace("<name>", checkName));
-            for (String command : action.getPlayerCommands())
-                Bukkit.dispatchCommand(onlinePlayer,
-                        command.replace("<player>",
-                                onlinePlayer.getName()).replace("<name>", checkName));
-            for (String command : action.getOppedPlayerCommands()) {
-                boolean op = onlinePlayer.isOp();
-                onlinePlayer.setOp(true);
-                Bukkit.dispatchCommand(onlinePlayer,
-                        command.replace("<player>",
-                                onlinePlayer.getName()).replace("<name>", checkName));
-                onlinePlayer.setOp(op);
-            }
-        };
-
-        if (delayTicks > 0) {
-            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), commandRunner, delayTicks);
-        } else {
-            Bukkit.getScheduler().runTask(HackedServerPlugin.get(), commandRunner);
-        }
     }
 
     private String readByteBuf(Object byteBuf) {

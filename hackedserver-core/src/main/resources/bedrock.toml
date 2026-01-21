@@ -1,0 +1,18 @@
+# Bedrock player detection via Geyser/Floodgate API
+# This requires Geyser and/or Floodgate to be installed on the server
+# Uses soft-depend + reflection, so it is safe if they are missing
+enabled = false
+
+[settings]
+# Which APIs to use when detecting Bedrock players
+use_geyser_api = true
+use_floodgate_api = true
+
+# Label used for <name> placeholder in actions
+label = "Bedrock"
+
+[actions]
+# Actions to execute when a Bedrock player is detected
+# Example: bedrock = ["alert", "kick"]
+# Available placeholders: <player>, <name>, <source>
+bedrock = []
