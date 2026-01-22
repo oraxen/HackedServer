@@ -5,6 +5,7 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.HackedServer;
+import org.hackedserver.core.bedrock.BedrockDetector;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
 import org.hackedserver.spigot.commands.CommandsManager;
@@ -83,6 +84,9 @@ public class HackedServerPlugin extends JavaPlugin {
         audiences = BukkitAudiences.create(this);
         Logs.onEnable(audiences);
         new Metrics(this, 2008);
+
+        // Initialize bedrock detection (auto-detects Geyser/Floodgate APIs)
+        BedrockDetector.initialize(getLogger());
         Bukkit.getPluginManager().registerEvents(new HackedPlayerListeners(), this);
 
         if (useProtocolLib) {

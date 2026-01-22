@@ -4,7 +4,6 @@ import org.hackedserver.core.HackedServer;
 import org.jetbrains.annotations.Nullable;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
-import org.tomlj.TomlTable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,8 +12,6 @@ import java.util.List;
 public final class BedrockConfig {
 
     private static boolean enabled = false;
-    private static boolean useGeyserApi = true;
-    private static boolean useFloodgateApi = true;
     private static String label = "Bedrock";
     private static List<Action> bedrockActions = Collections.emptyList();
 
@@ -23,8 +20,6 @@ public final class BedrockConfig {
 
     public static void load(@Nullable TomlParseResult result) {
         enabled = false;
-        useGeyserApi = true;
-        useFloodgateApi = true;
         label = "Bedrock";
         bedrockActions = Collections.emptyList();
 
@@ -37,25 +32,15 @@ public final class BedrockConfig {
             enabled = enabledValue;
         }
 
-        TomlTable settings = result.getTable("settings");
-        if (settings != null) {
-            useGeyserApi = getBoolean(settings, "use_geyser_api", useGeyserApi);
-            useFloodgateApi = getBoolean(settings, "use_floodgate_api", useFloodgateApi);
-            String labelValue = settings.getString("label");
-            if (labelValue != null && !labelValue.isBlank()) {
-                label = labelValue;
-            }
+        String labelValue = result.getString("label");
+        if (labelValue != null && !labelValue.isBlank()) {
+            label = labelValue;
         }
 
-        TomlTable actionsTable = result.getTable("actions");
-        if (actionsTable != null) {
-            bedrockActions = resolveActions(actionsTable.getArray("bedrock"));
+        TomlArray actionsArray = result.getArray("actions");
+        if (actionsArray != null) {
+            bedrockActions = resolveActions(actionsArray);
         }
-    }
-
-    private static boolean getBoolean(TomlTable table, String key, boolean defaultValue) {
-        Boolean value = table.getBoolean(key);
-        return value != null ? value : defaultValue;
     }
 
     private static List<Action> resolveActions(@Nullable TomlArray array) {
@@ -77,14 +62,6 @@ public final class BedrockConfig {
 
     public static boolean isEnabled() {
         return enabled;
-    }
-
-    public static boolean useGeyserApi() {
-        return useGeyserApi;
-    }
-
-    public static boolean useFloodgateApi() {
-        return useFloodgateApi;
     }
 
     public static String getLabel() {

@@ -163,3 +163,15 @@ actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "badlion"
 name = "Badlion Client"
+
+# === BEDROCK DETECTION VIA BRAND ===
+# Alternative to API-based detection in bedrock.toml
+# Detects Geyser clients via their brand string
+# Note: This won't detect Floodgate-only setups (where Geyser runs on a proxy)
+# For full bedrock detection, use bedrock.toml with Geyser/Floodgate APIs
+
+# [bedrock_geyser]
+# actions = ["alert"]
+# channels = ["MC|Brand", "minecraft:brand"]
+# message_has = "Geyser"
+# name = "Bedrock (Geyser)"

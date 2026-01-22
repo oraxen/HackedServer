@@ -15,7 +15,7 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.BedrockConfig;
 import org.hackedserver.spigot.HackedHolder;
 import org.hackedserver.spigot.HackedServerPlugin;
-import org.hackedserver.spigot.utils.BedrockDetector;
+import org.hackedserver.core.bedrock.BedrockDetector;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import java.util.Map;
@@ -74,7 +74,7 @@ public class HackedPlayerListeners implements Listener {
             return;
         }
 
-        String source = BedrockDetector.detectSource(player);
+        String source = BedrockDetector.detectSource(player.getUniqueId());
         if (source == null) {
             return;
         }

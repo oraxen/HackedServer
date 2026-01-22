@@ -7,6 +7,7 @@ import org.hackedserver.bungee.commands.CommandsManager;
 import org.hackedserver.bungee.listeners.CustomPayloadListener;
 import org.hackedserver.bungee.listeners.HackedPlayerListeners;
 import org.hackedserver.bungee.logs.Logs;
+import org.hackedserver.core.bedrock.BedrockDetector;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.lunar.LunarApolloHandshakeParser;
 
@@ -21,6 +22,7 @@ public class HackedServerPlugin extends Plugin {
         audiences = BungeeAudiences.create(this);
         Logs.onEnable(getLogger(), audiences);
         ConfigsManager.init(getDataFolder());
+        BedrockDetector.initialize(getLogger());
         PluginManager pluginManager = this.getProxy().getPluginManager();
         pluginManager.registerListener(this, new HackedPlayerListeners());
         pluginManager.registerListener(this, new CustomPayloadListener());
