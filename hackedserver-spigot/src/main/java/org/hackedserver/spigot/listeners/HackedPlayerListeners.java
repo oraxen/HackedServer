@@ -18,6 +18,8 @@ import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.utils.BedrockDetector;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
+import java.util.Map;
+
 public class HackedPlayerListeners implements Listener {
 
     @EventHandler
@@ -38,6 +40,9 @@ public class HackedPlayerListeners implements Listener {
         }
 
         Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+            if (!player.isOnline()) {
+                return;
+            }
             for (PendingPayloads.PendingPayload payload : PendingPayloads.drainFor(player)) {
                 PayloadProcessor.process(player, payload.getChannel(), payload.getMessage());
             }
@@ -77,6 +82,7 @@ public class HackedPlayerListeners implements Listener {
         hackedPlayer.setBedrockDetected(true);
         String label = BedrockConfig.getLabel();
         PayloadProcessor.runActions(player, label, BedrockConfig.getBedrockActions(),
+                Map.of("source", source),
                 Placeholder.unparsed("source", source));
     }
 }

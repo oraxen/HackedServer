@@ -20,7 +20,9 @@ import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.utils.logs.Logs;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class PayloadProcessor {
 
@@ -48,7 +50,9 @@ public final class PayloadProcessor {
             if (check.pass(hackedPlayer, channel, message)) {
                 hackedPlayer.addGenericCheck(check);
                 for (Action action : check.getActions()) {
-                    performActions(action, player, check.getName(),
+                    Map<String, String> commandPlaceholders = new HashMap<>();
+                    commandPlaceholders.put("name", check.getName());
+                    performActions(action, player, commandPlaceholders,
                             Placeholder.unparsed("player", player.getName()),
                             Placeholder.parsed("name", check.getName()));
                 }
@@ -63,6 +67,11 @@ public final class PayloadProcessor {
 
     public static void runActions(Player player, String checkName, List<Action> actions,
                                   TagResolver.Single... extraPlaceholders) {
+        runActions(player, checkName, actions, new HashMap<>(), extraPlaceholders);
+    }
+
+    public static void runActions(Player player, String checkName, List<Action> actions,
+                                  Map<String, String> commandPlaceholders, TagResolver.Single... extraPlaceholders) {
         if (player == null || actions == null || actions.isEmpty()) {
             return;
         }
@@ -71,8 +80,12 @@ public final class PayloadProcessor {
         placeholders[1] = Placeholder.parsed("name", checkName);
         System.arraycopy(extraPlaceholders, 0, placeholders, 2, extraPlaceholders.length);
 
+        // Build full command placeholders map
+        Map<String, String> fullPlaceholders = new HashMap<>(commandPlaceholders);
+        fullPlaceholders.put("name", checkName);
+
         for (Action action : actions) {
-            performActions(action, player, checkName, placeholders);
+            performActions(action, player, fullPlaceholders, placeholders);
         }
     }
 
@@ -104,14 +117,17 @@ public final class PayloadProcessor {
     private static void runForgeActions(List<ForgeActionTrigger> triggers, Player player) {
         for (ForgeActionTrigger trigger : triggers) {
             for (Action action : trigger.getActions()) {
-                performActions(action, player, trigger.getName(),
+                Map<String, String> commandPlaceholders = new HashMap<>();
+                commandPlaceholders.put("name", trigger.getName());
+                performActions(action, player, commandPlaceholders,
                         Placeholder.unparsed("player", player.getName()),
                         Placeholder.parsed("name", trigger.getName()));
             }
         }
     }
 
-    private static void performActions(Action action, Player player, String checkName, TagResolver.Single... templates) {
+    private static void performActions(Action action, Player player, Map<String, String> commandPlaceholders,
+                                       TagResolver.Single... templates) {
         if (action.hasAlert()) {
             Logs.logComponent(action.getAlert(templates));
             for (Player admin : Bukkit.getOnlinePlayers()) {
@@ -128,11 +144,11 @@ public final class PayloadProcessor {
         // Check if player is fully online - if not, defer the actions
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
         if (!isPlayerFullyOnline(player)) {
-            hackedPlayer.queuePendingAction(() -> executeCommands(action, player, checkName));
+            hackedPlayer.queuePendingAction(() -> executeCommands(action, player, commandPlaceholders));
             return;
         }
 
-        executeCommands(action, player, checkName);
+        executeCommands(action, player, commandPlaceholders);
     }
 
     private static boolean isPlayerFullyOnline(Player player) {
@@ -142,7 +158,7 @@ public final class PayloadProcessor {
         return onlinePlayer != null && onlinePlayer.isOnline();
     }
 
-    private static void executeCommands(Action action, Player player, String checkName) {
+    private static void executeCommands(Action action, Player player, Map<String, String> placeholders) {
         long delayTicks = action.getDelayTicks();
 
         // Schedule the commands with the configured delay
@@ -156,20 +172,17 @@ public final class PayloadProcessor {
 
             for (String command : action.getConsoleCommands()) {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        command.replace("<player>",
-                                onlinePlayer.getName()).replace("<name>", checkName));
+                        replacePlaceholders(command, onlinePlayer, placeholders));
             }
             for (String command : action.getPlayerCommands()) {
                 Bukkit.dispatchCommand(onlinePlayer,
-                        command.replace("<player>",
-                                onlinePlayer.getName()).replace("<name>", checkName));
+                        replacePlaceholders(command, onlinePlayer, placeholders));
             }
             for (String command : action.getOppedPlayerCommands()) {
                 boolean op = onlinePlayer.isOp();
                 onlinePlayer.setOp(true);
                 Bukkit.dispatchCommand(onlinePlayer,
-                        command.replace("<player>",
-                                onlinePlayer.getName()).replace("<name>", checkName));
+                        replacePlaceholders(command, onlinePlayer, placeholders));
                 onlinePlayer.setOp(op);
             }
         };
@@ -179,5 +192,13 @@ public final class PayloadProcessor {
         } else {
             Bukkit.getScheduler().runTask(HackedServerPlugin.get(), commandRunner);
         }
+    }
+
+    private static String replacePlaceholders(String command, Player player, Map<String, String> placeholders) {
+        String result = command.replace("<player>", player.getName());
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            result = result.replace("<" + entry.getKey() + ">", entry.getValue());
+        }
+        return result;
     }
 }
