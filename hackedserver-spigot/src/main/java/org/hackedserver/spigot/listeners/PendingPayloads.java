@@ -108,7 +108,7 @@ public final class PendingPayloads {
 
     private static final class PendingQueue {
         private final Deque<PendingPayload> payloads = new ArrayDeque<>();
-        private long lastUpdated;
+        private long lastUpdated = System.currentTimeMillis();
 
         private synchronized void add(String channel, String message) {
             long now = System.currentTimeMillis();
@@ -129,7 +129,9 @@ public final class PendingPayloads {
         }
 
         private synchronized boolean isExpired(long now) {
-            return payloads.isEmpty() || now - lastUpdated > MAX_AGE_MS;
+            // Only expire if time has passed AND queue is empty or stale
+            // A newly created empty queue is not expired until MAX_AGE_MS has passed
+            return now - lastUpdated > MAX_AGE_MS;
         }
     }
 }
