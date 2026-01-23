@@ -1,0 +1,13 @@
+# Bedrock player detection via Geyser/Floodgate API
+# Automatically detects which APIs are available (Geyser, Floodgate, or both)
+# Works on Spigot/Paper, BungeeCord, and Velocity
+enabled = false
+
+# Label used for <name> placeholder in actions
+label = "Bedrock"
+
+# Actions to execute when a Bedrock player is detected
+# Available placeholders: <player>, <name>, <source>
+# <source> will be "Geyser" or "Floodgate" depending on which API detected the player
+# Example: actions = ["alert", "kick"]
+actions = []

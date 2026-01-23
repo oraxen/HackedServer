@@ -13,6 +13,7 @@ import com.velocitypowered.api.plugin.PluginContainer;
 
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
 
+import org.hackedserver.core.bedrock.BedrockDetector;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.velocity.commands.HackedCommands;
 import org.hackedserver.velocity.listeners.CustomPayloadListener;
@@ -38,13 +39,18 @@ public class HackedServerPlugin {
         this.folder = dataDirectory.toFile();
         Logs.onEnable(logger, server);
         ConfigsManager.init(folder);
+        // Initialize bedrock detection (null logger since Velocity uses SLF4J)
+        BedrockDetector.initialize(null);
+        if (BedrockDetector.isAvailable()) {
+            logger.info("Geyser/Floodgate API detected - bedrock detection enabled");
+        }
         commands = new HackedCommands(folder, server.getCommandManager(), server);
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(server, pluginContainer, logger, dataDirectory));
     }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        server.getEventManager().register(this, new HackedPlayerListeners());
+        server.getEventManager().register(this, new HackedPlayerListeners(server));
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
         PacketEvents.getAPI().init();
@@ -70,7 +76,7 @@ public class HackedServerPlugin {
         commands.create();
 
         // Re-register event listeners
-        server.getEventManager().register(this, new HackedPlayerListeners());
+        server.getEventManager().register(this, new HackedPlayerListeners(server));
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
     }

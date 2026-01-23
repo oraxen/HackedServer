@@ -34,6 +34,8 @@ allprojects {
             mavenCentral()
             // Lunar Client Apollo API
             maven("https://repo.lunarclient.dev")
+            // Geyser/Floodgate API
+            maven("https://repo.opencollab.dev/main/")
             // Hopper (runtime dependency loader) - must be before other repos
             maven("https://repo.oraxen.com/releases") {
                 content { includeGroup("md.thomas.hopper") }
@@ -90,6 +92,9 @@ project(":hackedserver-core") {
         // xtomlj uses 4.7.2 which has ATN v3, conflicts with Arclight's ANTLR 4.13.1 (ATN v4)
         implementation("org.antlr:antlr4-runtime:4.7.2")
         implementation("com.lunarclient:apollo-protos:0.0.5")
+        // Geyser/Floodgate APIs for bedrock player detection (compile-only, loaded via class isolation)
+        compileOnly("org.geysermc.geyser:api:2.4.2-SNAPSHOT")
+        compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
     }
 }
 

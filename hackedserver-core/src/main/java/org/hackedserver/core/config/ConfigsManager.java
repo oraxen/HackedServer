@@ -45,6 +45,7 @@ public class ConfigsManager {
                     getConfig("generic.toml", new File(folder, "generic.toml"))));
             LunarConfig.load(getConfig("lunar.toml", new File(folder, "lunar.toml")));
             ForgeConfig.load(getConfig("forge.toml", new File(folder, "forge.toml")));
+            BedrockConfig.load(getConfig("bedrock.toml", new File(folder, "bedrock.toml")));
         } catch (IOException e) {
             e.printStackTrace();
         }
