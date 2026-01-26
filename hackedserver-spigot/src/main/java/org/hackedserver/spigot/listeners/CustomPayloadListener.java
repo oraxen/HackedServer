@@ -27,6 +27,15 @@ public class CustomPayloadListener {
 
             @Override
             public void onPacketReceiving(PacketEvent event) {
+                try {
+                    handlePacket(event);
+                } catch (Exception e) {
+                    // Never let packet processing errors disconnect the player
+                    plugin.getLogger().warning("Error processing custom payload packet: " + e.getMessage());
+                }
+            }
+
+            private void handlePacket(PacketEvent event) {
                 Player player = event.getPlayer();
                 if (player == null) {
                     return;
@@ -54,7 +63,10 @@ public class CustomPayloadListener {
                     Object byteBuf = dataField.get(value);
                     message = readByteBuf(byteBuf);
 
-                } catch (NoSuchFieldException e) {
+                } catch (NoSuchFieldException | IllegalArgumentException e) {
+                    // IllegalArgumentException: "object is not an instance of declaring class"
+                    // can occur on hybrid servers (Arclight, Mohist) where Forge patches
+                    // packet classes and class loader isolation causes reflection mismatches
                     channel = value.toString();
                     message = readByteBuf(modifier.read(1));
                 } catch (IllegalAccessException e) {
