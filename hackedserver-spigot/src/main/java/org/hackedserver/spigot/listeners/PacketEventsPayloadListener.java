@@ -52,63 +52,73 @@ public class PacketEventsPayloadListener extends PacketListenerAbstract {
         if (event.getPacketType() == PacketType.Play.Client.PLUGIN_MESSAGE ||
                 event.getPacketType() == PacketType.Configuration.Client.PLUGIN_MESSAGE ||
                 event.getPacketType() == PacketType.Login.Client.LOGIN_PLUGIN_RESPONSE) {
-
-            User user = event.getUser();
-            UUID playerUuid = user.getUUID();
-            if (playerUuid == null) {
-                return;
+            try {
+                handlePacket(event);
+            } catch (Exception e) {
+                // Never let packet processing errors disconnect the player.
+                // This can happen on hybrid servers (Arclight, Mohist) where Forge-patched
+                // classes cause reflection mismatches inside PacketEvents wrappers.
+                plugin.getLogger().warning("Error processing custom payload packet: " + e.getMessage());
             }
+        }
+    }
 
-            Player player = Bukkit.getPlayer(playerUuid);
-            String playerName = user.getName() != null ? user.getName() : (player != null ? player.getName() : "Unknown");
+    private void handlePacket(PacketReceiveEvent event) {
+        User user = event.getUser();
+        UUID playerUuid = user.getUUID();
+        if (playerUuid == null) {
+            return;
+        }
 
-            String channel;
-            byte[] data;
+        Player player = Bukkit.getPlayer(playerUuid);
+        String playerName = user.getName() != null ? user.getName() : (player != null ? player.getName() : "Unknown");
 
-            if (event.getPacketType() == PacketType.Play.Client.PLUGIN_MESSAGE) {
-                WrapperPlayClientPluginMessage packet = new WrapperPlayClientPluginMessage(event);
-                channel = packet.getChannelName();
-                data = packet.getData();
-            } else if (event.getPacketType() == PacketType.Configuration.Client.PLUGIN_MESSAGE) {
-                WrapperConfigClientPluginMessage packet = new WrapperConfigClientPluginMessage(event);
-                channel = packet.getChannelName();
-                data = packet.getData();
-            } else {
-                WrapperLoginClientPluginResponse packet = new WrapperLoginClientPluginResponse(event);
-                channel = "login:response";
-                data = packet.getData();
-            }
+        String channel;
+        byte[] data;
 
-            if (data == null) {
-                data = new byte[0];
-            }
+        if (event.getPacketType() == PacketType.Play.Client.PLUGIN_MESSAGE) {
+            WrapperPlayClientPluginMessage packet = new WrapperPlayClientPluginMessage(event);
+            channel = packet.getChannelName();
+            data = packet.getData();
+        } else if (event.getPacketType() == PacketType.Configuration.Client.PLUGIN_MESSAGE) {
+            WrapperConfigClientPluginMessage packet = new WrapperConfigClientPluginMessage(event);
+            channel = packet.getChannelName();
+            data = packet.getData();
+        } else {
+            WrapperLoginClientPluginResponse packet = new WrapperLoginClientPluginResponse(event);
+            channel = "login:response";
+            data = packet.getData();
+        }
 
-            String message = new String(data, StandardCharsets.UTF_8);
+        if (data == null) {
+            data = new byte[0];
+        }
 
-            if (Config.DEBUG.toBool()) {
-                Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
-                        Placeholder.unparsed("player", playerName),
-                        Placeholder.unparsed("channel", channel),
-                        Placeholder.unparsed("message", message)));
-            }
+        String message = new String(data, StandardCharsets.UTF_8);
 
-            // Generic checks
-            HackedPlayer hackedPlayer = HackedServer.getPlayer(playerUuid);
-            for (GenericCheck check : HackedServer.getChecks()) {
-                if (check.pass(hackedPlayer, channel, message)) {
-                    hackedPlayer.addGenericCheck(check);
-                    for (Action action : check.getActions()) {
-                        performActions(action, playerUuid, playerName, check.getName(),
-                                Placeholder.unparsed("player", playerName),
-                                Placeholder.parsed("name", check.getName()));
-                    }
+        if (Config.DEBUG.toBool()) {
+            Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
+                    Placeholder.unparsed("player", playerName),
+                    Placeholder.unparsed("channel", channel),
+                    Placeholder.unparsed("message", message)));
+        }
+
+        // Generic checks
+        HackedPlayer hackedPlayer = HackedServer.getPlayer(playerUuid);
+        for (GenericCheck check : HackedServer.getChecks()) {
+            if (check.pass(hackedPlayer, channel, message)) {
+                hackedPlayer.addGenericCheck(check);
+                for (Action action : check.getActions()) {
+                    performActions(action, playerUuid, playerName, check.getName(),
+                            Placeholder.unparsed("player", playerName),
+                            Placeholder.parsed("name", check.getName()));
                 }
             }
+        }
 
-            // Forge/NeoForge detection
-            if (ForgeConfig.isEnabled()) {
-                processForgePacket(playerUuid, playerName, hackedPlayer, channel, message);
-            }
+        // Forge/NeoForge detection
+        if (ForgeConfig.isEnabled()) {
+            processForgePacket(playerUuid, playerName, hackedPlayer, channel, message);
         }
     }
 

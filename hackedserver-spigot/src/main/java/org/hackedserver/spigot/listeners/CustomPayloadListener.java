@@ -27,6 +27,15 @@ public class CustomPayloadListener {
 
             @Override
             public void onPacketReceiving(PacketEvent event) {
+                try {
+                    handlePacket(event);
+                } catch (Exception e) {
+                    // Never let packet processing errors disconnect the player
+                    plugin.getLogger().warning("Error processing custom payload packet: " + e.getMessage());
+                }
+            }
+
+            private void handlePacket(PacketEvent event) {
                 Player player = event.getPlayer();
                 if (player == null) {
                     return;
@@ -41,21 +50,30 @@ public class CustomPayloadListener {
                 String channel;
                 String message;
 
+                // Resolve channel first, then data separately, so that a
+                // successful channel read is never overwritten by a later failure.
                 try {
-                    // Get the channel/id field directly
                     java.lang.reflect.Field idField = value.getClass().getDeclaredField("id");
                     idField.setAccessible(true);
                     Object minecraftKey = idField.get(value);
                     channel = minecraftKey.toString();
+                } catch (NoSuchFieldException | IllegalArgumentException e) {
+                    // IllegalArgumentException: "object is not an instance of declaring class"
+                    // can occur on hybrid servers (Arclight, Mohist) where Forge patches
+                    // packet classes and class loader isolation causes reflection mismatches
+                    channel = value.toString();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                    return;
+                }
 
-                    // Get the data field from DiscardedPayload
+                try {
                     java.lang.reflect.Field dataField = value.getClass().getDeclaredField("data");
                     dataField.setAccessible(true);
                     Object byteBuf = dataField.get(value);
                     message = readByteBuf(byteBuf);
-
-                } catch (NoSuchFieldException e) {
-                    channel = value.toString();
+                } catch (NoSuchFieldException | IllegalArgumentException e) {
+                    // Fallback: read data from modifier on hybrid servers
                     message = readByteBuf(modifier.read(1));
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();

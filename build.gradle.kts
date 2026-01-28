@@ -69,7 +69,8 @@ allprojects {
         maven("https://repo.codemc.io/repository/maven-snapshots/") {
             content { includeGroup("com.github.retrooper") }
         }
-        // ProtocolLib
+        // ProtocolLib (now published to Maven Central under net.dmulloy2)
+        // Legacy repo kept as fallback for older artifacts
         maven("https://repo.dmulloy2.net/repository/public/") {
             content { includeGroup("com.comphenix.protocol") }
         }
@@ -102,8 +103,8 @@ project(":hackedserver-spigot") {
     dependencies {
         // Use Paper API (Java 17-compatible) instead of Spigot to support CommandAPI Paper integration
         compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
-        // 1.21.11 support requires ProtocolLib dev snapshots (5.4.0 is not published as a stable release yet)
-        compileOnly("com.comphenix.protocol:ProtocolLib:5.4.0-SNAPSHOT")
+        // ProtocolLib is now published on Maven Central under net.dmulloy2
+        compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
         // PacketEvents as alternative to ProtocolLib (better Arclight/hybrid server compatibility)
         compileOnly("com.github.retrooper:packetevents-spigot:2.11.1")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
