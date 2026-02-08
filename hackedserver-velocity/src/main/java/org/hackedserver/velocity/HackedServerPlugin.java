@@ -5,11 +5,12 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
+import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.ChannelRegistrar;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
-import com.velocitypowered.api.plugin.PluginContainer;
 
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
 
@@ -26,6 +27,11 @@ import java.io.File;
 import java.nio.file.Path;
 import org.slf4j.Logger;
 
+@Plugin(
+        id = "hackedserver",
+        name = "HackedServer",
+        version = "3.16.0"
+)
 public class HackedServerPlugin {
 
     private final ProxyServer server;
@@ -33,8 +39,12 @@ public class HackedServerPlugin {
     private final File folder;
 
     @Inject
-    public HackedServerPlugin(ProxyServer server, Logger logger, final PluginContainer pluginContainer,
-            @DataDirectory Path dataDirectory) {
+    public HackedServerPlugin(
+            ProxyServer server,
+            Logger logger,
+            PluginContainer pluginContainer,
+            @DataDirectory Path dataDirectory
+    ) {
         this.server = server;
         this.folder = dataDirectory.toFile();
         Logs.onEnable(logger, server);
@@ -80,5 +90,4 @@ public class HackedServerPlugin {
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
     }
-
 }
