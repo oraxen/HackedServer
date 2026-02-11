@@ -153,39 +153,76 @@ public class CommandsManager {
                         meta.setDisplayName(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName());
 
                         List<String> lore = new ArrayList<>();
-                        List<GenericCheck> sortedChecks = new ArrayList<>(HackedServer.getChecks().stream()
+
+                        // Get all checks and categorize them
+                        List<GenericCheck> allChecks = new ArrayList<>(HackedServer.getChecks().stream()
                                 .sorted(Comparator.comparing(GenericCheck::getName)).toList());
-                        sortedChecks.remove(HackedServer.getCheck("fabric"));
-                        sortedChecks.remove(HackedServer.getCheck("forge"));
 
-                        lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)
-                                .append(hackedPlayer.getGenericChecks().contains("fabric")
-                                        ? Component.text("true", NamedTextColor.GREEN)
-                                        : Component.text("false", NamedTextColor.RED))));
-                        lore.add(toLegacy(Component.text("Forge: ", NamedTextColor.GOLD)
-                                .append(hackedPlayer.getGenericChecks().contains("forge")
-                                        ? Component.text("true", NamedTextColor.GREEN)
-                                        : Component.text("false", NamedTextColor.RED))));
-                        lore.add(toLegacy(Component.text("--------------------", NamedTextColor.BLUE)));
+                        // Separate detected checks from all checks
+                        List<GenericCheck> detectedChecks = allChecks.stream()
+                                .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId()))
+                                .collect(Collectors.toList());
 
-                        for (GenericCheck check : sortedChecks.stream()
-                                .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId())).toList()) {
-                            lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
-                                    .append(Component.text("true", NamedTextColor.GREEN))));
-                            sortedChecks.remove(check);
+                        int detectedCount = detectedChecks.size();
+                        int totalChecks = allChecks.size();
+                        int cleanCount = totalChecks - detectedCount;
+
+                        // Add separator line
+                        lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
+
+                        if (detectedCount == 0) {
+                            // Clean player - show positive message
+                            lore.add(toLegacy(Component.text("✓ CLEAN", NamedTextColor.GREEN)));
+                            lore.add(toLegacy(Component.text("No mods detected", NamedTextColor.GRAY)));
+                        } else {
+                            // Modded player - show summary and detected items
+                            lore.add(toLegacy(Component.text("⚠ MODDED ", NamedTextColor.GOLD)
+                                    .append(Component.text("(" + detectedCount + " detected)", NamedTextColor.GRAY))));
+                            lore.add(toLegacy(Component.text(""))); // Blank line
+
+                            // Show detected items with severity colors
+                            lore.add(toLegacy(Component.text("Detected:", NamedTextColor.YELLOW)));
+
+                            for (GenericCheck check : detectedChecks) {
+                                boolean isHighRisk = isHighRiskCheck(check);
+                                String bullet = isHighRisk ? "  ● " : "  ○ ";
+                                NamedTextColor color = isHighRisk ? NamedTextColor.RED : NamedTextColor.YELLOW;
+
+                                lore.add(toLegacy(Component.text(bullet + check.getName(), color)));
+                            }
+
+                            lore.add(toLegacy(Component.text(""))); // Blank line
+
+                            // Show summary of clean checks
+                            lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)));
                         }
 
-                        for (GenericCheck check : sortedChecks.stream()
-                                .filter(check -> !hackedPlayer.getGenericChecks().contains(check.getId())).toList()) {
-                            lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
-                                    .append(Component.text("false", NamedTextColor.RED))));
-                        }
+                        lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
+
                         meta.setLore(lore);
                         head.setItemMeta(meta);
                         inv.addItem(head);
                     });
                     player.openInventory(inv);
                 });
+    }
+
+    /**
+     * Determines if a check represents a high-risk mod/client
+     * High risk includes cheat clients and suspicious mods
+     */
+    private static boolean isHighRiskCheck(GenericCheck check) {
+        String name = check.getName().toLowerCase();
+        // Consider performance/utility mods as lower risk (yellow)
+        // Everything else as higher risk (red)
+        return !name.contains("optifine")
+                && !name.contains("journeymap")
+                && !name.contains("minimap")
+                && !name.contains("damage indicator")
+                && !name.contains("armor status")
+                && !name.contains("potion status")
+                && !name.contains("fps")
+                && !name.contains("schematic");
     }
 
     private static String toLegacy(Component component) {
