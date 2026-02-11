@@ -158,46 +158,46 @@ public class CommandsManager {
                         List<GenericCheck> allChecks = new ArrayList<>(HackedServer.getChecks().stream()
                                 .sorted(Comparator.comparing(GenericCheck::getName)).toList());
 
-                        // Separate detected checks from all checks
+                        // Separate detected checks from all checks (excluding Fabric and Forge for special handling)
                         List<GenericCheck> detectedChecks = allChecks.stream()
                                 .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId()))
+                                .filter(check -> !check.getId().equals("fabric") && !check.getId().equals("forge"))
                                 .collect(Collectors.toList());
 
-                        int detectedCount = detectedChecks.size();
+                        boolean hasFabric = hackedPlayer.getGenericChecks().contains("fabric");
+                        boolean hasForge = hackedPlayer.getGenericChecks().contains("forge");
+
+                        int detectedCount = detectedChecks.size() + (hasFabric ? 1 : 0) + (hasForge ? 1 : 0);
                         int totalChecks = allChecks.size();
                         int cleanCount = totalChecks - detectedCount;
 
-                        // Add separator line
-                        lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
+                        // Show Fabric and Forge status first (like original)
+                        lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)
+                                .append(hasFabric
+                                    ? Component.text("true", NamedTextColor.GREEN)
+                                    : Component.text("false", NamedTextColor.RED))));
+                        lore.add(toLegacy(Component.text("Forge: ", NamedTextColor.GOLD)
+                                .append(hasForge
+                                    ? Component.text("true", NamedTextColor.GREEN)
+                                    : Component.text("false", NamedTextColor.RED))));
 
-                        if (detectedCount == 0) {
-                            // Clean player - show positive message
-                            lore.add(toLegacy(Component.text("✓ CLEAN", NamedTextColor.GREEN)));
-                            lore.add(toLegacy(Component.text("No mods detected", NamedTextColor.GRAY)));
+                        // Separator
+                        lore.add(toLegacy(Component.text("--------------------", NamedTextColor.BLUE)));
+
+                        if (detectedChecks.isEmpty()) {
+                            // No other mods detected
+                            lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)));
                         } else {
-                            // Modded player - show summary and detected items
-                            lore.add(toLegacy(Component.text("⚠ MODDED ", NamedTextColor.GOLD)
-                                    .append(Component.text("(" + detectedCount + " detected)", NamedTextColor.GRAY))));
-                            lore.add(toLegacy(Component.text(""))); // Blank line
-
-                            // Show detected items with severity colors
-                            lore.add(toLegacy(Component.text("Detected:", NamedTextColor.YELLOW)));
-
+                            // Show only detected mods (not all the false ones)
                             for (GenericCheck check : detectedChecks) {
                                 boolean isHighRisk = isHighRiskCheck(check);
-                                String bullet = isHighRisk ? "  ● " : "  ○ ";
                                 NamedTextColor color = isHighRisk ? NamedTextColor.RED : NamedTextColor.YELLOW;
-
-                                lore.add(toLegacy(Component.text(bullet + check.getName(), color)));
+                                lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
+                                        .append(Component.text("true", color))));
                             }
-
                             lore.add(toLegacy(Component.text(""))); // Blank line
-
-                            // Show summary of clean checks
                             lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)));
                         }
-
-                        lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
 
                         meta.setLore(lore);
                         head.setItemMeta(meta);
