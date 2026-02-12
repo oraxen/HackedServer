@@ -151,9 +151,10 @@ public class CommandsManager {
                         assert meta != null;
                         meta.setOwningPlayer(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()));
                         // Set display name in white (not italic) to match standard Minecraft item naming
-                        meta.setDisplayName(toLegacy(Component.text(
-                                Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName(),
-                                NamedTextColor.WHITE)));
+                        String playerName = Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName();
+                        if (playerName != null) {
+                            meta.setDisplayName(toLegacy(Component.text(playerName, NamedTextColor.WHITE)));
+                        }
 
                         List<String> lore = new ArrayList<>();
 

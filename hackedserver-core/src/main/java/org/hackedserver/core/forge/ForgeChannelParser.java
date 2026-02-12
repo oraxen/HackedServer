@@ -21,7 +21,7 @@ public final class ForgeChannelParser {
 
     /**
      * Built-in namespaces that should not be considered as Forge/NeoForge mods.
-     * Includes Fabric-specific namespaces since Fabric has its own detection system.
+     * Note: Fabric API modules (fabric-*, fabricloader*) are excluded via prefix matching below.
      */
     private static final Set<String> BUILTIN_NAMESPACES = Set.of(
             "minecraft",
@@ -29,11 +29,7 @@ public final class ForgeChannelParser {
             "forge",
             "fml",
             "c",  // common namespace used by NeoForge
-            "fabric",  // Fabric loader - detected separately via brand/lunar handshake
-            "fabric-api",
-            "fabricloader",
-            "fabric-screen-handler-api-v1",
-            "fabric-screen-api-v1"
+            "fabric"  // Fabric loader - detected separately via brand/lunar handshake
     );
 
     private ForgeChannelParser() {
