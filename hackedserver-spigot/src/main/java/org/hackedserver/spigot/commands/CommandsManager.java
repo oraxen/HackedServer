@@ -150,7 +150,10 @@ public class CommandsManager {
                         SkullMeta meta = (SkullMeta) head.getItemMeta();
                         assert meta != null;
                         meta.setOwningPlayer(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()));
-                        meta.setDisplayName(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName());
+                        // Set display name in white (not italic) to match standard Minecraft item naming
+                        meta.setDisplayName(toLegacy(Component.text(
+                                Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName(),
+                                NamedTextColor.WHITE)));
 
                         List<String> lore = new ArrayList<>();
 
@@ -182,8 +185,8 @@ public class CommandsManager {
                                     ? Component.text("true", NamedTextColor.GREEN)
                                     : Component.text("false", NamedTextColor.RED))));
 
-                        // Separator
-                        lore.add(toLegacy(Component.text("--------------------", NamedTextColor.BLUE)));
+                        // Separator - subtle dark gray line using strikethrough for visual effect
+                        lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
 
                         if (detectedChecks.isEmpty()) {
                             // No other mods detected
