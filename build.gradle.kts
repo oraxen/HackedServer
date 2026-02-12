@@ -150,6 +150,10 @@ project(":hackedserver-velocity") {
         compileOnly("com.github.retrooper:packetevents-velocity:2.11.1")
         implementation("org.bstats:bstats-velocity:3.1.0")
     }
+
+    tasks.withType<Jar> {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }
 
 tasks.shadowJar {
