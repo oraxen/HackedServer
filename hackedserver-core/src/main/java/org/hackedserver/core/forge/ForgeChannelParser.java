@@ -20,14 +20,20 @@ public final class ForgeChannelParser {
     public static final String BRAND_CHANNEL = "minecraft:brand";
 
     /**
-     * Built-in namespaces that should not be considered as mods.
+     * Built-in namespaces that should not be considered as Forge/NeoForge mods.
+     * Includes Fabric-specific namespaces since Fabric has its own detection system.
      */
     private static final Set<String> BUILTIN_NAMESPACES = Set.of(
             "minecraft",
             "neoforge",
             "forge",
             "fml",
-            "c"  // common namespace used by NeoForge
+            "c",  // common namespace used by NeoForge
+            "fabric",  // Fabric loader - detected separately via brand/lunar handshake
+            "fabric-api",
+            "fabricloader",
+            "fabric-screen-handler-api-v1",
+            "fabric-screen-api-v1"
     );
 
     private ForgeChannelParser() {
