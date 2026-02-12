@@ -170,9 +170,14 @@ public class CommandsManager {
                         boolean hasFabric = hackedPlayer.getGenericChecks().contains("fabric");
                         boolean hasForge = hackedPlayer.getGenericChecks().contains("forge");
 
+                        // Count how many of fabric/forge exist in the registry (they're always displayed separately)
+                        int alwaysDisplayedCount = 0;
+                        if (HackedServer.getCheck("fabric") != null) alwaysDisplayedCount++;
+                        if (HackedServer.getCheck("forge") != null) alwaysDisplayedCount++;
+
                         int totalChecks = allChecks.size();
-                        // Subtract 2 for fabric and forge (always displayed separately), then subtract other detected checks
-                        int cleanCount = totalChecks - 2 - detectedChecks.size();
+                        // Subtract always-displayed checks (fabric/forge if they exist), then subtract other detected checks
+                        int cleanCount = totalChecks - alwaysDisplayedCount - detectedChecks.size();
 
                         // Show Fabric and Forge status first (like original)
                         lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)

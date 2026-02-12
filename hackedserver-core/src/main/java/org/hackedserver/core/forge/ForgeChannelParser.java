@@ -100,8 +100,9 @@ public final class ForgeChannelParser {
                 continue;
             }
 
-            // Skip all Fabric API modules (prefix match for fabric-, fabricloader-, etc.)
-            if (namespace.startsWith("fabric")) {
+            // Skip Fabric API modules using more specific patterns to avoid false positives
+            // Matches: fabric-*, fabricloader-*, but NOT mods like "fabrication" or "fabricators"
+            if (namespace.startsWith("fabric-") || namespace.startsWith("fabricloader")) {
                 continue;
             }
 
