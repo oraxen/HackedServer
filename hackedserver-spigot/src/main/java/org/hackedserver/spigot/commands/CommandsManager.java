@@ -169,7 +169,8 @@ public class CommandsManager {
 
                         int detectedCount = detectedChecks.size() + (hasFabric ? 1 : 0) + (hasForge ? 1 : 0);
                         int totalChecks = allChecks.size();
-                        int cleanCount = totalChecks - detectedCount;
+                        // Subtract 2 for fabric and forge which are always displayed separately
+                        int cleanCount = totalChecks - detectedCount - 2;
 
                         // Show Fabric and Forge status first (like original)
                         lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)
