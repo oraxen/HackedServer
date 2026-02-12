@@ -20,14 +20,16 @@ public final class ForgeChannelParser {
     public static final String BRAND_CHANNEL = "minecraft:brand";
 
     /**
-     * Built-in namespaces that should not be considered as mods.
+     * Built-in namespaces that should not be considered as Forge/NeoForge mods.
+     * Note: Fabric API modules (fabric-*, fabricloader*) are excluded via prefix matching below.
      */
     private static final Set<String> BUILTIN_NAMESPACES = Set.of(
             "minecraft",
             "neoforge",
             "forge",
             "fml",
-            "c"  // common namespace used by NeoForge
+            "c",  // common namespace used by NeoForge
+            "fabric"  // Fabric loader - detected separately via brand/lunar handshake
     );
 
     private ForgeChannelParser() {
@@ -89,8 +91,14 @@ public final class ForgeChannelParser {
 
             String namespace = channel.substring(0, colonIndex).toLowerCase(Locale.ROOT);
 
-            // Skip built-in namespaces
+            // Skip built-in namespaces (exact match)
             if (BUILTIN_NAMESPACES.contains(namespace)) {
+                continue;
+            }
+
+            // Skip Fabric API modules using more specific patterns to avoid false positives
+            // Matches: fabric-*, fabricloader-*, but NOT mods like "fabrication" or "fabricators"
+            if (namespace.startsWith("fabric-") || namespace.startsWith("fabricloader")) {
                 continue;
             }
 

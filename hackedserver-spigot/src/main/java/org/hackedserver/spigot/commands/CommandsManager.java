@@ -150,42 +150,88 @@ public class CommandsManager {
                         SkullMeta meta = (SkullMeta) head.getItemMeta();
                         assert meta != null;
                         meta.setOwningPlayer(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()));
-                        meta.setDisplayName(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName());
+                        // Set display name in white (not italic) to match standard Minecraft item naming
+                        String playerName = Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName();
+                        if (playerName != null) {
+                            meta.setDisplayName(toLegacy(Component.text(playerName, NamedTextColor.WHITE)));
+                        }
 
                         List<String> lore = new ArrayList<>();
-                        List<GenericCheck> sortedChecks = new ArrayList<>(HackedServer.getChecks().stream()
+
+                        // Get all checks and categorize them
+                        List<GenericCheck> allChecks = new ArrayList<>(HackedServer.getChecks().stream()
                                 .sorted(Comparator.comparing(GenericCheck::getName)).toList());
-                        sortedChecks.remove(HackedServer.getCheck("fabric"));
-                        sortedChecks.remove(HackedServer.getCheck("forge"));
 
+                        // Separate detected checks from all checks (excluding Fabric and Forge for special handling)
+                        List<GenericCheck> detectedChecks = allChecks.stream()
+                                .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId()))
+                                .filter(check -> !check.getId().equals("fabric") && !check.getId().equals("forge"))
+                                .collect(Collectors.toList());
+
+                        boolean hasFabric = hackedPlayer.getGenericChecks().contains("fabric");
+                        boolean hasForge = hackedPlayer.getGenericChecks().contains("forge");
+
+                        // Count how many of fabric/forge exist in the registry (they're always displayed separately)
+                        int alwaysDisplayedCount = 0;
+                        if (HackedServer.getCheck("fabric") != null) alwaysDisplayedCount++;
+                        if (HackedServer.getCheck("forge") != null) alwaysDisplayedCount++;
+
+                        int totalChecks = allChecks.size();
+                        // Subtract always-displayed checks (fabric/forge if they exist), then subtract other detected checks
+                        int cleanCount = totalChecks - alwaysDisplayedCount - detectedChecks.size();
+
+                        // Show Fabric and Forge status first (like original)
                         lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)
-                                .append(hackedPlayer.getGenericChecks().contains("fabric")
-                                        ? Component.text("true", NamedTextColor.GREEN)
-                                        : Component.text("false", NamedTextColor.RED))));
+                                .append(hasFabric
+                                    ? Component.text("true", NamedTextColor.GREEN)
+                                    : Component.text("false", NamedTextColor.RED))));
                         lore.add(toLegacy(Component.text("Forge: ", NamedTextColor.GOLD)
-                                .append(hackedPlayer.getGenericChecks().contains("forge")
-                                        ? Component.text("true", NamedTextColor.GREEN)
-                                        : Component.text("false", NamedTextColor.RED))));
-                        lore.add(toLegacy(Component.text("--------------------", NamedTextColor.BLUE)));
+                                .append(hasForge
+                                    ? Component.text("true", NamedTextColor.GREEN)
+                                    : Component.text("false", NamedTextColor.RED))));
 
-                        for (GenericCheck check : sortedChecks.stream()
-                                .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId())).toList()) {
-                            lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
-                                    .append(Component.text("true", NamedTextColor.GREEN))));
-                            sortedChecks.remove(check);
+                        // Separator - subtle dark gray line using strikethrough for visual effect
+                        lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
+
+                        if (detectedChecks.isEmpty()) {
+                            // No other mods detected
+                            lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)));
+                        } else {
+                            // Show only detected mods (not all the false ones)
+                            for (GenericCheck check : detectedChecks) {
+                                boolean isHighRisk = isHighRiskCheck(check);
+                                NamedTextColor color = isHighRisk ? NamedTextColor.RED : NamedTextColor.YELLOW;
+                                lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
+                                        .append(Component.text("true", color))));
+                            }
+                            lore.add(toLegacy(Component.text(""))); // Blank line
+                            lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)));
                         }
 
-                        for (GenericCheck check : sortedChecks.stream()
-                                .filter(check -> !hackedPlayer.getGenericChecks().contains(check.getId())).toList()) {
-                            lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
-                                    .append(Component.text("false", NamedTextColor.RED))));
-                        }
                         meta.setLore(lore);
                         head.setItemMeta(meta);
                         inv.addItem(head);
                     });
                     player.openInventory(inv);
                 });
+    }
+
+    /**
+     * Determines if a check represents a high-risk mod/client
+     * High risk includes cheat clients and suspicious mods
+     */
+    private static boolean isHighRiskCheck(GenericCheck check) {
+        String name = check.getName().toLowerCase();
+        // Consider performance/utility mods as lower risk (yellow)
+        // Everything else as higher risk (red)
+        return !name.contains("optifine")
+                && !name.contains("journeymap")
+                && !name.contains("minimap")
+                && !name.contains("damage indicator")
+                && !name.contains("armor status")
+                && !name.contains("potion status")
+                && !name.contains("fps")
+                && !name.contains("schematic");
     }
 
     private static String toLegacy(Component component) {
