@@ -95,8 +95,13 @@ public final class ForgeChannelParser {
 
             String namespace = channel.substring(0, colonIndex).toLowerCase(Locale.ROOT);
 
-            // Skip built-in namespaces
+            // Skip built-in namespaces (exact match)
             if (BUILTIN_NAMESPACES.contains(namespace)) {
+                continue;
+            }
+
+            // Skip all Fabric API modules (prefix match for fabric-, fabricloader-, etc.)
+            if (namespace.startsWith("fabric")) {
                 continue;
             }
 

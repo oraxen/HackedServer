@@ -170,10 +170,9 @@ public class CommandsManager {
                         boolean hasFabric = hackedPlayer.getGenericChecks().contains("fabric");
                         boolean hasForge = hackedPlayer.getGenericChecks().contains("forge");
 
-                        int detectedCount = detectedChecks.size() + (hasFabric ? 1 : 0) + (hasForge ? 1 : 0);
                         int totalChecks = allChecks.size();
-                        // Subtract 2 for fabric and forge which are always displayed separately
-                        int cleanCount = totalChecks - detectedCount - 2;
+                        // Subtract 2 for fabric and forge (always displayed separately), then subtract other detected checks
+                        int cleanCount = totalChecks - 2 - detectedChecks.size();
 
                         // Show Fabric and Forge status first (like original)
                         lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)
