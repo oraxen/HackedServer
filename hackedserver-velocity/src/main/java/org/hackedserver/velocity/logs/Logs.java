@@ -27,7 +27,7 @@ public class Logs {
     }
 
     public static void logComponent(Component message) {
-        SERVER.sendMessage(message);
+        SERVER.getConsoleCommandSource().sendMessage(message);
     }
 
 }
