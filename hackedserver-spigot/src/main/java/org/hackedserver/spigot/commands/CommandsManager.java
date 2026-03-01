@@ -6,12 +6,14 @@ import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.HackedPlayer;
@@ -32,6 +34,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class CommandsManager {
+
+    private static final int ITEMS_PER_PAGE = 45;
+    private static final int INV_SIZE = 54;
+    private static final int NAV_PREV_SLOT = 45;
+    private static final int NAV_INFO_SLOT = 49;
+    private static final int NAV_NEXT_SLOT = 53;
 
     private final JavaPlugin plugin;
     private final BukkitAudiences audiences;
@@ -144,94 +152,128 @@ public class CommandsManager {
         return new CommandAPICommand("inv")
                 .withPermission("hackedserver.command.inv")
                 .executesPlayer((player, args) -> {
-                    Inventory inv = Bukkit.createInventory(new HackedHolder(player), 9, "HackedServer");
-                    HackedServer.getPlayers().forEach(hackedPlayer -> {
-                        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-                        SkullMeta meta = (SkullMeta) head.getItemMeta();
-                        assert meta != null;
-                        meta.setOwningPlayer(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()));
-                        // Set display name in white (not italic) to match standard Minecraft item naming
-                        String playerName = Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName();
-                        if (playerName != null) {
-                            meta.setDisplayName(toLegacy(Component.text(playerName, NamedTextColor.WHITE)));
-                        }
-
-                        List<String> lore = new ArrayList<>();
-
-                        // Get all checks and categorize them
-                        List<GenericCheck> allChecks = new ArrayList<>(HackedServer.getChecks().stream()
-                                .sorted(Comparator.comparing(GenericCheck::getName)).toList());
-
-                        // Separate detected checks from all checks (excluding Fabric and Forge for special handling)
-                        List<GenericCheck> detectedChecks = allChecks.stream()
-                                .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId()))
-                                .filter(check -> !check.getId().equals("fabric") && !check.getId().equals("forge"))
-                                .collect(Collectors.toList());
-
-                        boolean hasFabric = hackedPlayer.getGenericChecks().contains("fabric");
-                        boolean hasForge = hackedPlayer.getGenericChecks().contains("forge");
-
-                        // Count how many of fabric/forge exist in the registry (they're always displayed separately)
-                        int alwaysDisplayedCount = 0;
-                        if (HackedServer.getCheck("fabric") != null) alwaysDisplayedCount++;
-                        if (HackedServer.getCheck("forge") != null) alwaysDisplayedCount++;
-
-                        int totalChecks = allChecks.size();
-                        // Subtract always-displayed checks (fabric/forge if they exist), then subtract other detected checks
-                        int cleanCount = totalChecks - alwaysDisplayedCount - detectedChecks.size();
-
-                        // Show Fabric and Forge status first (like original)
-                        lore.add(toLegacy(Component.text("Fabric: ", NamedTextColor.GOLD)
-                                .append(hasFabric
-                                    ? Component.text("true", NamedTextColor.GREEN)
-                                    : Component.text("false", NamedTextColor.RED))));
-                        lore.add(toLegacy(Component.text("Forge: ", NamedTextColor.GOLD)
-                                .append(hasForge
-                                    ? Component.text("true", NamedTextColor.GREEN)
-                                    : Component.text("false", NamedTextColor.RED))));
-
-                        // Separator - subtle dark gray line using strikethrough for visual effect
-                        lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
-
-                        if (detectedChecks.isEmpty()) {
-                            // No other mods detected
-                            lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)));
-                        } else {
-                            // Show only detected mods (not all the false ones)
-                            for (GenericCheck check : detectedChecks) {
-                                boolean isHighRisk = isHighRiskCheck(check);
-                                NamedTextColor color = isHighRisk ? NamedTextColor.RED : NamedTextColor.YELLOW;
-                                lore.add(toLegacy(Component.text(check.getName() + ": ", NamedTextColor.GOLD)
-                                        .append(Component.text("true", color))));
-                            }
-                            lore.add(toLegacy(Component.text(""))); // Blank line
-                            lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)));
-                        }
-
-                        meta.setLore(lore);
-                        head.setItemMeta(meta);
-                        inv.addItem(head);
-                    });
-                    player.openInventory(inv);
+                    openInvPage(player, 0);
                 });
     }
 
-    /**
-     * Determines if a check represents a high-risk mod/client
-     * High risk includes cheat clients and suspicious mods
-     */
-    private static boolean isHighRiskCheck(GenericCheck check) {
-        String name = check.getName().toLowerCase();
-        // Consider performance/utility mods as lower risk (yellow)
-        // Everything else as higher risk (red)
-        return !name.contains("optifine")
-                && !name.contains("journeymap")
-                && !name.contains("minimap")
-                && !name.contains("damage indicator")
-                && !name.contains("armor status")
-                && !name.contains("potion status")
-                && !name.contains("fps")
-                && !name.contains("schematic");
+    public static void openInvPage(Player viewer, int page) {
+        List<HackedPlayer> players = HackedServer.getPlayers().stream()
+                .sorted(Comparator.comparing(p -> {
+                    String name = Bukkit.getOfflinePlayer(p.getUuid()).getName();
+                    return name != null ? name.toLowerCase() : "";
+                }))
+                .collect(Collectors.toList());
+
+        int totalPages = Math.max(1, (int) Math.ceil((double) players.size() / ITEMS_PER_PAGE));
+        page = Math.max(0, Math.min(page, totalPages - 1));
+
+        HackedHolder holder = new HackedHolder(page);
+        Inventory inv = Bukkit.createInventory(holder, INV_SIZE, "HackedServer");
+        holder.setInventory(inv);
+
+        // Get all checks for categorization
+        List<GenericCheck> loaderChecks = HackedServer.getChecks().stream()
+                .filter(c -> "loader".equals(c.getCategory()))
+                .sorted(Comparator.comparing(GenericCheck::getName))
+                .collect(Collectors.toList());
+
+        int start = page * ITEMS_PER_PAGE;
+        int end = Math.min(start + ITEMS_PER_PAGE, players.size());
+
+        for (int i = start; i < end; i++) {
+            HackedPlayer hackedPlayer = players.get(i);
+            ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+            SkullMeta meta = (SkullMeta) head.getItemMeta();
+            assert meta != null;
+            meta.setOwningPlayer(Bukkit.getOfflinePlayer(hackedPlayer.getUuid()));
+
+            String playerName = Bukkit.getOfflinePlayer(hackedPlayer.getUuid()).getName();
+            if (playerName != null) {
+                meta.setDisplayName(toLegacy(Component.text(playerName, NamedTextColor.WHITE)
+                        .decoration(TextDecoration.ITALIC, false)));
+            }
+
+            List<String> lore = new ArrayList<>();
+
+            // Loader section — show all loader checks with ✓/✗
+            for (GenericCheck loader : loaderChecks) {
+                boolean detected = hackedPlayer.getGenericChecks().contains(loader.getId());
+                if (detected) {
+                    lore.add(toLegacy(Component.text("✓ " + loader.getName() + " detected", NamedTextColor.GREEN)
+                            .decoration(TextDecoration.ITALIC, false)));
+                } else {
+                    lore.add(toLegacy(Component.text("✗ " + loader.getName() + " not detected", NamedTextColor.GRAY)
+                            .decoration(TextDecoration.ITALIC, false)));
+                }
+            }
+
+            // Separator
+            lore.add(toLegacy(Component.text("━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
+
+            // Non-loader detected checks
+            List<GenericCheck> detectedNonLoader = HackedServer.getChecks().stream()
+                    .filter(check -> hackedPlayer.getGenericChecks().contains(check.getId()))
+                    .filter(check -> !"loader".equals(check.getCategory()))
+                    .sorted(Comparator.comparing(GenericCheck::getName))
+                    .collect(Collectors.toList());
+
+            int totalNonLoader = (int) HackedServer.getChecks().stream()
+                    .filter(check -> !"loader".equals(check.getCategory()))
+                    .count();
+            int cleanCount = totalNonLoader - detectedNonLoader.size();
+
+            if (detectedNonLoader.isEmpty()) {
+                lore.add(toLegacy(Component.text("✓ " + cleanCount + " checks passed", NamedTextColor.GREEN)
+                        .decoration(TextDecoration.ITALIC, false)));
+            } else {
+                for (GenericCheck check : detectedNonLoader) {
+                    lore.add(toLegacy(Component.text("⚠ " + check.getName(), NamedTextColor.YELLOW)
+                            .decoration(TextDecoration.ITALIC, false)));
+                }
+                lore.add(toLegacy(Component.text("")));
+                lore.add(toLegacy(Component.text("✓ " + cleanCount + " other checks passed", NamedTextColor.GREEN)
+                        .decoration(TextDecoration.ITALIC, false)));
+            }
+
+            meta.setLore(lore);
+            head.setItemMeta(meta);
+            inv.setItem(i - start, head);
+        }
+
+        // Navigation bar (bottom row)
+        if (page > 0) {
+            ItemStack prev = new ItemStack(Material.ARROW);
+            ItemMeta prevMeta = prev.getItemMeta();
+            assert prevMeta != null;
+            prevMeta.setDisplayName(toLegacy(Component.text("← Previous Page", NamedTextColor.GOLD)
+                    .decoration(TextDecoration.ITALIC, false)));
+            prev.setItemMeta(prevMeta);
+            inv.setItem(NAV_PREV_SLOT, prev);
+        }
+
+        ItemStack info = new ItemStack(Material.PAPER);
+        ItemMeta infoMeta = info.getItemMeta();
+        assert infoMeta != null;
+        infoMeta.setDisplayName(toLegacy(Component.text("Page " + (page + 1) + "/" + totalPages, NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false)));
+        List<String> infoLore = new ArrayList<>();
+        infoLore.add(toLegacy(Component.text(players.size() + " players tracked", NamedTextColor.GRAY)
+                .decoration(TextDecoration.ITALIC, false)));
+        infoMeta.setLore(infoLore);
+        info.setItemMeta(infoMeta);
+        inv.setItem(NAV_INFO_SLOT, info);
+
+        if (page < totalPages - 1) {
+            ItemStack next = new ItemStack(Material.ARROW);
+            ItemMeta nextMeta = next.getItemMeta();
+            assert nextMeta != null;
+            nextMeta.setDisplayName(toLegacy(Component.text("Next Page →", NamedTextColor.GOLD)
+                    .decoration(TextDecoration.ITALIC, false)));
+            next.setItemMeta(nextMeta);
+            inv.setItem(NAV_NEXT_SLOT, next);
+        }
+
+        viewer.openInventory(inv);
     }
 
     private static String toLegacy(Component component) {

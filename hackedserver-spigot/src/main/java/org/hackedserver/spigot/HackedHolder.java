@@ -1,16 +1,28 @@
 package org.hackedserver.spigot;
 
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.jetbrains.annotations.NotNull;
 
 public class HackedHolder implements InventoryHolder {
 
-    private final Inventory inventory;
+    private Inventory inventory;
+    private int page;
 
-    public HackedHolder(HumanEntity player) {
-        this.inventory = player.getOpenInventory().getTopInventory();
+    public HackedHolder(int page) {
+        this.page = page;
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+    public void setInventory(Inventory inventory) {
+        this.inventory = inventory;
     }
 
     @Override

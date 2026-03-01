@@ -5,164 +5,202 @@ enabled = true
 actions = ["alert"]
 channels = ["LABYMOD"]
 name = "Labymod v1"
+category = "client"
 
 [labymod_v2]
 actions = ["alert"]
 channels = ["LMC"]
 name = "Labymod v2"
+category = "client"
 
 [labymod_v3]
 actions = ["alert"]
 channels = ["labymod3:main"]
 name = "Labymod v3"
+category = "client"
 
 [5_zig_mod]
 actions = ["alert"]
 channels = ["5zig_Set"]
 name = "5zig Mod"
+category = "client"
 
 [px_mod]
 actions = ["alert"]
 channels = ["PX|Version"]
 name = "PX Mod"
+category = "mod"
 
 [better_sprinting]
 actions = ["alert"]
 channels = ["BSprint"]
 name = "Better Sprinting"
+category = "mod"
 
 [hyperium]
 actions = ["alert"]
 channels = ["hyperium"]
 name = "Hyperium"
+category = "client"
 
 [journeymap]
 actions = ["alert"]
 channels = ["journeymap_channel"]
 name = "JourneyMap"
+category = "mod"
 
 [remix]
 actions = ["alert"]
 channels = ["BLC|M"]
 name = "Remix"
+category = "client"
 
 [waila]
 actions = ["alert"]
 channels = ["waila"]
 name = "Waila"
+category = "mod"
 
 [winterware]
 actions = ["alert"]
 channels = ["LC|Brand"]
 name = "Winterware"
+category = "client"
 
 [forge_mod_loader_v1]
 actions = ["alert"]
 channels = ["REGISTER", "minecraft:register"]
 message_has = "legacy:fml"
 name = "Legacy Forge Mod Loader"
+category = "loader"
 
 [forge_mod_loader_v2]
 actions = ["alert"]
 channels = ["FML|HS", "l:fmlhs"]
 name = "Forge Mod Loader"
+category = "loader"
 
 [world_downloader_v1]
 actions = ["alert"]
 channels = ["REGISTER", "minecraft:register"]
 message_has = "wdl"
 name = "World Downloader"
+category = "mod"
 
 [world_downloader_v2]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "WorldDownloader"
 name = "World Downloader"
+category = "mod"
 
 [world_downloader_v3]
 actions = ["alert"]
 channels = ["WDL|INIT"]
 name = "World Downloader"
+category = "mod"
 
 [world_downloader_v4]
 actions = ["alert"]
 channels = ["WDL|CONTROL"]
 message_has = "WDL"
 name = "World Downloader"
+category = "mod"
 
 [emc]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "Subsystem"
 name = "Easy Minecraft Client"
+category = "client"
 
 [liteloader]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "LiteLoader"
 name = "LiteLoader"
+category = "loader"
 
 [fabric]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "fabric"
 name = "Fabric"
+category = "loader"
 
 [forge]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "forge"
+message_not_has = "neoforge"
 name = "Forge"
+category = "loader"
+
+[neoforge]
+actions = ["alert"]
+channels = ["MC|Brand", "minecraft:brand"]
+message_has = "neoforge"
+name = "NeoForge"
+category = "loader"
 
 [lunar_client]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "lunarclient"
 name = "Lunar Client"
+category = "client"
 
 [feather_client]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "feather"
 name = "Feather Client"
+category = "client"
 
 [pvp_lounge]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "PLC18"
 name = "PvPLounge Client"
+category = "client"
 
 [cracked_vape]
 actions = ["alert"]
 channels = ["LOLIMAHCKER"]
 name = "Cracked Vape"
+category = "client"
 
 [xaero_minimap]
 actions = ["alert"]
 channels = ["XaeroMinimap"]
 name = "XaeroMinimap"
+category = "mod"
 
 [inventory_tweaks]
 actions = ["alert"]
 channels = ["InventoryTweaks"]
 name = "InventoryTweaks"
+category = "mod"
 
 [world_edit_cui]
 actions = ["alert"]
 channels = ["WECUI"]
 name = "World Edit CUI"
+category = "mod"
 
 [optifine]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "optifine"
 name = "Optifine"
+category = "mod"
 
 [badlion_client]
 actions = ["alert"]
 channels = ["MC|Brand", "minecraft:brand"]
 message_has = "badlion"
 name = "Badlion Client"
+category = "client"
 
 # === BEDROCK DETECTION VIA BRAND ===
 # Alternative to API-based detection in bedrock.toml
@@ -175,3 +213,4 @@ name = "Badlion Client"
 # channels = ["MC|Brand", "minecraft:brand"]
 # message_has = "Geyser"
 # name = "Bedrock (Geyser)"
+# category = "other"

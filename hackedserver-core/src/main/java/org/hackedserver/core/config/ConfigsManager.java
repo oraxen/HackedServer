@@ -152,6 +152,8 @@ public class ConfigsManager {
                     table.getString("name"),
                     (List<String>) (Object) table.getArray("channels").toList(),
                     table.getString("message_has"),
+                    table.getString("message_not_has"),
+                    table.getString("category"),
                     actions));
         }
     }

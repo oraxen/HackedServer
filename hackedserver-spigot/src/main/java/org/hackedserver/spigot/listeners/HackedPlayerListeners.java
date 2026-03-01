@@ -15,6 +15,7 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.BedrockConfig;
 import org.hackedserver.spigot.HackedHolder;
 import org.hackedserver.spigot.HackedServerPlugin;
+import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.core.bedrock.BedrockDetector;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
@@ -59,7 +60,18 @@ public class HackedPlayerListeners implements Listener {
     @EventHandler
     public void onClickInv(InventoryClickEvent event) {
         Inventory inv = event.getInventory();
-        if (inv.getHolder() instanceof HackedHolder) event.setCancelled(true);
+        if (!(inv.getHolder() instanceof HackedHolder holder)) return;
+        event.setCancelled(true);
+
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= inv.getSize()) return;
+
+        Player player = (Player) event.getWhoClicked();
+        if (slot == 45 && holder.getPage() > 0) {
+            CommandsManager.openInvPage(player, holder.getPage() - 1);
+        } else if (slot == 53 && inv.getItem(53) != null) {
+            CommandsManager.openInvPage(player, holder.getPage() + 1);
+        }
     }
 
     private void handleBedrockDetection(Player player) {
