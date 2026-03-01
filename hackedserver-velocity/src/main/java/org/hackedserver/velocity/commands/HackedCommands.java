@@ -37,11 +37,13 @@ public class HackedCommands {
     public BrigadierCommand createBrigadierCommand() {
         LiteralCommandNode<CommandSource> hackedServerNode = LiteralArgumentBuilder
                 .<CommandSource>literal("hackedserver")
+                .requires(source -> source.hasPermission("hackedserver.command"))
                 .executes(context -> {
                     Message.COMMANDS_HELP.send(context.getSource());
                     return 1;
                 })
                 .then(LiteralArgumentBuilder.<CommandSource>literal("reload")
+                        .requires(source -> source.hasPermission("hackedserver.command.reload"))
                         .executes(context -> {
                             ConfigsManager.reload(dataFolder);
                             server.getAllPlayers()
@@ -50,7 +52,7 @@ public class HackedCommands {
                             return 1;
                         }))
                 .then(LiteralArgumentBuilder.<CommandSource>literal("check")
-                        .requires(source -> source.hasPermission("hackedserver.check"))
+                        .requires(source -> source.hasPermission("hackedserver.command.check"))
                         .then(RequiredArgumentBuilder
                                 .<CommandSource, String>argument("player", StringArgumentType.string())
                                 .suggests((context, builder) -> {
@@ -116,6 +118,7 @@ public class HackedCommands {
                                     return 1;
                                 })))
                 .then(LiteralArgumentBuilder.<CommandSource>literal("list")
+                        .requires(source -> source.hasPermission("hackedserver.command.list"))
                         .executes(context -> {
                             var playersWithChecks = HackedServer.getPlayers().stream()
                                     .filter(player -> !player.getGenericChecks().isEmpty())
