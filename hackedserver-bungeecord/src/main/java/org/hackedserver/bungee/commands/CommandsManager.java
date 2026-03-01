@@ -40,11 +40,13 @@ public class CommandsManager extends Command {
 
         switch (args[0]) {
             case "reload" -> {
+                if (!sender.hasPermission("hackedserver.command.reload")) return;
                 ConfigsManager.reload(dataFolder);
                 Message.COMMANDS_RELOAD_SUCCESS.send(audience);
                 server.getPlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
             }
             case "check" -> {
+                if (!sender.hasPermission("hackedserver.command.check")) return;
                 if (args.length < 2) {
                     audience.sendMessage(
                             net.kyori.adventure.text.Component.text("Usage: /hackedserver check <player>"));
@@ -104,6 +106,7 @@ public class CommandsManager extends Command {
                 }
             }
             case "list" -> {
+                if (!sender.hasPermission("hackedserver.command.list")) return;
                 var playersWithChecks = HackedServer.getPlayers().stream()
                         .filter(player -> !player.getGenericChecks().isEmpty())
                         .collect(Collectors.toList());
