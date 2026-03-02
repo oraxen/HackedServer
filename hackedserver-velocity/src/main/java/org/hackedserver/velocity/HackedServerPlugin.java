@@ -21,7 +21,7 @@ import org.hackedserver.velocity.listeners.CustomPayloadListener;
 import org.hackedserver.velocity.listeners.HackedPlayerListeners;
 import org.hackedserver.velocity.logs.Logs;
 
-import javax.inject.Inject;
+import com.google.inject.Inject;
 
 import java.io.File;
 import java.nio.file.Path;
