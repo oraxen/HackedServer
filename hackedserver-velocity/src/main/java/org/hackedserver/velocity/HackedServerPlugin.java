@@ -60,7 +60,7 @@ public class HackedServerPlugin {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        server.getEventManager().register(this, new HackedPlayerListeners(server));
+        server.getEventManager().register(this, new HackedPlayerListeners(server, this));
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
         PacketEvents.getAPI().init();
@@ -86,7 +86,7 @@ public class HackedServerPlugin {
         commands.create();
 
         // Re-register event listeners
-        server.getEventManager().register(this, new HackedPlayerListeners(server));
+        server.getEventManager().register(this, new HackedPlayerListeners(server, this));
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
     }

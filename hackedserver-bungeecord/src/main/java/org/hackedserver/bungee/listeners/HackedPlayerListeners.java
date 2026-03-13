@@ -17,7 +17,13 @@ import org.hackedserver.core.bedrock.BedrockDetector;
 import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.BedrockConfig;
 
+import org.hackedserver.core.utils.JoinWebhook;
+
+import java.util.concurrent.TimeUnit;
+
 public class HackedPlayerListeners implements Listener {
+
+    private static final long JOIN_WEBHOOK_DELAY_SECONDS = 1L;
 
     @EventHandler
     public void onPlayerJoin(LoginEvent event) {
@@ -28,6 +34,11 @@ public class HackedPlayerListeners implements Listener {
     public void onPostLogin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+        
+        ProxyServer.getInstance().getScheduler().schedule(HackedServerPlugin.get(), () -> {
+            JoinWebhook.send(player.getName(), player.getUniqueId());
+        }, JOIN_WEBHOOK_DELAY_SECONDS, TimeUnit.SECONDS);
+
         if (hackedPlayer.hasPendingActions()) {
             hackedPlayer.executePendingActions();
         }

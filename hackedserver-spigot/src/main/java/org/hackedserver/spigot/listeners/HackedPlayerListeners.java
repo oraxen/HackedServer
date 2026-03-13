@@ -19,9 +19,13 @@ import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.core.bedrock.BedrockDetector;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
+import org.hackedserver.core.utils.JoinWebhook;
+
 import java.util.Map;
 
 public class HackedPlayerListeners implements Listener {
+
+    private static final long JOIN_WEBHOOK_DELAY_TICKS = 20L;
 
     @EventHandler
     public void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
@@ -32,6 +36,11 @@ public class HackedPlayerListeners implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+
+        Bukkit.getScheduler().runTaskLaterAsynchronously(HackedServerPlugin.get(), () -> {
+            JoinWebhook.send(player.getName(), player.getUniqueId());
+        }, JOIN_WEBHOOK_DELAY_TICKS);
+
         if (hackedPlayer.hasPendingActions()) {
             // Execute pending actions after a short delay to ensure player is fully initialized
             // Use at least 1 tick to ensure the join event completes

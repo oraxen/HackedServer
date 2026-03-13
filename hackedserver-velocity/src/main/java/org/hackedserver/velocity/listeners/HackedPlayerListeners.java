@@ -15,12 +15,20 @@ import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.BedrockConfig;
 import org.hackedserver.velocity.logs.Logs;
 
+import org.hackedserver.core.utils.JoinWebhook;
+
+import java.time.Duration;
+
 public class HackedPlayerListeners {
 
-    private final ProxyServer server;
+    private static final Duration JOIN_WEBHOOK_DELAY = Duration.ofSeconds(1);
 
-    public HackedPlayerListeners(ProxyServer server) {
+    private final ProxyServer server;
+    private final Object plugin;
+
+    public HackedPlayerListeners(ProxyServer server, Object plugin) {
         this.server = server;
+        this.plugin = plugin;
     }
 
     @Subscribe
@@ -32,6 +40,11 @@ public class HackedPlayerListeners {
     public void onPostLogin(PostLoginEvent event) {
         Player player = event.getPlayer();
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
+
+        server.getScheduler().buildTask(plugin, () -> {
+            JoinWebhook.send(player.getUsername(), player.getUniqueId());
+        }).delay(JOIN_WEBHOOK_DELAY).schedule();
+
         if (hackedPlayer.hasPendingActions()) {
             hackedPlayer.executePendingActions();
         }
