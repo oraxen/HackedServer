@@ -5,15 +5,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class DiscordWebhook {
 
     // Simple rate limiter: max 25 requests per 60 seconds (Discord limit is ~30)
     private static final int MAX_REQUESTS_PER_WINDOW = 25;
     private static final long WINDOW_MS = 60_000L;
-    private static final AtomicLong windowStart = new AtomicLong(System.currentTimeMillis());
-    private static final AtomicInteger requestCount = new AtomicInteger(0);
+    // Encodes both window start and request count in a single AtomicLong to ensure
+    // fully atomic window resets. High 48 bits = timestamp ms (good until year 2861),
+    // low 16 bits = request count (max 65535, well above our limit of 25).
+    private static final int COUNT_BITS = 16;
+    private static final long COUNT_MASK = (1L << COUNT_BITS) - 1;
+    private static final AtomicLong windowState = new AtomicLong(pack(System.currentTimeMillis(), 0));
 
     public static void send(String webhookUrl, String content, String embedTitle, String embedDescription, int embedColor, String embedFooter) {
         if (webhookUrl == null || webhookUrl.isEmpty()) {
@@ -52,19 +55,41 @@ public class DiscordWebhook {
         }
     }
 
+    private static long pack(long timestampMs, int count) {
+        return (timestampMs << COUNT_BITS) | (count & COUNT_MASK);
+    }
+
+    private static long unpackTimestamp(long packed) {
+        return packed >>> COUNT_BITS;
+    }
+
+    private static int unpackCount(long packed) {
+        return (int) (packed & COUNT_MASK);
+    }
+
     private static boolean tryAcquireRateLimit() {
         long now = System.currentTimeMillis();
         while (true) {
-            long start = windowStart.get();
+            long current = windowState.get();
+            long start = unpackTimestamp(current);
+            int count = unpackCount(current);
+
+            long next;
             if (now - start >= WINDOW_MS) {
-                if (windowStart.compareAndSet(start, now)) {
-                    requestCount.set(1);
-                    return true;
-                }
-                // Another thread reset the window; retry with updated values
-                continue;
+                // Window expired - reset with count=1 (this request)
+                next = pack(now, 1);
+            } else if (count < MAX_REQUESTS_PER_WINDOW) {
+                // Window active and under limit - increment count
+                next = pack(start, count + 1);
+            } else {
+                // Window active but limit reached
+                return false;
             }
-            return requestCount.incrementAndGet() <= MAX_REQUESTS_PER_WINDOW;
+
+            if (windowState.compareAndSet(current, next)) {
+                return true;
+            }
+            // CAS failed, another thread modified state - retry
         }
     }
 
