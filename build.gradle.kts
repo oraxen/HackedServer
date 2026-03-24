@@ -92,7 +92,7 @@ project(":hackedserver-core") {
         // Explicit ANTLR runtime dependency to ensure it gets shaded
         // xtomlj uses 4.7.2 which has ATN v3, conflicts with Arclight's ANTLR 4.13.1 (ATN v4)
         implementation("org.antlr:antlr4-runtime:4.7.2")
-        implementation("com.lunarclient:apollo-protos:0.0.5")
+        implementation("com.lunarclient:apollo-protos:0.0.6")
         // Geyser/Floodgate APIs for bedrock player detection (compile-only, loaded via class isolation)
         compileOnly("org.geysermc.geyser:api:2.4.2-SNAPSHOT")
         compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")

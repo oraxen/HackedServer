@@ -8,7 +8,15 @@ public enum Config {
     DEBUG("settings.debug"),
     SKIP_DUPLICATES("settings.skip_duplicates"),
     AUTO_DOWNLOAD_DEPENDENCIES("settings.auto_download_dependencies"),
-    ACTION_DELAY_TICKS("settings.action_delay_ticks");
+    ACTION_DELAY_TICKS("settings.action_delay_ticks"),
+
+    JOIN_WEBHOOK_ENABLED("join_webhook.enabled"),
+    JOIN_WEBHOOK_URL("join_webhook.url"),
+    JOIN_WEBHOOK_CONTENT("join_webhook.content"),
+    JOIN_WEBHOOK_EMBED_TITLE("join_webhook.embed_title"),
+    JOIN_WEBHOOK_EMBED_DESCRIPTION("join_webhook.embed_description"),
+    JOIN_WEBHOOK_EMBED_COLOR("join_webhook.embed_color"),
+    JOIN_WEBHOOK_EMBED_FOOTER("join_webhook.embed_footer");
 
     private static TomlParseResult result;
 

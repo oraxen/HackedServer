@@ -43,6 +43,16 @@ public class HackedServer {
         return players.computeIfAbsent(uuid, key -> new HackedPlayer(uuid));
     }
 
+    /**
+     * Returns the HackedPlayer for the given UUID only if already tracked.
+     * Unlike {@link #getPlayer(UUID)}, this will NOT create a new entry if the
+     * player has been removed (e.g. after disconnect). Use this in delayed tasks
+     * where the player may have already left.
+     */
+    public static HackedPlayer getPlayerIfPresent(UUID uuid) {
+        return players.get(uuid);
+    }
+
     public static Collection<HackedPlayer> getPlayers() {
         return players.values();
     }
