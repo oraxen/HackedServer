@@ -34,7 +34,9 @@ public class JoinWebhook {
         }
         String safeName = playerName != null ? playerName : "Unknown";
         String safeUuid = playerUuid != null ? playerUuid.toString() : "Unknown";
-        HackedPlayer hackedPlayer = playerUuid != null ? HackedServer.getPlayer(playerUuid) : null;
+        // Use getPlayerIfPresent to avoid recreating a removed player record.
+        // The webhook runs on a delay, so the player may have disconnected by now.
+        HackedPlayer hackedPlayer = playerUuid != null ? HackedServer.getPlayerIfPresent(playerUuid) : null;
         String client = getClientName(hackedPlayer);
         String modlist = getModList(hackedPlayer);
         return input.replace("{player}", safeName)

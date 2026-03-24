@@ -54,13 +54,18 @@ public class DiscordWebhook {
 
     private static boolean tryAcquireRateLimit() {
         long now = System.currentTimeMillis();
-        long start = windowStart.get();
-        if (now - start >= WINDOW_MS) {
-            windowStart.set(now);
-            requestCount.set(1);
-            return true;
+        while (true) {
+            long start = windowStart.get();
+            if (now - start >= WINDOW_MS) {
+                if (windowStart.compareAndSet(start, now)) {
+                    requestCount.set(1);
+                    return true;
+                }
+                // Another thread reset the window; retry with updated values
+                continue;
+            }
+            return requestCount.incrementAndGet() <= MAX_REQUESTS_PER_WINDOW;
         }
-        return requestCount.incrementAndGet() <= MAX_REQUESTS_PER_WINDOW;
     }
 
     private static String buildJsonPayload(String content, String title, String description, int color, String footer) {
