@@ -37,8 +37,12 @@ public class HackedPlayerListeners implements Listener {
         Player player = event.getPlayer();
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
 
+        // Capture player data on the main thread before scheduling the async webhook task.
+        // Accessing Bukkit Player objects from async threads is unsafe and can cause errors.
+        final String playerName = player.getName();
+        final java.util.UUID playerUuid = player.getUniqueId();
         Bukkit.getScheduler().runTaskLaterAsynchronously(HackedServerPlugin.get(), () -> {
-            JoinWebhook.send(player.getName(), player.getUniqueId());
+            JoinWebhook.send(playerName, playerUuid);
         }, JOIN_WEBHOOK_DELAY_TICKS);
 
         if (hackedPlayer.hasPendingActions()) {

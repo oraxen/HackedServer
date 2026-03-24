@@ -18,25 +18,27 @@ public class JoinWebhook {
             return;
         }
 
+        // Look up the player once to avoid redundant map lookups across placeholder calls.
+        // Use getPlayerIfPresent to avoid recreating a removed player record — the webhook
+        // runs on a delay, so the player may have disconnected by now.
+        HackedPlayer hackedPlayer = playerUuid != null ? HackedServer.getPlayerIfPresent(playerUuid) : null;
+
         String url = Config.JOIN_WEBHOOK_URL.getStringOrDefault("");
-        String content = replacePlaceholders(Config.JOIN_WEBHOOK_CONTENT.getStringOrDefault(""), playerName, playerUuid);
-        String title = replacePlaceholders(Config.JOIN_WEBHOOK_EMBED_TITLE.getStringOrDefault("Player Joined"), playerName, playerUuid);
-        String description = replacePlaceholders(Config.JOIN_WEBHOOK_EMBED_DESCRIPTION.getStringOrDefault("Player {player} has joined."), playerName, playerUuid);
+        String content = replacePlaceholders(Config.JOIN_WEBHOOK_CONTENT.getStringOrDefault(""), playerName, playerUuid, hackedPlayer);
+        String title = replacePlaceholders(Config.JOIN_WEBHOOK_EMBED_TITLE.getStringOrDefault("Player Joined"), playerName, playerUuid, hackedPlayer);
+        String description = replacePlaceholders(Config.JOIN_WEBHOOK_EMBED_DESCRIPTION.getStringOrDefault("Player {player} has joined the server."), playerName, playerUuid, hackedPlayer);
         int color = (int) Config.JOIN_WEBHOOK_EMBED_COLOR.toLong(65280);
-        String footer = replacePlaceholders(Config.JOIN_WEBHOOK_EMBED_FOOTER.getStringOrDefault("HackedServer"), playerName, playerUuid);
+        String footer = replacePlaceholders(Config.JOIN_WEBHOOK_EMBED_FOOTER.getStringOrDefault("HackedServer"), playerName, playerUuid, hackedPlayer);
 
         DiscordWebhook.send(url, content, title, description, color, footer);
     }
 
-    private static String replacePlaceholders(String input, String playerName, UUID playerUuid) {
+    private static String replacePlaceholders(String input, String playerName, UUID playerUuid, HackedPlayer hackedPlayer) {
         if (input == null) {
             return "";
         }
         String safeName = playerName != null ? playerName : "Unknown";
         String safeUuid = playerUuid != null ? playerUuid.toString() : "Unknown";
-        // Use getPlayerIfPresent to avoid recreating a removed player record.
-        // The webhook runs on a delay, so the player may have disconnected by now.
-        HackedPlayer hackedPlayer = playerUuid != null ? HackedServer.getPlayerIfPresent(playerUuid) : null;
         String client = getClientName(hackedPlayer);
         String modlist = getModList(hackedPlayer);
         return input.replace("{player}", safeName)

@@ -28,9 +28,10 @@ public class DiscordWebhook {
             return;
         }
 
+        HttpURLConnection connection = null;
         try {
             URL url = new URL(webhookUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
             connection.setRequestMethod("POST");
@@ -49,9 +50,10 @@ public class DiscordWebhook {
             if (responseCode >= 400) {
                 System.err.println("[HackedServer] Webhook request failed with status: " + responseCode);
             }
-            connection.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (connection != null) connection.disconnect();
         }
     }
 
