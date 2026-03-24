@@ -4,11 +4,24 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DiscordWebhook {
 
+    // Simple rate limiter: max 25 requests per 60 seconds (Discord limit is ~30)
+    private static final int MAX_REQUESTS_PER_WINDOW = 25;
+    private static final long WINDOW_MS = 60_000L;
+    private static final AtomicLong windowStart = new AtomicLong(System.currentTimeMillis());
+    private static final AtomicInteger requestCount = new AtomicInteger(0);
+
     public static void send(String webhookUrl, String content, String embedTitle, String embedDescription, int embedColor, String embedFooter) {
         if (webhookUrl == null || webhookUrl.isEmpty()) {
+            return;
+        }
+
+        if (!tryAcquireRateLimit()) {
+            System.err.println("[HackedServer] Discord webhook rate limit reached, skipping message");
             return;
         }
 
@@ -37,6 +50,17 @@ public class DiscordWebhook {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static boolean tryAcquireRateLimit() {
+        long now = System.currentTimeMillis();
+        long start = windowStart.get();
+        if (now - start >= WINDOW_MS) {
+            windowStart.set(now);
+            requestCount.set(1);
+            return true;
+        }
+        return requestCount.incrementAndGet() <= MAX_REQUESTS_PER_WINDOW;
     }
 
     private static String buildJsonPayload(String content, String title, String description, int color, String footer) {

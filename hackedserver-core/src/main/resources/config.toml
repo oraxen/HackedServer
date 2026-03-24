@@ -15,6 +15,8 @@ auto_download_dependencies = true
 # Delay in ticks before executing actions after a check is triggered
 # This helps ensure the player is fully connected before kicks/commands are executed
 # Set to 0 for no delay, or increase if kicks fail on some server software (e.g., Purpur)
+# Can also be configured per-action in actions.toml
+action_delay_ticks = 20
 
 [join_webhook]
 enabled = false
