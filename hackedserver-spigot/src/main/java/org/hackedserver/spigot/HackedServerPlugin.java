@@ -8,10 +8,12 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.bedrock.BedrockDetector;
 import org.hackedserver.core.config.ConfigsManager;
 import org.hackedserver.core.config.Message;
+import org.hackedserver.spigot.commands.BukkitCommandFallback;
 import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.spigot.hopper.HackedServerHopper;
 import org.hackedserver.spigot.listeners.HackedPlayerListeners;
 import org.hackedserver.spigot.listeners.LunarApolloListener;
+import org.hackedserver.spigot.probing.SignTranslationProber;
 import org.hackedserver.spigot.protocol.PacketEventsIntegration;
 import org.hackedserver.spigot.protocol.ProtocolLibIntegration;
 import org.hackedserver.spigot.utils.logs.Logs;
@@ -29,6 +31,8 @@ public class HackedServerPlugin extends JavaPlugin {
     private PacketEventsIntegration packetEventsIntegration;
     @Nullable
     private LunarApolloListener lunarApolloListener;
+    @Nullable
+    private SignTranslationProber signTranslationProber;
 
     public HackedServerPlugin() throws NoSuchFieldException, IllegalAccessException {
         instance = this;
@@ -62,6 +66,22 @@ public class HackedServerPlugin extends JavaPlugin {
     public void onEnable() {
         // Check if ProtocolLib is available
         protocolLibAvailable = Bukkit.getPluginManager().getPlugin("ProtocolLib") != null;
+
+        // Re-check PacketEvents availability during onEnable() if not found during onLoad()
+        // Paper's new plugin system may not have loaded packetevents' classes during our onLoad()
+        if (!packetEventsAvailable) {
+            packetEventsAvailable = isPacketEventsPresent();
+            if (packetEventsAvailable) {
+                try {
+                    packetEventsIntegration = new PacketEventsIntegration(this);
+                    packetEventsIntegration.load();
+                } catch (Throwable e) {
+                    getLogger().warning("Failed to initialize PacketEvents: " + e.getMessage());
+                    packetEventsAvailable = false;
+                    packetEventsIntegration = null;
+                }
+            }
+        }
 
         // Determine which packet library to use
         // Prefer ProtocolLib on standard Paper/Spigot, use PacketEvents on hybrid servers like Arclight
@@ -117,14 +137,46 @@ public class HackedServerPlugin extends JavaPlugin {
 
         lunarApolloListener = new LunarApolloListener(this);
 
-        // Try to load commands with CommandAPI (may not be available on all server types)
+        // Register sign translation probing (active mod detection via packets)
+        // Only register when PacketEvents is actually initialized (usePacketEvents or standalone plugin)
+        // SignTranslationProber uses 1.20+ sign APIs (Side, SignSide, Player#openSign)
+        boolean packetEventsInitialized = packetEventsIntegration != null
+                && packetEventsIntegration.isReadyForListeners();
+        if (packetEventsAvailable && packetEventsInitialized) {
+            if (isSignApiAvailable()) {
+                try {
+                    signTranslationProber = new SignTranslationProber();
+                    Bukkit.getPluginManager().registerEvents(signTranslationProber, this);
+                    signTranslationProber.register();
+                    getLogger().info("Sign translation probing enabled (PacketEvents)");
+                } catch (Throwable e) {
+                    signTranslationProber = null;
+                    getLogger().warning("Failed to register sign translation probing: " + e.getMessage());
+                }
+            } else {
+                getLogger().info("Sign translation probing requires 1.20+ server APIs - disabled on this version");
+            }
+        } else if (!packetEventsAvailable) {
+            getLogger().warning("Sign translation probing requires PacketEvents - disabled");
+        } else {
+            getLogger().warning("Sign translation probing requires an initialized PacketEvents API - disabled");
+        }
+
+        // Try to load commands with CommandAPI, fall back to Bukkit commands if unavailable
+        boolean commandsRegistered = false;
         try {
             new CommandsManager(this, audiences).loadCommands();
+            commandsRegistered = true;
         } catch (LinkageError e) {
-            // Catches NoClassDefFoundError, IncompatibleClassChangeError, etc.
-            getLogger().warning("CommandAPI is not available - commands will not be registered.");
-            getLogger().warning("This is expected on non-Paper servers like Arclight/Mohist.");
-            getLogger().info("The plugin will function normally without command support.");
+            // CommandAPI not available - will use Bukkit fallback below
+        }
+        if (!commandsRegistered) {
+            BukkitCommandFallback fallback = new BukkitCommandFallback(this, audiences);
+            var cmd = getCommand("hackedserver");
+            if (cmd != null) {
+                cmd.setExecutor(fallback);
+                cmd.setTabCompleter(fallback);
+            }
         }
         Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
 
@@ -142,6 +194,9 @@ public class HackedServerPlugin extends JavaPlugin {
         if (lunarApolloListener != null) {
             lunarApolloListener.unregister();
         }
+        if (signTranslationProber != null) {
+            signTranslationProber.unregister();
+        }
         HackedServer.clear();
     }
 
@@ -156,6 +211,19 @@ public class HackedServerPlugin extends JavaPlugin {
         // Also check if the PacketEvents classes are available (could be shaded)
         try {
             Class.forName("com.github.retrooper.packetevents.PacketEvents");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if the 1.20+ sign API (Side, SignSide, Player#openSign) is available.
+     * These classes were added in Bukkit 1.20 and are required by SignTranslationProber.
+     */
+    private boolean isSignApiAvailable() {
+        try {
+            Class.forName("org.bukkit.block.sign.Side");
             return true;
         } catch (ClassNotFoundException e) {
             return false;

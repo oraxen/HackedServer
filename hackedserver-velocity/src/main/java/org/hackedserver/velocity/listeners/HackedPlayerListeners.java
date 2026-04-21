@@ -1,5 +1,7 @@
 package org.hackedserver.velocity.listeners;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.User;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
@@ -13,6 +15,7 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.bedrock.BedrockDetector;
 import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.BedrockConfig;
+import org.hackedserver.core.probing.PacketSignProber;
 import org.hackedserver.velocity.logs.Logs;
 
 import org.hackedserver.core.utils.JoinWebhook;
@@ -25,10 +28,12 @@ public class HackedPlayerListeners {
 
     private final ProxyServer server;
     private final Object plugin;
+    private final PacketSignProber signProber;
 
-    public HackedPlayerListeners(ProxyServer server, Object plugin) {
+    public HackedPlayerListeners(ProxyServer server, Object plugin, PacketSignProber signProber) {
         this.server = server;
         this.plugin = plugin;
+        this.signProber = signProber;
     }
 
     @Subscribe
@@ -49,10 +54,21 @@ public class HackedPlayerListeners {
             hackedPlayer.executePendingActions();
         }
         handleBedrockDetection(player, hackedPlayer);
+
+        // Start sign translation probe if enabled
+        if (signProber != null && !player.hasPermission("hackedserver.bypass")) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
+            if (user != null) {
+                signProber.startProbe(user, player.getUsername());
+            }
+        }
     }
 
     @Subscribe
     public void onPlayerLeave(DisconnectEvent event) {
+        if (signProber != null) {
+            signProber.onPlayerDisconnect(event.getPlayer().getUniqueId());
+        }
         HackedServer.removePlayer(event.getPlayer().getUniqueId());
     }
 

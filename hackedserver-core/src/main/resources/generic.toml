@@ -164,6 +164,13 @@ message_has = "PLC18"
 name = "PvPLounge Client"
 category = "client"
 
+[meteor_client]
+actions = ["alert"]
+channels = ["REGISTER", "minecraft:register"]
+message_has = "meteor-client"
+name = "Meteor Client"
+category = "client"
+
 [cracked_vape]
 actions = ["alert"]
 channels = ["LOLIMAHCKER"]

@@ -44,6 +44,13 @@ mods = [
     "wurst",
     "baritone",
     "meteor",
+    "meteor-client",
     "aristois",
     "impact"
 ]
+
+[spoofing]
+# Detect when the client brand doesn't match registered channels
+# e.g., brand claims "vanilla" but registers fabric/forge channels (ServerSpoof)
+enabled = true
+actions = ["alert"]

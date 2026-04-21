@@ -26,6 +26,7 @@ import org.hackedserver.core.forge.ForgeConfig;
 import org.hackedserver.core.forge.ForgeHandshakeProcessor;
 import org.hackedserver.core.forge.ForgeHandshakeResult;
 import org.hackedserver.core.forge.ForgeModInfo;
+import org.hackedserver.core.forge.ForgeSpoofingDetector;
 import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.utils.logs.Logs;
 
@@ -125,6 +126,7 @@ public class PacketEventsPayloadListener extends PacketListenerAbstract {
     private void processForgePacket(UUID playerUuid, String playerName, HackedPlayer hackedPlayer, String channel, String message) {
         // Detect client type from minecraft:brand
         if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
+            hackedPlayer.setBrand(message);
             ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
             if (clientType != null && hackedPlayer.getForgeClientType() == null) {
                 hackedPlayer.setForgeClientType(clientType);
@@ -133,6 +135,9 @@ public class PacketEventsPayloadListener extends PacketListenerAbstract {
                     runForgeActions(result.getTriggers(), playerUuid, playerName);
                 }
             }
+
+            // Re-evaluate spoofing: brand arrived after register
+            checkBrandSpoofing(playerUuid, playerName, hackedPlayer);
         }
 
         // Detect mods from minecraft:register
@@ -142,6 +147,27 @@ public class PacketEventsPayloadListener extends PacketListenerAbstract {
                 ForgeHandshakeResult result = ForgeHandshakeProcessor.processMods(hackedPlayer, mods);
                 if (result.hasTriggers()) {
                     runForgeActions(result.getTriggers(), playerUuid, playerName);
+                }
+            }
+
+            // Track fabric channels for deferred spoofing check
+            if (ForgeChannelParser.containsFabricChannels(message)) {
+                hackedPlayer.setFabricChannelsDetected(true);
+            }
+
+            // Brand spoofing detection: vanilla brand + fabric channels = ServerSpoof
+            checkBrandSpoofing(playerUuid, playerName, hackedPlayer);
+        }
+    }
+
+    private void checkBrandSpoofing(UUID playerUuid, String playerName, HackedPlayer hackedPlayer) {
+        if (ForgeSpoofingDetector.detect(hackedPlayer)) {
+            List<Action> actions = ForgeConfig.getSpoofingActions();
+            if (!actions.isEmpty()) {
+                for (Action action : actions) {
+                    performActions(action, playerUuid, playerName, ForgeSpoofingDetector.CHECK_NAME,
+                            Placeholder.unparsed("player", playerName),
+                            Placeholder.parsed("name", ForgeSpoofingDetector.CHECK_NAME));
                 }
             }
         }

@@ -1,0 +1,33 @@
+# Active probing via sign translation vulnerability (MC-265322)
+# Works on Paper/Spigot (real sign blocks) and BungeeCord/Velocity (fake client-side packets).
+# Detects mods by exploiting client-side translation key resolution in sign editors
+enabled = true
+
+[settings]
+# Delay in ticks after player join before probing (20 ticks = 1 second)
+delay_ticks = 40
+# Y offset from player position for sign placement (negative = below)
+# Only applies to Paper/Spigot; proxy platforms use a fixed position near the player.
+sign_offset_y = -5
+
+# Translation checks - each entry detects a specific mod
+# Up to 4 checks per probe cycle (one per sign line)
+#
+# bypass_protection: wraps the key in a %s substitution to evade
+# Meteor's sign translation mixin that strips known keys
+
+[checks.meteor_client]
+name = "Meteor Client"
+translation_key = "key.category.meteor-client.meteor-client"
+bypass_protection = true
+actions = ["alert"]
+
+[checks.wurst]
+name = "Wurst Client"
+translation_key = "key.wurst.zoom"
+actions = ["alert"]
+
+[checks.freecam]
+name = "Freecam"
+translation_key = "key.freecam.toggle"
+actions = ["alert"]

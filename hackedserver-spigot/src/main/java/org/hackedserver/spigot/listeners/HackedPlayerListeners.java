@@ -15,9 +15,9 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.BedrockConfig;
 import org.hackedserver.spigot.HackedHolder;
 import org.hackedserver.spigot.HackedServerPlugin;
-import org.hackedserver.spigot.commands.CommandsManager;
 import org.hackedserver.core.bedrock.BedrockDetector;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import org.hackedserver.spigot.utils.HackedInventoryView;
 
 import org.hackedserver.core.utils.JoinWebhook;
 
@@ -81,9 +81,9 @@ public class HackedPlayerListeners implements Listener {
 
         Player player = (Player) event.getWhoClicked();
         if (slot == 45 && holder.getPage() > 0) {
-            CommandsManager.openInvPage(player, holder.getPage() - 1);
+            HackedInventoryView.openInvPage(player, holder.getPage() - 1);
         } else if (slot == 53 && inv.getItem(53) != null) {
-            CommandsManager.openInvPage(player, holder.getPage() + 1);
+            HackedInventoryView.openInvPage(player, holder.getPage() + 1);
         }
     }
 

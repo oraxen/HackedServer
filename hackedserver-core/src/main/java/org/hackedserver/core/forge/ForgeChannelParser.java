@@ -130,4 +130,47 @@ public final class ForgeChannelParser {
     public static boolean isBuiltinNamespace(String namespace) {
         return namespace != null && BUILTIN_NAMESPACES.contains(namespace.toLowerCase(Locale.ROOT));
     }
+
+    /**
+     * Checks if the minecraft:register payload contains Fabric-related channels.
+     * This is used for brand spoofing detection — a "vanilla" client should never
+     * register Fabric channels.
+     *
+     * @param message the register payload
+     * @return true if Fabric channels are present
+     */
+    public static boolean containsFabricChannels(String message) {
+        if (message == null || message.isEmpty()) {
+            return false;
+        }
+
+        String[] channels;
+        if (message.contains("\0")) {
+            channels = message.split("\0");
+        } else {
+            channels = message.split("\\s+");
+        }
+
+        for (String channel : channels) {
+            channel = channel.trim().toLowerCase(Locale.ROOT);
+            if (channel.startsWith("fabric-") || channel.startsWith("fabric:") || channel.startsWith("fabricloader")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the brand string indicates a vanilla client (no mod loader).
+     *
+     * @param brand the brand string
+     * @return true if the brand claims to be vanilla
+     */
+    public static boolean isVanillaBrand(String brand) {
+        if (brand == null || brand.isEmpty()) {
+            return false;
+        }
+        String lower = brand.toLowerCase(Locale.ROOT).trim();
+        return lower.equals("vanilla") || lower.equals("minecraft");
+    }
 }

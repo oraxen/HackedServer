@@ -33,6 +33,8 @@ public final class ForgeConfig {
     private static Set<String> blacklistedMods = Collections.emptySet();
     private static String whitelistedColor = "<green>";
     private static String blacklistedColor = "<red>";
+    private static boolean spoofingEnabled = true;
+    private static List<Action> spoofingActions = Collections.emptyList();
 
     private ForgeConfig() {
     }
@@ -50,6 +52,8 @@ public final class ForgeConfig {
         blacklistedMods = Collections.emptySet();
         whitelistedColor = "<green>";
         blacklistedColor = "<red>";
+        spoofingEnabled = true;
+        spoofingActions = Collections.emptyList();
 
         if (result == null) {
             return;
@@ -109,6 +113,12 @@ public final class ForgeConfig {
                 }
                 blacklistedMods = parseModList(blacklistTable.getArray("mods"));
             }
+        }
+
+        TomlTable spoofingTable = result.getTable("spoofing");
+        if (spoofingTable != null) {
+            spoofingEnabled = getBoolean(spoofingTable, "enabled", spoofingEnabled);
+            spoofingActions = resolveActions(spoofingTable.getArray("actions"));
         }
     }
 
@@ -228,6 +238,14 @@ public final class ForgeConfig {
         }
 
         return output.toString();
+    }
+
+    public static boolean isSpoofingDetectionEnabled() {
+        return spoofingEnabled;
+    }
+
+    public static List<Action> getSpoofingActions() {
+        return spoofingActions;
     }
 
     public static String normalizeModId(String modId) {

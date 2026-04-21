@@ -96,6 +96,8 @@ project(":hackedserver-core") {
         // Geyser/Floodgate APIs for bedrock player detection (compile-only, loaded via class isolation)
         compileOnly("org.geysermc.geyser:api:2.4.2-SNAPSHOT")
         compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
+        // PacketEvents API for packet-level sign translation probing (proxy platforms)
+        compileOnly("com.github.retrooper:packetevents-api:2.11.1")
     }
 }
 
@@ -130,6 +132,7 @@ project(":hackedserver-bungeecord") {
         compileOnly("net.md-5:bungeecord-api:1.20-R0.2")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
+        compileOnly("com.github.retrooper:packetevents-bungeecord:2.11.1")
 
         implementation("net.kyori:adventure-platform-bungeecord:4.3.0")
         implementation("org.bstats:bstats-bungeecord:3.1.0")

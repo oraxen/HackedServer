@@ -17,6 +17,7 @@ import org.hackedserver.core.forge.ForgeConfig;
 import org.hackedserver.core.forge.ForgeHandshakeProcessor;
 import org.hackedserver.core.forge.ForgeHandshakeResult;
 import org.hackedserver.core.forge.ForgeModInfo;
+import org.hackedserver.core.forge.ForgeSpoofingDetector;
 import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.utils.logs.Logs;
 
@@ -92,6 +93,7 @@ public final class PayloadProcessor {
     private static void processForgePacket(Player player, HackedPlayer hackedPlayer, String channel, String message) {
         // Detect client type from minecraft:brand
         if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
+            hackedPlayer.setBrand(message);
             ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
             if (clientType != null && hackedPlayer.getForgeClientType() == null) {
                 hackedPlayer.setForgeClientType(clientType);
@@ -100,6 +102,9 @@ public final class PayloadProcessor {
                     runForgeActions(result.getTriggers(), player);
                 }
             }
+
+            // Re-evaluate spoofing: brand arrived after register
+            checkBrandSpoofing(player, hackedPlayer);
         }
 
         // Detect mods from minecraft:register
@@ -110,6 +115,23 @@ public final class PayloadProcessor {
                 if (result.hasTriggers()) {
                     runForgeActions(result.getTriggers(), player);
                 }
+            }
+
+            // Track fabric channels for deferred spoofing check
+            if (ForgeChannelParser.containsFabricChannels(message)) {
+                hackedPlayer.setFabricChannelsDetected(true);
+            }
+
+            // Brand spoofing detection: vanilla brand + fabric channels = ServerSpoof
+            checkBrandSpoofing(player, hackedPlayer);
+        }
+    }
+
+    private static void checkBrandSpoofing(Player player, HackedPlayer hackedPlayer) {
+        if (ForgeSpoofingDetector.detect(hackedPlayer)) {
+            List<Action> actions = ForgeConfig.getSpoofingActions();
+            if (!actions.isEmpty()) {
+                runActions(player, ForgeSpoofingDetector.CHECK_NAME, actions);
             }
         }
     }

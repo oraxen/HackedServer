@@ -15,7 +15,9 @@ import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
 
 import org.hackedserver.core.bedrock.BedrockDetector;
+import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.ConfigsManager;
+import org.hackedserver.core.probing.PacketSignProber;
 import org.hackedserver.velocity.commands.HackedCommands;
 import org.hackedserver.velocity.listeners.CustomPayloadListener;
 import org.hackedserver.velocity.listeners.HackedPlayerListeners;
@@ -23,8 +25,13 @@ import org.hackedserver.velocity.logs.Logs;
 
 import com.google.inject.Inject;
 
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 
 @Plugin(
@@ -37,6 +44,7 @@ public class HackedServerPlugin {
     private final ProxyServer server;
     private final HackedCommands commands;
     private final File folder;
+    private PacketSignProber signProber;
 
     @Inject
     public HackedServerPlugin(
@@ -60,9 +68,15 @@ public class HackedServerPlugin {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        server.getEventManager().register(this, new HackedPlayerListeners(server, this));
+        // Create sign prober with Velocity action executor
+        signProber = new PacketSignProber((uuid, playerName, checkName, actions) -> {
+            executeProbeActions(uuid, playerName, checkName, actions);
+        });
+
+        server.getEventManager().register(this, new HackedPlayerListeners(server, this, signProber));
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
+        signProber.register();
         PacketEvents.getAPI().init();
         commands.create();
 
@@ -75,6 +89,11 @@ public class HackedServerPlugin {
         // Unregister all event listeners for this plugin
         server.getEventManager().unregisterListeners(this);
 
+        // Unregister sign prober before terminating PacketEvents
+        if (signProber != null) {
+            signProber.unregister();
+        }
+
         // Terminate and reinit PacketEvents
         PacketEvents.getAPI().terminate();
         PacketEvents.getAPI().init();
@@ -85,9 +104,56 @@ public class HackedServerPlugin {
         // Recreate commands
         commands.create();
 
+        // Re-create sign prober with fresh config
+        signProber = new PacketSignProber((uuid, playerName, checkName, actions) -> {
+            executeProbeActions(uuid, playerName, checkName, actions);
+        });
+
         // Re-register event listeners
-        server.getEventManager().register(this, new HackedPlayerListeners(server, this));
+        server.getEventManager().register(this, new HackedPlayerListeners(server, this, signProber));
         PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
+        signProber.register();
+    }
+
+    private void executeProbeActions(UUID uuid, String playerName, String checkName, List<Action> actions) {
+        if (actions == null || actions.isEmpty()) {
+            return;
+        }
+
+        TagResolver.Single[] templates = new TagResolver.Single[]{
+                Placeholder.unparsed("player", playerName),
+                Placeholder.parsed("name", checkName)
+        };
+
+        for (Action action : actions) {
+            if (action.hasAlert()) {
+                Logs.logComponent(action.getAlert(templates));
+                for (com.velocitypowered.api.proxy.Player admin : server.getAllPlayers()) {
+                    if (admin.hasPermission("hackedserver.alert")) {
+                        admin.sendMessage(action.getAlert(templates));
+                    }
+                }
+            }
+
+            com.velocitypowered.api.proxy.Player player = server.getPlayer(uuid).orElse(null);
+            if (player == null || !player.isActive()) {
+                continue;
+            }
+            if (player.hasPermission("hackedserver.bypass")) {
+                continue;
+            }
+
+            for (String command : action.getConsoleCommands()) {
+                server.getCommandManager().executeAsync(server.getConsoleCommandSource(),
+                        command.replace("<player>", playerName)
+                                .replace("<name>", checkName));
+            }
+            for (String command : action.getPlayerCommands()) {
+                server.getCommandManager().executeAsync(player,
+                        command.replace("<player>", playerName)
+                                .replace("<name>", checkName));
+            }
+        }
     }
 }

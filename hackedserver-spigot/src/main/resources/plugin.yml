@@ -4,3 +4,8 @@ version: ${projectVersion}
 author: Th0rgal
 softdepend: [ ViaVersion, ProtocolSupport, ProtocolLib, packetevents, Geyser-Spigot, Floodgate ]
 api-version: 1.18
+commands:
+  hackedserver:
+    description: HackedServer main command
+    aliases: [hs]
+    permission: hackedserver.command

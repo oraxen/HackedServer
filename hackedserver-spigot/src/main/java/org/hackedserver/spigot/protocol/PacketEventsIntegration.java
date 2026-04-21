@@ -72,6 +72,14 @@ public final class PacketEventsIntegration {
         plugin.getLogger().info("PacketEvents listener registered successfully");
     }
 
+    public boolean isReadyForListeners() {
+        try {
+            return PacketEvents.getAPI() != null && PacketEvents.getAPI().getEventManager() != null;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     /**
      * Unregister the packet listener and terminate PacketEvents if we own it.
      */
