@@ -1,6 +1,5 @@
 package org.hackedserver.spigot;
 
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,12 +15,13 @@ import org.hackedserver.spigot.listeners.LunarApolloListener;
 import org.hackedserver.spigot.probing.SignTranslationProber;
 import org.hackedserver.spigot.protocol.PacketEventsIntegration;
 import org.hackedserver.spigot.protocol.ProtocolLibIntegration;
+import org.hackedserver.spigot.utils.HackedAudiences;
 import org.hackedserver.spigot.utils.logs.Logs;
 import org.jetbrains.annotations.Nullable;
 
 public class HackedServerPlugin extends JavaPlugin {
 
-    private BukkitAudiences audiences;
+    private HackedAudiences audiences;
     private static HackedServerPlugin instance;
     private boolean protocolLibAvailable = false;
     private boolean packetEventsAvailable = false;
@@ -64,6 +64,10 @@ public class HackedServerPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // Set up messaging first so every message below reaches the console
+        audiences = HackedAudiences.create(this);
+        Logs.onEnable(audiences);
+
         // Check if ProtocolLib is available
         protocolLibAvailable = Bukkit.getPluginManager().getPlugin("ProtocolLib") != null;
 
@@ -101,8 +105,6 @@ public class HackedServerPlugin extends JavaPlugin {
             }
         }
 
-        audiences = BukkitAudiences.create(this);
-        Logs.onEnable(audiences);
         new Metrics(this, 2008);
 
         // Initialize bedrock detection (auto-detects Geyser/Floodgate APIs)
@@ -198,6 +200,11 @@ public class HackedServerPlugin extends JavaPlugin {
             signTranslationProber.unregister();
         }
         HackedServer.clear();
+        if (audiences != null) {
+            Logs.onEnable(null);
+            audiences.close();
+            audiences = null;
+        }
     }
 
     /**
@@ -253,7 +260,7 @@ public class HackedServerPlugin extends JavaPlugin {
                 serverName.contains("magma");
     }
 
-    public BukkitAudiences getAudiences() {
+    public HackedAudiences getAudiences() {
         return audiences;
     }
 
