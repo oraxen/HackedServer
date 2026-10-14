@@ -29,6 +29,14 @@ public class Logs {
         Bukkit.getConsoleSender().sendMessage(message);
     }
 
+    /**
+     * Logs an important lifecycle message (e.g. which packet library is used).
+     * Unlike regular INFO records, these are not dropped by {@link CustomLogger}.
+     */
+    public static void logStatus(String message) {
+        LOGGER.newLog(Level.INFO, message);
+    }
+
     public static void logError(String message) {
         LOGGER.newLog(Level.SEVERE, message);
     }

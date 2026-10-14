@@ -5,6 +5,8 @@ import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import org.bukkit.Bukkit;
 import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.listeners.PacketEventsPayloadListener;
+import org.hackedserver.spigot.probing.SignTranslationProber;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Isolates PacketEvents references to prevent class loading failures when PacketEvents is not installed.
@@ -14,6 +16,8 @@ public final class PacketEventsIntegration {
 
     private final HackedServerPlugin plugin;
     private final PacketEventsPayloadListener listener;
+    @Nullable
+    private PacketEventsSignListener signListener;
     private boolean loaded = false;
     private boolean initialized = false;
     private boolean ownedByUs = false;
@@ -72,18 +76,53 @@ public final class PacketEventsIntegration {
         plugin.getLogger().info("PacketEvents listener registered successfully");
     }
 
-    public boolean isReadyForListeners() {
+    /**
+     * Whether this integration can be selected as the packet library: our own instance is loaded,
+     * or the standalone plugin finished its own initialization.
+     */
+    public boolean isUsable() {
         try {
-            return PacketEvents.getAPI() != null && PacketEvents.getAPI().getEventManager() != null;
+            if (PacketEvents.getAPI() == null) {
+                return false;
+            }
+            return ownedByUs ? loaded : PacketEvents.getAPI().isInitialized();
         } catch (Throwable ignored) {
             return false;
         }
     }
 
     /**
+     * Whether PacketEvents is actually injected and delivering packets: either we initialized it
+     * ourselves, or the standalone plugin finished its own initialization.
+     * A plugin that failed to enable (e.g. an outdated build on a new Minecraft version) is not ready.
+     */
+    public boolean isReadyForListeners() {
+        try {
+            if (PacketEvents.getAPI() == null || PacketEvents.getAPI().getEventManager() == null) {
+                return false;
+            }
+            return ownedByUs ? initialized : PacketEvents.getAPI().isInitialized();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * Consume sign probe replies at the packet level. Must be called after the API is ready.
+     */
+    public void registerSignListener(SignTranslationProber prober) {
+        signListener = new PacketEventsSignListener(prober);
+        PacketEvents.getAPI().getEventManager().registerListener(signListener);
+    }
+
+    /**
      * Unregister the packet listener and terminate PacketEvents if we own it.
      */
     public void unregister() {
+        if (signListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(signListener);
+            signListener = null;
+        }
         if (initialized) {
             // Always unregister our listener to prevent duplicates on reload
             PacketEvents.getAPI().getEventManager().unregisterListener(listener);

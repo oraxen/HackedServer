@@ -2,6 +2,7 @@ package org.hackedserver.spigot;
 
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.bedrock.BedrockDetector;
@@ -16,6 +17,7 @@ import org.hackedserver.spigot.probing.SignTranslationProber;
 import org.hackedserver.spigot.protocol.PacketEventsIntegration;
 import org.hackedserver.spigot.protocol.ProtocolLibIntegration;
 import org.hackedserver.spigot.utils.HackedAudiences;
+import org.hackedserver.spigot.utils.VersionUtil;
 import org.hackedserver.spigot.utils.logs.Logs;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,16 +51,8 @@ public class HackedServerPlugin extends JavaPlugin {
 
         // Check for PacketEvents availability and initialize if present
         // Must be done in onLoad() before onEnable()
-        packetEventsAvailable = isPacketEventsPresent();
-        if (packetEventsAvailable) {
-            try {
-                packetEventsIntegration = new PacketEventsIntegration(this);
-                packetEventsIntegration.load();
-            } catch (Throwable e) {
-                getLogger().warning("Failed to initialize PacketEvents: " + e.getMessage());
-                packetEventsAvailable = false;
-                packetEventsIntegration = null;
-            }
+        if (isPacketEventsPresent()) {
+            packetEventsIntegration = createPacketEventsIntegration();
         }
     }
 
@@ -68,40 +62,41 @@ public class HackedServerPlugin extends JavaPlugin {
         audiences = HackedAudiences.create(this);
         Logs.onEnable(audiences);
 
-        // Check if ProtocolLib is available
-        protocolLibAvailable = Bukkit.getPluginManager().getPlugin("ProtocolLib") != null;
+        // Only trust packet libraries that actually enabled: a plugin that failed to start
+        // (e.g. an outdated build on a new Minecraft version) is still returned by getPlugin()
+        protocolLibAvailable = isPluginEnabled("ProtocolLib");
 
-        // Re-check PacketEvents availability during onEnable() if not found during onLoad()
-        // Paper's new plugin system may not have loaded packetevents' classes during our onLoad()
+        Plugin packetEventsPlugin = Bukkit.getPluginManager().getPlugin("packetevents");
+        if (packetEventsPlugin != null && !packetEventsPlugin.isEnabled()) {
+            Logs.logWarning("packetevents " + packetEventsPlugin.getDescription().getVersion()
+                    + " is installed but not enabled (it probably failed to start), ignoring it."
+                    + (VersionUtil.isMinecraft26OrNewer() ? " Minecraft 26.x requires packetevents 2.14.0+." : ""));
+            packetEventsIntegration = null;
+        } else if (packetEventsIntegration == null && isPacketEventsPresent()) {
+            // Re-check PacketEvents availability during onEnable() if not found during onLoad()
+            // Paper's new plugin system may not have loaded packetevents' classes during our onLoad()
+            packetEventsIntegration = createPacketEventsIntegration();
+        }
+        packetEventsAvailable = packetEventsIntegration != null && packetEventsIntegration.isUsable();
         if (!packetEventsAvailable) {
-            packetEventsAvailable = isPacketEventsPresent();
-            if (packetEventsAvailable) {
-                try {
-                    packetEventsIntegration = new PacketEventsIntegration(this);
-                    packetEventsIntegration.load();
-                } catch (Throwable e) {
-                    getLogger().warning("Failed to initialize PacketEvents: " + e.getMessage());
-                    packetEventsAvailable = false;
-                    packetEventsIntegration = null;
-                }
-            }
+            packetEventsIntegration = null;
         }
 
         // Determine which packet library to use
         // Prefer ProtocolLib on standard Paper/Spigot, use PacketEvents on hybrid servers like Arclight
-        boolean useProtocolLib = protocolLibAvailable && !isHybridServer();
+        boolean useProtocolLib = protocolLibAvailable && !(isHybridServer() && packetEventsAvailable);
         boolean usePacketEvents = packetEventsAvailable && !useProtocolLib;
 
         if (!useProtocolLib && !usePacketEvents) {
             if (HackedServerHopper.requiresRestart()) {
-                getLogger().warning("A packet library was downloaded but requires a server restart to load.");
-                getLogger().warning("Please restart your server to enable HackedServer functionality.");
+                Logs.logWarning("A packet library was downloaded but requires a server restart to load.");
+                Logs.logWarning("Please restart your server to enable HackedServer functionality.");
             } else if (!HackedServerHopper.isEnabled()) {
-                getLogger().warning("No packet library (ProtocolLib or PacketEvents) is installed and auto-download is disabled.");
-                getLogger().warning("Please install one manually or enable auto_download_dependencies in config.toml");
+                Logs.logWarning("No packet library (ProtocolLib or PacketEvents) is installed and auto-download is disabled.");
+                Logs.logWarning("Please install one manually or enable auto_download_dependencies in config.toml");
             } else {
-                getLogger().severe("No packet library available! HackedServer will have limited functionality.");
-                getLogger().severe("Please install ProtocolLib or PacketEvents manually.");
+                Logs.logError("No packet library available! HackedServer will have limited functionality.");
+                Logs.logError("Please install ProtocolLib or PacketEvents manually.");
             }
         }
 
@@ -114,55 +109,33 @@ public class HackedServerPlugin extends JavaPlugin {
         if (useProtocolLib) {
             // Load ProtocolLib integration in a separate class to avoid NoClassDefFoundError
             // when ProtocolLib is not installed
-            getLogger().info("Using ProtocolLib for packet interception");
             try {
                 protocolLibIntegration = new ProtocolLibIntegration(this);
                 protocolLibIntegration.register();
+                Logs.logStatus("Using ProtocolLib for packet interception");
             } catch (Throwable e) {
-                getLogger().severe("Failed to initialize ProtocolLib: " + e.getMessage());
+                protocolLibIntegration = null;
+                Logs.logError("Failed to initialize ProtocolLib: " + e);
                 // Try to fall back to PacketEvents
                 if (packetEventsAvailable) {
-                    getLogger().info("Falling back to PacketEvents...");
+                    Logs.logStatus("Falling back to PacketEvents...");
                     usePacketEvents = true;
                 }
             }
         }
 
-        if (usePacketEvents && packetEventsIntegration != null) {
-            getLogger().info("Using PacketEvents for packet interception (better for hybrid servers like Arclight)");
+        if (usePacketEvents) {
             try {
                 packetEventsIntegration.register();
+                Logs.logStatus("Using PacketEvents for packet interception");
             } catch (Throwable e) {
-                getLogger().severe("Failed to initialize PacketEvents: " + e.getMessage());
+                Logs.logError("Failed to initialize PacketEvents: " + e);
             }
         }
 
         lunarApolloListener = new LunarApolloListener(this);
 
-        // Register sign translation probing (active mod detection via packets)
-        // Only register when PacketEvents is actually initialized (usePacketEvents or standalone plugin)
-        // SignTranslationProber uses 1.20+ sign APIs (Side, SignSide, Player#openSign)
-        boolean packetEventsInitialized = packetEventsIntegration != null
-                && packetEventsIntegration.isReadyForListeners();
-        if (packetEventsAvailable && packetEventsInitialized) {
-            if (isSignApiAvailable()) {
-                try {
-                    signTranslationProber = new SignTranslationProber();
-                    Bukkit.getPluginManager().registerEvents(signTranslationProber, this);
-                    signTranslationProber.register();
-                    getLogger().info("Sign translation probing enabled (PacketEvents)");
-                } catch (Throwable e) {
-                    signTranslationProber = null;
-                    getLogger().warning("Failed to register sign translation probing: " + e.getMessage());
-                }
-            } else {
-                getLogger().info("Sign translation probing requires 1.20+ server APIs - disabled on this version");
-            }
-        } else if (!packetEventsAvailable) {
-            getLogger().warning("Sign translation probing requires PacketEvents - disabled");
-        } else {
-            getLogger().warning("Sign translation probing requires an initialized PacketEvents API - disabled");
-        }
+        registerSignProbing();
 
         // Try to load commands with CommandAPI, fall back to Bukkit commands if unavailable
         boolean commandsRegistered = false;
@@ -183,6 +156,39 @@ public class HackedServerPlugin extends JavaPlugin {
         Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
 
         Bukkit.getOnlinePlayers().forEach(player -> HackedServer.registerPlayer(player.getUniqueId()));
+    }
+
+    /**
+     * Registers sign translation probing (active mod detection).
+     * Probe replies are consumed at the packet level when PacketEvents is running, and read from
+     * {@code SignChangeEvent} otherwise, so probing never depends on an optional library loading.
+     */
+    private void registerSignProbing() {
+        // SignTranslationProber uses 1.20+ sign APIs (Side, SignSide, Player#openSign)
+        // and Paper's Adventure sign lines
+        if (!isSignApiAvailable() || !VersionUtil.isPaperServer()) {
+            Logs.logStatus("Sign translation probing requires Paper 1.20+ - disabled on this server");
+            return;
+        }
+        try {
+            signTranslationProber = new SignTranslationProber();
+            Bukkit.getPluginManager().registerEvents(signTranslationProber, this);
+        } catch (Throwable e) {
+            signTranslationProber = null;
+            Logs.logWarning("Failed to register sign translation probing: " + e);
+            return;
+        }
+
+        if (packetEventsIntegration != null && packetEventsIntegration.isReadyForListeners()) {
+            try {
+                packetEventsIntegration.registerSignListener(signTranslationProber);
+                Logs.logStatus("Sign translation probing enabled (PacketEvents)");
+                return;
+            } catch (Throwable e) {
+                Logs.logWarning("Failed to register PacketEvents sign listener, using sign events instead: " + e);
+            }
+        }
+        Logs.logStatus("Sign translation probing enabled (sign events)");
     }
 
     @Override
@@ -207,6 +213,23 @@ public class HackedServerPlugin extends JavaPlugin {
         }
     }
 
+    @Nullable
+    private PacketEventsIntegration createPacketEventsIntegration() {
+        try {
+            PacketEventsIntegration integration = new PacketEventsIntegration(this);
+            integration.load();
+            return integration;
+        } catch (Throwable e) {
+            Logs.logWarning("Failed to initialize PacketEvents: " + e);
+            return null;
+        }
+    }
+
+    private static boolean isPluginEnabled(String name) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin(name);
+        return plugin != null && plugin.isEnabled();
+    }
+
     /**
      * Check if PacketEvents is present on the server.
      */
@@ -219,7 +242,7 @@ public class HackedServerPlugin extends JavaPlugin {
         try {
             Class.forName("com.github.retrooper.packetevents.PacketEvents");
             return true;
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | LinkageError e) {
             return false;
         }
     }
