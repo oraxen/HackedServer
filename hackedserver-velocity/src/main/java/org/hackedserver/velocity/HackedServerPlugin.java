@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 @Plugin(
         id = "hackedserver",
         name = "HackedServer",
-        version = "3.17.2",
+        version = "3.18.0",
         dependencies = {@Dependency(id = "packetevents")}
 )
 public class HackedServerPlugin {
