@@ -19,6 +19,7 @@ import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUpdateSign;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockEntityData;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenSignEditor;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 
@@ -277,6 +278,15 @@ public class PacketSignProber {
                 if (debugEnabled) {
                     LOGGER.info("HackedServer | Opened sign editor via packet for " + playerName);
                 }
+
+                // Close the editor right away: the client answers with the lines it rendered when the
+                // screen closes, so the probe neither waits for nor depends on the player
+                scheduler.schedule(() -> {
+                    ProbeSession s = activeSessions.get(playerUUID);
+                    if (s != null && !s.handled.get()) {
+                        user.sendPacket(new WrapperPlayServerCloseWindow(0));
+                    }
+                }, 100, TimeUnit.MILLISECONDS);
 
                 // Timeout: clean up the virtual block but keep the session briefly to consume late UPDATE_SIGN packets.
                 scheduler.schedule(() -> {

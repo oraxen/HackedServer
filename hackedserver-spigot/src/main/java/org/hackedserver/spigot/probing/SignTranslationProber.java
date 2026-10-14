@@ -247,6 +247,14 @@ public class SignTranslationProber implements Listener {
                     Logs.logInfo("HackedServer | Opened sign editor for " + player.getName());
                 }
 
+                // Close the editor right away: the client answers with the lines it rendered when the
+                // screen closes, so the probe neither waits for nor depends on the player
+                Schedulers.runForEntity(player, () -> {
+                    if (activeSessions.get(player.getUniqueId()) == probe && !probe.handled.get()) {
+                        player.closeInventory();
+                    }
+                }, 2L);
+
                 // Timeout: restore block but keep session for late packet arrivals
                 // Compare by identity: a later probe batch may have replaced this session
                 Schedulers.runForEntity(player, () -> {
