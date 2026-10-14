@@ -53,6 +53,8 @@ public class CustomPayloadListener implements PacketListener {
                 event.getPacketType() == PacketType.Login.Client.LOGIN_PLUGIN_RESPONSE) {
 
             User user = event.getUser();
+            if (user.getUUID() == null)
+                return;
             Player player = server.getPlayer(user.getUUID()).orElse(null);
             if (player == null)
                 return;
@@ -74,6 +76,8 @@ public class CustomPayloadListener implements PacketListener {
                 data = packet.getData();
             }
 
+            if (data == null)
+                data = new byte[0];
             String message = new String(data, StandardCharsets.UTF_8);
 
             if (Config.DEBUG.toBool()) {

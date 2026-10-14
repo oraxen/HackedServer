@@ -1,22 +1,23 @@
 package org.hackedserver.velocity;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
-import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.ChannelRegistrar;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 
-import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
-
 import org.hackedserver.core.bedrock.BedrockDetector;
 import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.ConfigsManager;
+import org.hackedserver.core.config.Message;
 import org.hackedserver.core.probing.PacketSignProber;
 import org.hackedserver.velocity.commands.HackedCommands;
 import org.hackedserver.velocity.listeners.CustomPayloadListener;
@@ -37,7 +38,8 @@ import org.slf4j.Logger;
 @Plugin(
         id = "hackedserver",
         name = "HackedServer",
-        version = "3.17.2"
+        version = "3.17.2",
+        dependencies = {@Dependency(id = "packetevents")}
 )
 public class HackedServerPlugin {
 
@@ -45,12 +47,13 @@ public class HackedServerPlugin {
     private final HackedCommands commands;
     private final File folder;
     private PacketSignProber signProber;
+    private HackedPlayerListeners playerListeners;
+    private PacketListenerCommon payloadListener;
 
     @Inject
     public HackedServerPlugin(
             ProxyServer server,
             Logger logger,
-            PluginContainer pluginContainer,
             @DataDirectory Path dataDirectory
     ) {
         this.server = server;
@@ -63,40 +66,23 @@ public class HackedServerPlugin {
             logger.info("Geyser/Floodgate API detected - bedrock detection enabled");
         }
         commands = new HackedCommands(folder, server.getCommandManager(), server);
-        PacketEvents.setAPI(VelocityPacketEventsBuilder.build(server, pluginContainer, logger, dataDirectory));
     }
 
-    @Subscribe
+    // The packetevents plugin creates and initializes its API in its own ProxyInitializeEvent handler:
+    // run after it and only register listeners, never replace or terminate its API instance.
+    @Subscribe(order = PostOrder.LAST)
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        // Create sign prober with Velocity action executor
-        signProber = new PacketSignProber((uuid, playerName, checkName, actions) -> {
-            executeProbeActions(uuid, playerName, checkName, actions);
-        });
-
-        server.getEventManager().register(this, new HackedPlayerListeners(server, this, signProber));
-        PacketEvents.getAPI().getEventManager().registerListener(
-                new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
-        signProber.register();
-        PacketEvents.getAPI().init();
+        registerListeners();
         commands.create();
 
         ChannelRegistrar channelRegistrar = server.getChannelRegistrar();
         channelRegistrar.register(MinecraftChannelIdentifier.create("lunar", "apollo"));
+        Logs.logComponent(Message.PLUGIN_LOADED.toComponent());
     }
 
     @Subscribe
     public void onProxyReload(ProxyReloadEvent event) {
-        // Unregister all event listeners for this plugin
-        server.getEventManager().unregisterListeners(this);
-
-        // Unregister sign prober before terminating PacketEvents
-        if (signProber != null) {
-            signProber.unregister();
-        }
-
-        // Terminate and reinit PacketEvents
-        PacketEvents.getAPI().terminate();
-        PacketEvents.getAPI().init();
+        unregisterListeners();
 
         // Reload configs
         ConfigsManager.reload(folder);
@@ -104,16 +90,38 @@ public class HackedServerPlugin {
         // Recreate commands
         commands.create();
 
-        // Re-create sign prober with fresh config
+        // Re-create listeners and sign prober with fresh config
+        registerListeners();
+    }
+
+    private void registerListeners() {
+        // Create sign prober with Velocity action executor
         signProber = new PacketSignProber((uuid, playerName, checkName, actions) -> {
             executeProbeActions(uuid, playerName, checkName, actions);
         });
 
-        // Re-register event listeners
-        server.getEventManager().register(this, new HackedPlayerListeners(server, this, signProber));
-        PacketEvents.getAPI().getEventManager().registerListener(
+        playerListeners = new HackedPlayerListeners(server, this, signProber);
+        server.getEventManager().register(this, playerListeners);
+        payloadListener = PacketEvents.getAPI().getEventManager().registerListener(
                 new CustomPayloadListener(server), PacketListenerPriority.NORMAL);
         signProber.register();
+    }
+
+    private void unregisterListeners() {
+        // Only remove our own listeners: unregisterListeners(this) would also drop this class's
+        // @Subscribe handlers (including this reload handler)
+        if (playerListeners != null) {
+            server.getEventManager().unregisterListener(this, playerListeners);
+            playerListeners = null;
+        }
+        if (payloadListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(payloadListener);
+            payloadListener = null;
+        }
+        if (signProber != null) {
+            signProber.unregister();
+            signProber = null;
+        }
     }
 
     private void executeProbeActions(UUID uuid, String playerName, String checkName, List<Action> actions) {
