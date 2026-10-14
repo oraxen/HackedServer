@@ -35,7 +35,7 @@ public enum Config {
     }
 
     public String toString() {
-        return result.getString(path);
+        return result != null ? result.getString(path) : null;
     }
 
     public String getStringOrDefault(String defaultValue) {
@@ -51,6 +51,9 @@ public enum Config {
     }
 
     public boolean toBool(boolean defaultValue) {
+        if (result == null) {
+            return defaultValue;
+        }
         Boolean value = result.getBoolean(path);
         return value != null ? value : defaultValue;
     }
@@ -60,6 +63,9 @@ public enum Config {
     }
 
     public long toLong(long defaultValue) {
+        if (result == null) {
+            return defaultValue;
+        }
         Long value = result.getLong(path);
         return value != null ? value : defaultValue;
     }

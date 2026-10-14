@@ -1,6 +1,7 @@
 package org.hackedserver.core.config;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
@@ -38,16 +39,22 @@ public class GenericCheck {
     }
 
     public boolean pass(HackedPlayer player, String channel, String message) {
-        if (!this.channels.contains(channel) ||
-                (messageHas != null && !message.toLowerCase().contains(messageHas.toLowerCase()))) {
+        if (channel == null || !this.channels.contains(channel)) {
+            return false;
+        }
+        String lowerMessage = message != null ? message.toLowerCase(Locale.ROOT) : "";
+        if (messageHas != null && !lowerMessage.contains(messageHas.toLowerCase(Locale.ROOT))) {
             return false;
         }
 
-        if (messageNotHas != null && message.toLowerCase().contains(messageNotHas.toLowerCase())) {
+        if (messageNotHas != null && lowerMessage.contains(messageNotHas.toLowerCase(Locale.ROOT))) {
             return false;
         }
 
-        return !Config.SKIP_DUPLICATES.toBool() || !HackedServer.isMessageDuplicate(player, channel, message);
+        // Scope duplicates per check: one payload can legitimately match several checks
+        // (e.g. a minecraft:register listing both wdl and meteor-client channels)
+        return !Config.SKIP_DUPLICATES.toBool()
+                || !HackedServer.isMessageDuplicate(player, id + '|' + channel, message);
     }
 
     public List<Action> getActions() {

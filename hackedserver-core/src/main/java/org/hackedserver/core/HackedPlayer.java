@@ -5,7 +5,6 @@ import org.hackedserver.core.forge.ForgeClientType;
 import org.hackedserver.core.forge.ForgeModInfo;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -13,13 +12,15 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.hackedserver.core.lunar.LunarModInfo;
 
 public class HackedPlayer {
 
     private final UUID uuid;
-    private final Set<String> genericChecks = new HashSet<>();
+    // Written from netty threads (packet listeners) and read from the main thread (commands, GUI)
+    private final Set<String> genericChecks = ConcurrentHashMap.newKeySet();
     private final Map<String, LunarModInfo> lunarMods = new LinkedHashMap<>();
     private volatile boolean lunarModsKnown = false;
     private final Map<String, ForgeModInfo> forgeMods = new LinkedHashMap<>();

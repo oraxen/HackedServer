@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HackedServer {
 
     private final static Map<UUID, HackedPlayer> players = new ConcurrentHashMap<>();
-    private final static Map<String, Action> actions = new HashMap<>();
-    private final static Map<String, GenericCheck> genericChecks = new HashMap<>();
+    private final static Map<String, Action> actions = new ConcurrentHashMap<>();
+    private final static Map<String, GenericCheck> genericChecks = new ConcurrentHashMap<>();
     private final static Map<HackedPlayer, Set<MessagePayload>> messageHistory = new ConcurrentHashMap<>();
 
     public static void clear() {
@@ -95,7 +95,7 @@ public class HackedServer {
 
     public static boolean isMessageDuplicate(HackedPlayer player, String channel, String message) {
         MessagePayload payload = new MessagePayload(channel, message);
-        Set<MessagePayload> playerHistory = messageHistory.computeIfAbsent(player, k -> new HashSet<>());
+        Set<MessagePayload> playerHistory = messageHistory.computeIfAbsent(player, k -> ConcurrentHashMap.newKeySet());
         return !playerHistory.add(payload);
     }
 }
