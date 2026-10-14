@@ -7,6 +7,8 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
+import com.comphenix.protocol.utility.MinecraftVersion;
+import com.comphenix.protocol.wrappers.CustomPacketPayloadWrapper;
 
 import org.bukkit.entity.Player;
 import org.hackedserver.spigot.HackedServerPlugin;
@@ -41,6 +43,14 @@ public class CustomPayloadListener {
                     return;
                 }
                 PacketContainer packet = event.getPacket();
+
+                CustomPacketPayloadWrapper payload = readPayloadWrapper(packet);
+                if (payload != null) {
+                    dispatch(event, player, payload.getId().getFullKey(),
+                            new String(payload.getPayload(), StandardCharsets.UTF_8));
+                    return;
+                }
+
                 StructureModifier<?> modifier = packet.getModifier();
 
                 Object value = modifier.read(0);
@@ -80,6 +90,10 @@ public class CustomPayloadListener {
                     return;
                 }
 
+                dispatch(event, player, channel, message);
+            }
+
+            private void dispatch(PacketEvent event, Player player, String channel, String message) {
                 if (event.isPlayerTemporary()) {
                     PendingPayloads.queue(player, channel, message);
                     return;
@@ -89,6 +103,24 @@ public class CustomPayloadListener {
             }
 
         };
+    }
+
+    /**
+     * Since 1.20.2 custom payloads are typed records (e.g. {@code BrandPayload(String brand)}) that
+     * no longer expose {@code id}/{@code data} fields. ProtocolLib's wrapper re-serializes any
+     * payload to its wire format, which keeps channel names and message contents identical to
+     * what older versions exposed.
+     */
+    private static CustomPacketPayloadWrapper readPayloadWrapper(PacketContainer packet) {
+        if (!MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
+            return null;
+        }
+        try {
+            return packet.getCustomPacketPayloads().readSafely(0);
+        } catch (RuntimeException | LinkageError e) {
+            // Not a custom payload packet (login query answers) or unsupported by this ProtocolLib build
+            return null;
+        }
     }
 
     public void register() {
