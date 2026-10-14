@@ -1,5 +1,6 @@
 package org.hackedserver.spigot.listeners;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
@@ -151,13 +152,7 @@ public final class PayloadProcessor {
     private static void performActions(Action action, Player player, Map<String, String> commandPlaceholders,
                                        TagResolver.Single... templates) {
         if (action.hasAlert()) {
-            Logs.logComponent(action.getAlert(templates));
-            for (Player admin : Bukkit.getOnlinePlayers()) {
-                if (admin.hasPermission("hackedserver.alert")) {
-                    HackedServerPlugin.get().getAudiences().player(admin)
-                            .sendMessage(action.getAlert(templates));
-                }
-            }
+            sendAlert(action.getAlert(templates));
         }
         if (player.hasPermission("hackedserver.bypass")) {
             return;
@@ -171,6 +166,18 @@ public final class PayloadProcessor {
         }
 
         executeCommands(action, player, commandPlaceholders);
+    }
+
+    /**
+     * Sends an alert to the console and every online player with the {@code hackedserver.alert} permission.
+     */
+    public static void sendAlert(Component alert) {
+        Logs.logComponent(alert);
+        for (Player admin : Bukkit.getOnlinePlayers()) {
+            if (admin.hasPermission("hackedserver.alert")) {
+                HackedServerPlugin.get().getAudiences().player(admin).sendMessage(alert);
+            }
+        }
     }
 
     private static boolean isPlayerFullyOnline(Player player) {
@@ -190,6 +197,10 @@ public final class PayloadProcessor {
             Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
             if (onlinePlayer == null || !onlinePlayer.isOnline()) {
                 return; // Player logged out before we could execute
+            }
+            // Re-check bypass permission now that player is fully online
+            if (onlinePlayer.hasPermission("hackedserver.bypass")) {
+                return;
             }
 
             for (String command : action.getConsoleCommands()) {

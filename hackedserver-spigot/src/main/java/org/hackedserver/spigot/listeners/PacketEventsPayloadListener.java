@@ -9,35 +9,21 @@ import com.github.retrooper.packetevents.wrapper.configuration.client.WrapperCon
 import com.github.retrooper.packetevents.wrapper.login.client.WrapperLoginClientPluginResponse;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPluginMessage;
 
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.hackedserver.core.HackedPlayer;
-import org.hackedserver.core.HackedServer;
-import org.hackedserver.core.config.Action;
-import org.hackedserver.core.config.Config;
-import org.hackedserver.core.config.GenericCheck;
-import org.hackedserver.core.config.Message;
-import org.hackedserver.core.forge.ForgeActionTrigger;
-import org.hackedserver.core.forge.ForgeChannelParser;
-import org.hackedserver.core.forge.ForgeClientType;
-import org.hackedserver.core.forge.ForgeConfig;
-import org.hackedserver.core.forge.ForgeHandshakeProcessor;
-import org.hackedserver.core.forge.ForgeHandshakeResult;
-import org.hackedserver.core.forge.ForgeModInfo;
-import org.hackedserver.core.forge.ForgeSpoofingDetector;
 import org.hackedserver.spigot.HackedServerPlugin;
-import org.hackedserver.spigot.utils.logs.Logs;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.UUID;
 
 /**
- * PacketEvents-based custom payload listener for Spigot/Paper/Arclight servers.
+ * PacketEvents-based custom payload listener for Spigot/Paper/Folia/Arclight servers.
  * This is an alternative to the ProtocolLib-based listener that works better
- * with hybrid server software like Arclight.
+ * with hybrid server software like Arclight and on Minecraft 26.x.
+ * <p>
+ * Payloads received before the Bukkit player exists (login and configuration phase, where
+ * 1.20.2+ clients send {@code minecraft:brand} and {@code minecraft:register}) are queued and
+ * processed on join, exactly like the ProtocolLib listener does.
  */
 public class PacketEventsPayloadListener extends PacketListenerAbstract {
 
@@ -71,9 +57,6 @@ public class PacketEventsPayloadListener extends PacketListenerAbstract {
             return;
         }
 
-        Player player = Bukkit.getPlayer(playerUuid);
-        String playerName = user.getName() != null ? user.getName() : (player != null ? player.getName() : "Unknown");
-
         String channel;
         byte[] data;
 
@@ -91,165 +74,14 @@ public class PacketEventsPayloadListener extends PacketListenerAbstract {
             data = packet.getData();
         }
 
-        if (data == null) {
-            data = new byte[0];
-        }
-
-        String message = new String(data, StandardCharsets.UTF_8);
-
-        if (Config.DEBUG.toBool()) {
-            Logs.logComponent(Message.DEBUG_MESSAGE.toComponent(
-                    Placeholder.unparsed("player", playerName),
-                    Placeholder.unparsed("channel", channel),
-                    Placeholder.unparsed("message", message)));
-        }
-
-        // Generic checks
-        HackedPlayer hackedPlayer = HackedServer.getPlayer(playerUuid);
-        for (GenericCheck check : HackedServer.getChecks()) {
-            if (check.pass(hackedPlayer, channel, message)) {
-                hackedPlayer.addGenericCheck(check);
-                for (Action action : check.getActions()) {
-                    performActions(action, playerUuid, playerName, check.getName(),
-                            Placeholder.unparsed("player", playerName),
-                            Placeholder.parsed("name", check.getName()));
-                }
-            }
-        }
-
-        // Forge/NeoForge detection
-        if (ForgeConfig.isEnabled()) {
-            processForgePacket(playerUuid, playerName, hackedPlayer, channel, message);
-        }
-    }
-
-    private void processForgePacket(UUID playerUuid, String playerName, HackedPlayer hackedPlayer, String channel, String message) {
-        // Detect client type from minecraft:brand
-        if (ForgeChannelParser.BRAND_CHANNEL.equalsIgnoreCase(channel)) {
-            hackedPlayer.setBrand(message);
-            ForgeClientType clientType = ForgeChannelParser.parseClientType(message);
-            if (clientType != null && hackedPlayer.getForgeClientType() == null) {
-                hackedPlayer.setForgeClientType(clientType);
-                ForgeHandshakeResult result = ForgeHandshakeProcessor.processClientType(hackedPlayer, clientType);
-                if (result.hasTriggers()) {
-                    runForgeActions(result.getTriggers(), playerUuid, playerName);
-                }
-            }
-
-            // Re-evaluate spoofing: brand arrived after register
-            checkBrandSpoofing(playerUuid, playerName, hackedPlayer);
-        }
-
-        // Detect mods from minecraft:register
-        if (ForgeChannelParser.REGISTER_CHANNEL.equalsIgnoreCase(channel)) {
-            List<ForgeModInfo> mods = ForgeChannelParser.parseRegisteredChannels(message);
-            if (!mods.isEmpty()) {
-                ForgeHandshakeResult result = ForgeHandshakeProcessor.processMods(hackedPlayer, mods);
-                if (result.hasTriggers()) {
-                    runForgeActions(result.getTriggers(), playerUuid, playerName);
-                }
-            }
-
-            // Track fabric channels for deferred spoofing check
-            if (ForgeChannelParser.containsFabricChannels(message)) {
-                hackedPlayer.setFabricChannelsDetected(true);
-            }
-
-            // Brand spoofing detection: vanilla brand + fabric channels = ServerSpoof
-            checkBrandSpoofing(playerUuid, playerName, hackedPlayer);
-        }
-    }
-
-    private void checkBrandSpoofing(UUID playerUuid, String playerName, HackedPlayer hackedPlayer) {
-        if (ForgeSpoofingDetector.detect(hackedPlayer)) {
-            List<Action> actions = ForgeConfig.getSpoofingActions();
-            if (!actions.isEmpty()) {
-                for (Action action : actions) {
-                    performActions(action, playerUuid, playerName, ForgeSpoofingDetector.CHECK_NAME,
-                            Placeholder.unparsed("player", playerName),
-                            Placeholder.parsed("name", ForgeSpoofingDetector.CHECK_NAME));
-                }
-            }
-        }
-    }
-
-    private void runForgeActions(List<ForgeActionTrigger> triggers, UUID playerUuid, String playerName) {
-        for (ForgeActionTrigger trigger : triggers) {
-            for (Action action : trigger.getActions()) {
-                performActions(action, playerUuid, playerName, trigger.getName(),
-                        Placeholder.unparsed("player", playerName),
-                        Placeholder.parsed("name", trigger.getName()));
-            }
-        }
-    }
-
-    private void performActions(Action action, UUID playerUuid, String playerName, String checkName, TagResolver.Single... templates) {
-        if (action.hasAlert()) {
-            Logs.logComponent(action.getAlert(templates));
-            for (Player admin : Bukkit.getOnlinePlayers()) {
-                if (admin.hasPermission("hackedserver.alert")) {
-                    plugin.getAudiences().player(admin).sendMessage(action.getAlert(templates));
-                }
-            }
-        }
+        String message = new String(data != null ? data : new byte[0], StandardCharsets.UTF_8);
 
         Player player = Bukkit.getPlayer(playerUuid);
-        if (player != null && player.hasPermission("hackedserver.bypass")) {
+        if (player == null) {
+            PendingPayloads.queue(playerUuid, channel, message);
             return;
         }
 
-        // Check if player is fully online - if not, defer the actions
-        HackedPlayer hackedPlayer = HackedServer.getPlayer(playerUuid);
-        if (!isPlayerFullyOnline(playerUuid)) {
-            hackedPlayer.queuePendingAction(() -> executeCommands(action, playerUuid, checkName));
-            return;
-        }
-
-        executeCommands(action, playerUuid, checkName);
-    }
-
-    private boolean isPlayerFullyOnline(UUID playerUuid) {
-        Player onlinePlayer = Bukkit.getPlayer(playerUuid);
-        return onlinePlayer != null && onlinePlayer.isOnline();
-    }
-
-    private void executeCommands(Action action, UUID playerUuid, String checkName) {
-        long delayTicks = action.getDelayTicks();
-
-        Runnable commandRunner = () -> {
-            Player onlinePlayer = Bukkit.getPlayer(playerUuid);
-            if (onlinePlayer == null || !onlinePlayer.isOnline()) {
-                return;
-            }
-
-            // Re-check bypass permission now that player is fully online
-            if (onlinePlayer.hasPermission("hackedserver.bypass")) {
-                return;
-            }
-
-            String playerName = onlinePlayer.getName();
-
-            for (String command : action.getConsoleCommands()) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        command.replace("<player>", playerName).replace("<name>", checkName));
-            }
-            for (String command : action.getPlayerCommands()) {
-                Bukkit.dispatchCommand(onlinePlayer,
-                        command.replace("<player>", playerName).replace("<name>", checkName));
-            }
-            for (String command : action.getOppedPlayerCommands()) {
-                boolean op = onlinePlayer.isOp();
-                onlinePlayer.setOp(true);
-                Bukkit.dispatchCommand(onlinePlayer,
-                        command.replace("<player>", playerName).replace("<name>", checkName));
-                onlinePlayer.setOp(op);
-            }
-        };
-
-        if (delayTicks > 0) {
-            Bukkit.getScheduler().runTaskLater(plugin, commandRunner, delayTicks);
-        } else {
-            Bukkit.getScheduler().runTask(plugin, commandRunner);
-        }
+        PayloadProcessor.process(player, channel, message);
     }
 }
