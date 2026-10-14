@@ -1,6 +1,7 @@
 package org.hackedserver.spigot.hopper;
 
 import md.thomas.hopper.Dependency;
+import md.thomas.hopper.DependencyCollector;
 import md.thomas.hopper.FailurePolicy;
 import md.thomas.hopper.LogLevel;
 import md.thomas.hopper.bukkit.BukkitHopper;
@@ -8,6 +9,8 @@ import md.thomas.hopper.version.UpdatePolicy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.hackedserver.core.config.Config;
+import org.hackedserver.spigot.utils.VersionUtil;
+import org.hackedserver.spigot.utils.logs.Logs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.logging.Logger;
@@ -18,8 +21,8 @@ import java.util.regex.Pattern;
  * <p>
  * This class registers and downloads:
  * <ul>
- *   <li>PacketEvents - Primary choice for hybrid servers (Arclight, Mohist, etc.)</li>
- *   <li>ProtocolLib - Fallback for standard Paper/Spigot servers</li>
+ *   <li>PacketEvents - Primary choice for hybrid servers (Arclight, Mohist, etc.) and Minecraft 26.x</li>
+ *   <li>ProtocolLib - Default for standard Paper/Spigot servers up to 1.21.x</li>
  * </ul>
  * Downloaded plugins are automatically loaded at runtime without requiring a server restart.
  */
@@ -41,6 +44,10 @@ public final class HackedServerHopper {
     private static final Pattern PACKETEVENTS_PATTERN = Pattern.compile(
         "(?i)^packetevents([-_][\\w.-]+)?\\.jar$"
     );
+
+    // Oldest PacketEvents releases known to work on hybrid servers / Minecraft 26.x
+    private static final String PACKETEVENTS_MIN_VERSION = "2.7.0";
+    private static final String PACKETEVENTS_MIN_VERSION_26 = "2.14.0";
 
     private HackedServerHopper() {}
 
@@ -79,29 +86,16 @@ public final class HackedServerHopper {
             boolean hasProtocolLib = pluginJarExists(PROTOCOLLIB_PATTERN);
             boolean hasPacketEvents = pluginJarExists(PACKETEVENTS_PATTERN);
             boolean isHybrid = isHybridServer();
+            boolean isModern = VersionUtil.isMinecraft26OrNewer();
 
-            // For hybrid servers (Arclight, Mohist, etc.), prefer PacketEvents
-            // For standard servers, prefer ProtocolLib
-            if (isHybrid) {
-                // Hybrid server - download PacketEvents
+            // For hybrid servers (Arclight, Mohist, etc.) and Minecraft 26.x, prefer PacketEvents
+            // (ProtocolLib 5.4.0 is untested on 26.x). For other standard servers, prefer ProtocolLib
+            if (isHybrid || isModern) {
                 if (!hasPacketEvents) {
-                    logger.info("Hybrid server detected - downloading PacketEvents for better compatibility");
-                    // PacketEvents from Modrinth
-                    deps.require(Dependency.modrinth("packetevents")
-                        .name("packetevents")
-                        .minVersion("2.7.0")
-                        .updatePolicy(UpdatePolicy.MINOR)
-                        .onFailure(FailurePolicy.WARN_SKIP)
-                        .build());
-
-                    // Fallback: GitHub releases
-                    deps.require(Dependency.github("retrooper/packetevents")
-                        .name("packetevents")
-                        .minVersion("2.7.0")
-                        .assetPattern("packetevents-spigot-.*\\.jar")
-                        .updatePolicy(UpdatePolicy.MINOR)
-                        .onFailure(FailurePolicy.WARN_SKIP)
-                        .build());
+                    String minVersion = isModern ? PACKETEVENTS_MIN_VERSION_26 : PACKETEVENTS_MIN_VERSION;
+                    Logs.logStatus((isHybrid ? "Hybrid server" : "Minecraft 26.x") + " detected - downloading PacketEvents "
+                            + minVersion + "+ for better compatibility");
+                    requirePacketEvents(deps, minVersion);
                 }
             } else {
                 // Standard server - download ProtocolLib
@@ -125,6 +119,25 @@ public final class HackedServerHopper {
                 }
             }
         });
+    }
+
+    private static void requirePacketEvents(DependencyCollector deps, String minVersion) {
+        // PacketEvents from Modrinth
+        deps.require(Dependency.modrinth("packetevents")
+            .name("packetevents")
+            .minVersion(minVersion)
+            .updatePolicy(UpdatePolicy.MINOR)
+            .onFailure(FailurePolicy.WARN_SKIP)
+            .build());
+
+        // Fallback: GitHub releases
+        deps.require(Dependency.github("retrooper/packetevents")
+            .name("packetevents")
+            .minVersion(minVersion)
+            .assetPattern("packetevents-spigot-.*\\.jar")
+            .updatePolicy(UpdatePolicy.MINOR)
+            .onFailure(FailurePolicy.WARN_SKIP)
+            .build());
     }
 
     /**
