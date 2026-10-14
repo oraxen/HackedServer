@@ -2,11 +2,16 @@ package org.hackedserver.core;
 
 import org.hackedserver.core.config.Action;
 import org.hackedserver.core.config.GenericCheck;
+import org.hackedserver.core.probing.ProbingConfig;
+import org.hackedserver.core.probing.TranslationCheck;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HackedServer {
+
+    /** Prefix of detection ids recorded by the sign translation probes. */
+    public static final String PROBE_CHECK_PREFIX = "probe_";
 
     private final static Map<UUID, HackedPlayer> players = new ConcurrentHashMap<>();
     private final static Map<String, Action> actions = new ConcurrentHashMap<>();
@@ -87,6 +92,25 @@ public class HackedServer {
 
     public static GenericCheck getCheck(String id) {
         return genericChecks.get(id);
+    }
+
+    /**
+     * Display name of a detection: the generic check's name, the sign probe check's name, or the id itself.
+     */
+    public static String getCheckName(String id) {
+        GenericCheck check = genericChecks.get(id);
+        if (check != null) {
+            return check.getName();
+        }
+        if (id.startsWith(PROBE_CHECK_PREFIX)) {
+            String probeId = id.substring(PROBE_CHECK_PREFIX.length());
+            for (TranslationCheck probeCheck : ProbingConfig.getChecks()) {
+                if (probeCheck.getId().equals(probeId)) {
+                    return probeCheck.getName();
+                }
+            }
+        }
+        return id;
     }
 
     public static Collection<GenericCheck> getChecks() {

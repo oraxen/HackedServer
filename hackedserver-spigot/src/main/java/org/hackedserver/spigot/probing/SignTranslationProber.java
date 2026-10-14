@@ -355,7 +355,7 @@ public class SignTranslationProber implements Listener {
                         Logs.logInfo("HackedServer | DETECTED: " + check.getName()
                                 + " via sign translation probe");
                     }
-                    String probeCheckId = "probe_" + check.getId();
+                    String probeCheckId = HackedServer.PROBE_CHECK_PREFIX + check.getId();
                     if (!hackedPlayer.hasGenericCheck(probeCheckId)) {
                         hackedPlayer.addGenericCheck(probeCheckId);
                         PayloadProcessor.runActions(onlinePlayer, check.getName(), check.getActions());

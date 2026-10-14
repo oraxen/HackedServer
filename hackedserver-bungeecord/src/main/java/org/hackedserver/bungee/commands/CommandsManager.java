@@ -67,8 +67,7 @@ public class CommandsManager extends Command {
                 if (hasGenericChecks) {
                     Message.CHECK_MODS.send(audience);
                     for (String checkId : hackedPlayer.getGenericChecks()) {
-                        var check = HackedServer.getCheck(checkId);
-                        String modName = check != null ? check.getName() : checkId;
+                        String modName = HackedServer.getCheckName(checkId);
                         Message.MOD_LIST_FORMAT.send(audience, Placeholder.parsed("mod", modName));
                     }
                 } else if (!showLunarMods) {

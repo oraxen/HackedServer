@@ -462,7 +462,7 @@ public class PacketSignProber {
                     LOGGER.info("HackedServer | DETECTED: " + check.getName()
                             + " via packet sign translation probe");
                 }
-                String probeCheckId = "probe_" + check.getId();
+                String probeCheckId = HackedServer.PROBE_CHECK_PREFIX + check.getId();
                 if (!hackedPlayer.hasGenericCheck(probeCheckId)) {
                     hackedPlayer.addGenericCheck(probeCheckId);
                     actionExecutor.execute(playerUUID, user.getName(), check.getName(), check.getActions());
