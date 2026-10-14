@@ -15,6 +15,7 @@ import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.world.blockentity.BlockEntityTypes;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUpdateSign;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
@@ -247,8 +248,9 @@ public class PacketSignProber {
         }
 
         // 1. Send Block Change to place a virtual sign
-        WrappedBlockState signState = WrappedBlockState.getByString(
-                user.getClientVersion(), "minecraft:oak_sign");
+        // A bare "minecraft:oak_sign" string does not resolve to a sign state, and real clients ignore
+        // the sign editor unless a sign block entity exists at the position
+        WrappedBlockState signState = StateTypes.OAK_SIGN.createBlockState(user.getClientVersion());
         WrapperPlayServerBlockChange blockChange = new WrapperPlayServerBlockChange(signPos, signState);
         user.sendPacket(blockChange);
 
