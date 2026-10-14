@@ -1,6 +1,5 @@
 package org.hackedserver.spigot.listeners;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -14,10 +13,10 @@ import org.hackedserver.core.HackedPlayer;
 import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.BedrockConfig;
 import org.hackedserver.spigot.HackedHolder;
-import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.core.bedrock.BedrockDetector;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.hackedserver.spigot.utils.HackedInventoryView;
+import org.hackedserver.spigot.utils.Schedulers;
 
 import org.hackedserver.core.utils.JoinWebhook;
 
@@ -41,7 +40,7 @@ public class HackedPlayerListeners implements Listener {
         // Accessing Bukkit Player objects from async threads is unsafe and can cause errors.
         final String playerName = player.getName();
         final java.util.UUID playerUuid = player.getUniqueId();
-        Bukkit.getScheduler().runTaskLaterAsynchronously(HackedServerPlugin.get(), () -> {
+        Schedulers.runAsync(() -> {
             JoinWebhook.send(playerName, playerUuid);
         }, JOIN_WEBHOOK_DELAY_TICKS);
 
@@ -49,11 +48,10 @@ public class HackedPlayerListeners implements Listener {
             // Execute pending actions after a short delay to ensure player is fully initialized
             // Use at least 1 tick to ensure the join event completes
             // Each action will then apply its own configured delay before executing commands
-            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(),
-                    hackedPlayer::executePendingActions, 1L);
+            Schedulers.runForEntity(player, hackedPlayer::executePendingActions, 1L);
         }
 
-        Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+        Schedulers.runForEntity(player, () -> {
             if (!player.isOnline()) {
                 return;
             }

@@ -23,8 +23,8 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.probing.ProbingConfig;
 import org.hackedserver.core.probing.TranslationCheck;
-import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.listeners.PayloadProcessor;
+import org.hackedserver.spigot.utils.Schedulers;
 import org.hackedserver.spigot.utils.logs.Logs;
 
 import java.util.ArrayList;
@@ -114,7 +114,7 @@ public class SignTranslationProber implements Listener {
                     + " with " + checks.size() + " checks (delay: " + ProbingConfig.getDelayTicks() + " ticks)");
         }
 
-        Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+        Schedulers.runForEntity(player, () -> {
             if (!player.isOnline()) {
                 return;
             }
@@ -228,7 +228,7 @@ public class SignTranslationProber implements Listener {
             activeSessions.put(player.getUniqueId(), probe);
 
             // Open sign editor after a short delay to let the block update propagate
-            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+            Schedulers.runForEntity(player, () -> {
                 if (!player.isOnline()) {
                     if (activeSessions.remove(player.getUniqueId(), probe)) restoreBlock(probe);
                     return;
@@ -249,7 +249,7 @@ public class SignTranslationProber implements Listener {
 
                 // Timeout: restore block but keep session for late packet arrivals
                 // Compare by identity: a later probe batch may have replaced this session
-                Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+                Schedulers.runForEntity(player, () -> {
                     ProbeSession s = activeSessions.get(player.getUniqueId());
                     if (s == probe && !s.handled.get()) {
                         s.timedOut = true;
@@ -261,7 +261,7 @@ public class SignTranslationProber implements Listener {
                 }, 400L); // 20 second timeout
 
                 // Final cleanup: remove session after grace period for late packets
-                Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+                Schedulers.runForEntity(player, () -> {
                     if (activeSessions.remove(player.getUniqueId(), probe) && !probe.handled.get()) {
                         if (Config.DEBUG.toBool()) {
                             Logs.logInfo("HackedServer | Sign probe final cleanup for " + player.getName());
@@ -317,7 +317,7 @@ public class SignTranslationProber implements Listener {
             return true;
         }
 
-        Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+        Schedulers.runForEntity(player, () -> {
             if (!session.timedOut) {
                 restoreBlock(session);
             }
@@ -364,10 +364,11 @@ public class SignTranslationProber implements Listener {
         if (!session.restored.compareAndSet(false, true)) {
             return;
         }
-        if (Bukkit.isPrimaryThread()) {
-            restoreBlockNow(session);
-        } else {
-            Bukkit.getScheduler().runTask(HackedServerPlugin.get(), () -> restoreBlockNow(session));
+        try {
+            Schedulers.runAtLocationNow(session.signLocation(), () -> restoreBlockNow(session));
+        } catch (Exception e) {
+            // Scheduling fails while the plugin is disabling on Folia
+            Logs.logWarning("Failed to restore block after probe: " + e.getMessage());
         }
     }
 
@@ -388,7 +389,7 @@ public class SignTranslationProber implements Listener {
         if (session.remainingChecks().isEmpty() || !player.isOnline()) {
             return;
         }
-        Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+        Schedulers.runForEntity(player, () -> {
             if (player.isOnline()) {
                 startProbe(player, session.remainingChecks());
             }
