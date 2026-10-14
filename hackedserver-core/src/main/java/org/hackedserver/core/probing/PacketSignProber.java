@@ -5,6 +5,7 @@ import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.ConnectionState;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.nbt.NBTByte;
 import com.github.retrooper.packetevents.protocol.nbt.NBTList;
@@ -57,6 +58,8 @@ import java.util.logging.Logger;
 public class PacketSignProber {
 
     private static final Logger LOGGER = Logger.getLogger("HackedServer");
+    private static final int MAX_READY_ATTEMPTS = 40;
+    private static final long READY_RETRY_DELAY_MS = 500L;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "HackedServer-ProbeScheduler");
         t.setDaemon(true);
@@ -171,13 +174,41 @@ public class PacketSignProber {
         }
 
         long delayMs = ProbingConfig.getDelayTicks() * 50L; // Convert ticks to milliseconds
+        scheduleProbeAttempt(user, playerName, checks, delayMs, MAX_READY_ATTEMPTS);
+    }
+
+    /**
+     * Proxies see the player before it finished joining a backend server (configuration phase,
+     * position unknown). Play packets sent then are dropped or rejected by the client, so wait
+     * until the connection is in the PLAY state and a position is known, for a bounded time.
+     */
+    private void scheduleProbeAttempt(User user, String playerName, List<TranslationCheck> checks,
+                                      long delayMs, int attemptsLeft) {
         scheduler.schedule(() -> {
             try {
+                if (!isReadyForProbe(user) && attemptsLeft > 0) {
+                    scheduleProbeAttempt(user, playerName, checks, READY_RETRY_DELAY_MS, attemptsLeft - 1);
+                    return;
+                }
+                if (user.getEncoderState() != ConnectionState.PLAY) {
+                    if (debugEnabled) {
+                        LOGGER.info("HackedServer | Skipping packet sign probe for " + playerName
+                                + " (never reached the play state)");
+                    }
+                    return;
+                }
                 doStartProbe(user, playerName, checks);
             } catch (Exception e) {
                 LOGGER.warning("HackedServer | Failed to start packet sign probe for " + playerName + ": " + e.getMessage());
             }
         }, delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    private boolean isReadyForProbe(User user) {
+        UUID uuid = user.getUUID();
+        return uuid != null
+                && user.getEncoderState() == ConnectionState.PLAY
+                && playerPositions.containsKey(uuid);
     }
 
     /**
