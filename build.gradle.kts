@@ -98,6 +98,14 @@ project(":hackedserver-core") {
         compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
         // PacketEvents API for packet-level sign translation probing (proxy platforms)
         compileOnly("com.github.retrooper:packetevents-api:2.14.0")
+
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+        testImplementation("com.github.retrooper:packetevents-api:2.14.0")
+    }
+
+    tasks.test {
+        useJUnitPlatform()
     }
 }
 
@@ -120,6 +128,14 @@ project(":hackedserver-spigot") {
         implementation("org.bstats:bstats-bukkit:3.1.0")
         // Hopper - Runtime dependency loader for auto-downloading ProtocolLib or PacketEvents
         implementation("md.thomas.hopper:hopper-bukkit:1.4.2")
+
+        testImplementation("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    }
+
+    tasks.test {
+        useJUnitPlatform()
     }
 }
 
