@@ -27,6 +27,7 @@ public class HackedServerPlugin extends Plugin {
     private BungeeAudiences audiences;
     private static HackedServerPlugin instance;
     private PacketSignProber signProber;
+    private boolean ownsPacketEvents = false;
 
     @Override
     public void onEnable() {
@@ -46,8 +47,13 @@ public class HackedServerPlugin extends Plugin {
         }
 
         try {
-            PacketEvents.setAPI(BungeePacketEventsBuilder.build(this));
-            PacketEvents.getAPI().load();
+            // The packetevents plugin sets up its API in onLoad(); only create our own instance
+            // when it is missing, never replace (and later terminate) the shared one
+            ownsPacketEvents = PacketEvents.getAPI() == null;
+            if (ownsPacketEvents) {
+                PacketEvents.setAPI(BungeePacketEventsBuilder.build(this));
+                PacketEvents.getAPI().load();
+            }
         } catch (Throwable e) {
             getLogger().severe("Failed to initialize PacketEvents. HackedServer will not function: " + e.getMessage());
             return;
@@ -65,7 +71,9 @@ public class HackedServerPlugin extends Plugin {
                 executeProbeActions(uuid, playerName, checkName, actions);
             });
             signProber.register();
-            PacketEvents.getAPI().init();
+            if (ownsPacketEvents) {
+                PacketEvents.getAPI().init();
+            }
         } catch (Throwable e) {
             getLogger().severe("Failed to register PacketEvents listeners. HackedServer will not function: " + e.getMessage());
             if (signProber != null) {
@@ -80,7 +88,7 @@ public class HackedServerPlugin extends Plugin {
         if (signProber != null) {
             signProber.unregister();
         }
-        if (PacketEvents.getAPI() != null) {
+        if (ownsPacketEvents && PacketEvents.getAPI() != null) {
             PacketEvents.getAPI().terminate();
         }
         this.getProxy().unregisterChannel(LunarApolloHandshakeParser.CHANNEL);
