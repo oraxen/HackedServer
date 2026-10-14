@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.protocol.nbt.NBTByte;
 import com.github.retrooper.packetevents.protocol.nbt.NBTList;
 import com.github.retrooper.packetevents.protocol.nbt.NBTString;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.world.blockentity.BlockEntityTypes;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
@@ -220,7 +221,11 @@ public class PacketSignProber {
         user.sendPacket(blockChange);
 
         // 2. Send Block Entity Data with translatable text components
-        NBTCompound signNBT = buildSignNBT(lineChecks);
+        boolean structuredComponents = user.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5);
+        NBTCompound signNBT = buildSignNBT(lineChecks, structuredComponents);
+        if (debugEnabled) {
+            LOGGER.info("HackedServer | Packet probe sign NBT for " + playerName + ": " + signNBT);
+        }
         WrapperPlayServerBlockEntityData blockEntityData = new WrapperPlayServerBlockEntityData(
                 signPos, BlockEntityTypes.SIGN, signNBT);
         user.sendPacket(blockEntityData);
@@ -276,12 +281,7 @@ public class PacketSignProber {
      * <pre>
      * {
      *   "front_text": {
-     *     "messages": [
-     *       '{"translate":"key"}',
-     *       '{"translate":"key"}',
-     *       '{"translate":"key"}',
-     *       '{"translate":"key"}'
-     *     ],
+     *     "messages": [ line, line, line, line ],
      *     "color": "black",
      *     "has_glowing_text": 0b
      *   },
@@ -289,48 +289,23 @@ public class PacketSignProber {
      *   "is_waxed": 0b
      * }
      * </pre>
+     * Before 1.21.5 each line is a JSON string ('{"translate":"key"}'). Since 1.21.5 text components
+     * are stored as structured NBT ({translate:"key"}); a JSON string would be shown verbatim by the
+     * client and echoed back, which would flag every player.
      */
-    private NBTCompound buildSignNBT(List<TranslationCheck> checks) {
+    static NBTCompound buildSignNBT(List<TranslationCheck> checks, boolean structuredComponents) {
         NBTCompound root = new NBTCompound();
 
         // Front text with translatable components
         NBTCompound frontText = new NBTCompound();
-        NBTList<NBTString> messages = NBTList.createStringList();
-
-        for (int i = 0; i < 4; i++) {
-            if (i < checks.size()) {
-                TranslationCheck check = checks.get(i);
-                String json;
-                if (check.isBypassProtection()) {
-                    // Wrap in %s substitution to bypass client-side protection
-                    json = "{\"translate\":\"%s\",\"with\":[{\"translate\":\""
-                            + escapeJson(check.getTranslationKey()) + "\"}]}";
-                } else {
-                    json = "{\"translate\":\"" + escapeJson(check.getTranslationKey()) + "\"}";
-                }
-                messages.addTag(new NBTString(json));
-
-                if (debugEnabled) {
-                    LOGGER.info("HackedServer | Packet probe line " + i + ": " + json
-                            + " (bypass=" + check.isBypassProtection() + ")");
-                }
-            } else {
-                messages.addTag(new NBTString("{\"text\":\"\"}"));
-            }
-        }
-
-        frontText.setTag("messages", messages);
+        frontText.setTag("messages", buildLines(checks, structuredComponents));
         frontText.setTag("color", new NBTString("black"));
         frontText.setTag("has_glowing_text", new NBTByte((byte) 0));
         root.setTag("front_text", frontText);
 
         // Back text (empty)
         NBTCompound backText = new NBTCompound();
-        NBTList<NBTString> backMessages = NBTList.createStringList();
-        for (int i = 0; i < 4; i++) {
-            backMessages.addTag(new NBTString("{\"text\":\"\"}"));
-        }
-        backText.setTag("messages", backMessages);
+        backText.setTag("messages", buildLines(List.of(), structuredComponents));
         backText.setTag("color", new NBTString("black"));
         backText.setTag("has_glowing_text", new NBTByte((byte) 0));
         root.setTag("back_text", backText);
@@ -338,6 +313,51 @@ public class PacketSignProber {
         root.setTag("is_waxed", new NBTByte((byte) 0));
 
         return root;
+    }
+
+    private static NBTList<?> buildLines(List<TranslationCheck> checks, boolean structuredComponents) {
+        if (structuredComponents) {
+            NBTList<NBTCompound> lines = NBTList.createCompoundList();
+            for (int i = 0; i < 4; i++) {
+                lines.addTag(i < checks.size() ? translatableCompound(checks.get(i)) : emptyCompound());
+            }
+            return lines;
+        }
+        NBTList<NBTString> lines = NBTList.createStringList();
+        for (int i = 0; i < 4; i++) {
+            lines.addTag(new NBTString(i < checks.size() ? translatableJson(checks.get(i)) : "{\"text\":\"\"}"));
+        }
+        return lines;
+    }
+
+    static String translatableJson(TranslationCheck check) {
+        if (check.isBypassProtection()) {
+            // Wrap in %s substitution to bypass client-side protection
+            return "{\"translate\":\"%s\",\"with\":[{\"translate\":\""
+                    + escapeJson(check.getTranslationKey()) + "\"}]}";
+        }
+        return "{\"translate\":\"" + escapeJson(check.getTranslationKey()) + "\"}";
+    }
+
+    static NBTCompound translatableCompound(TranslationCheck check) {
+        NBTCompound inner = new NBTCompound();
+        inner.setTag("translate", new NBTString(check.getTranslationKey()));
+        if (!check.isBypassProtection()) {
+            return inner;
+        }
+        // Wrap in %s substitution to bypass client-side protection
+        NBTCompound outer = new NBTCompound();
+        outer.setTag("translate", new NBTString("%s"));
+        NBTList<NBTCompound> with = NBTList.createCompoundList();
+        with.addTag(inner);
+        outer.setTag("with", with);
+        return outer;
+    }
+
+    private static NBTCompound emptyCompound() {
+        NBTCompound empty = new NBTCompound();
+        empty.setTag("text", new NBTString(""));
+        return empty;
     }
 
     private void handleUpdateSign(PacketReceiveEvent event) {
