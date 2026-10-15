@@ -36,9 +36,9 @@ HackedServer is a premium Minecraft plugin that uses packet-based analysis to de
 | Platform | Versions |
 |----------|----------|
 | Paper, Purpur, Spigot, CraftBukkit | 1.16 - 1.21.11, 26.1 - 26.3 |
-| Folia | 1.20+ (tested on 26.2) |
+| Folia | 1.20+ (tested on 26.2 and 26.3) |
 | BungeeCord | 1.16 - 1.21.x |
-| Velocity | 3.x (tested on 3.5.1) |
+| Velocity | 3.x and 4.x (tested on 3.5.1 and 4.2.0) |
 
 ## Requirements
 
