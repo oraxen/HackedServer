@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class PendingPayloads {
@@ -14,6 +15,8 @@ public final class PendingPayloads {
     private static final long MAX_AGE_MS = 30_000L;
     private static final int MAX_PAYLOADS_PER_PLAYER = 256;
     private static final Map<Player, PendingQueue> PENDING = new ConcurrentHashMap<>();
+    // Payloads received before the Bukkit player exists (login/configuration phase), keyed by profile UUID
+    private static final Map<UUID, PendingQueue> PENDING_BY_UUID = new ConcurrentHashMap<>();
 
     private PendingPayloads() {
     }
@@ -27,12 +30,24 @@ public final class PendingPayloads {
         queue.add(channel, message);
     }
 
+    public static void queue(UUID uuid, String channel, String message) {
+        if (uuid == null) {
+            return;
+        }
+        pruneExpired();
+        PENDING_BY_UUID.computeIfAbsent(uuid, key -> new PendingQueue()).add(channel, message);
+    }
+
     public static List<PendingPayload> drainFor(Player player) {
         if (player == null) {
             return List.of();
         }
         pruneExpired();
         List<PendingPayload> drained = new ArrayList<>();
+        PendingQueue byUuid = PENDING_BY_UUID.remove(player.getUniqueId());
+        if (byUuid != null) {
+            drained.addAll(byUuid.drain());
+        }
         for (Map.Entry<Player, PendingQueue> entry : PENDING.entrySet()) {
             Player temporaryPlayer = entry.getKey();
             Player resolved = resolvePlayer(temporaryPlayer);
@@ -53,6 +68,7 @@ public final class PendingPayloads {
         if (player == null) {
             return;
         }
+        PENDING_BY_UUID.remove(player.getUniqueId());
         for (Map.Entry<Player, PendingQueue> entry : PENDING.entrySet()) {
             Player temporaryPlayer = entry.getKey();
             Player resolved = resolvePlayer(temporaryPlayer);
@@ -78,6 +94,11 @@ public final class PendingPayloads {
         for (Map.Entry<Player, PendingQueue> entry : PENDING.entrySet()) {
             if (entry.getValue().isExpired(now)) {
                 PENDING.remove(entry.getKey(), entry.getValue());
+            }
+        }
+        for (Map.Entry<UUID, PendingQueue> entry : PENDING_BY_UUID.entrySet()) {
+            if (entry.getValue().isExpired(now)) {
+                PENDING_BY_UUID.remove(entry.getKey(), entry.getValue());
             }
         }
     }

@@ -21,7 +21,9 @@ public class CustomLogger extends PluginLogger {
     }
 
     void newLog(Level level, String message) {
-        super.log(new LogRecord(level, message));
+        LogRecord logRecord = new LogRecord(level, message);
+        logRecord.setLoggerName(getName());
+        super.log(logRecord);
     }
 
 }

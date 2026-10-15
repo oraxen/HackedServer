@@ -1,12 +1,7 @@
 package org.hackedserver.spigot.probing;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerAbstract;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
-import com.github.retrooper.packetevents.event.PacketReceiveEvent;
-import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUpdateSign;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -28,8 +23,8 @@ import org.hackedserver.core.HackedServer;
 import org.hackedserver.core.config.Config;
 import org.hackedserver.core.probing.ProbingConfig;
 import org.hackedserver.core.probing.TranslationCheck;
-import org.hackedserver.spigot.HackedServerPlugin;
 import org.hackedserver.spigot.listeners.PayloadProcessor;
+import org.hackedserver.spigot.utils.Schedulers;
 import org.hackedserver.spigot.utils.logs.Logs;
 
 import java.util.ArrayList;
@@ -46,18 +41,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * set via the Bukkit Sign API. The server natively serializes these into
  * the correct NBT format in the BlockEntityData packet. The sign editor
  * is opened via player.openSign(), and the client's response is intercepted
- * at the packet level (UPDATE_SIGN) using PacketEvents.
+ * at the packet level (UPDATE_SIGN) when PacketEvents is available, or through
+ * {@link SignChangeEvent} otherwise (e.g. ProtocolLib-only servers).
  * <p>
  * When the client opens the sign editor, translatable text components are
  * resolved to plain text. If a mod's translation key resolves to something
  * other than the raw key, that mod is installed.
  * <p>
- * Requires PacketEvents 2.x on the server and Paper (for Adventure API).
+ * Requires Paper (for the Adventure sign API). This class must not reference
+ * PacketEvents types: it is registered as a Bukkit listener even when PacketEvents
+ * is missing or broken (see {@code PacketEventsIntegration#registerSignListener}).
  */
 public class SignTranslationProber implements Listener {
 
     private final Map<UUID, ProbeSession> activeSessions = new ConcurrentHashMap<>();
-    private PacketListenerAbstract packetListener;
 
     private static final class ProbeSession {
         private final Location signLocation;
@@ -83,33 +80,13 @@ public class SignTranslationProber implements Listener {
         BlockState originalBlockState() { return originalBlockState; }
         List<TranslationCheck> lineChecks() { return lineChecks; }
         List<TranslationCheck> remainingChecks() { return remainingChecks; }
-    }
 
-    public void register() {
-        packetListener = new PacketListenerAbstract(PacketListenerPriority.LOW) {
-            @Override
-            public void onPacketReceive(PacketReceiveEvent event) {
-                if (event.getPacketType() == PacketType.Play.Client.UPDATE_SIGN) {
-                    if (Config.DEBUG.toBool()) {
-                        WrapperPlayClientUpdateSign dbg = new WrapperPlayClientUpdateSign(event);
-                        UUID uid = event.getUser().getUUID();
-                        boolean hasSession = activeSessions.containsKey(uid);
-                        Logs.logInfo("HackedServer | Received UPDATE_SIGN packet from "
-                                + uid + " (hasSession=" + hasSession + ") lines: [\""
-                                + String.join("\", \"", dbg.getTextLines()) + "\"]");
-                    }
-                    handleUpdateSign(event);
-                }
-            }
-        };
-        PacketEvents.getAPI().getEventManager().registerListener(packetListener);
+        boolean isAt(int x, int y, int z) {
+            return signLocation.getBlockX() == x && signLocation.getBlockY() == y && signLocation.getBlockZ() == z;
+        }
     }
 
     public void unregister() {
-        if (packetListener != null) {
-            PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
-            packetListener = null;
-        }
         for (var entry : activeSessions.entrySet()) {
             restoreBlock(entry.getValue());
         }
@@ -137,7 +114,7 @@ public class SignTranslationProber implements Listener {
                     + " with " + checks.size() + " checks (delay: " + ProbingConfig.getDelayTicks() + " ticks)");
         }
 
-        Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+        Schedulers.runForEntity(player, () -> {
             if (!player.isOnline()) {
                 return;
             }
@@ -160,15 +137,23 @@ public class SignTranslationProber implements Listener {
     public void onSignChange(SignChangeEvent event) {
         Player player = event.getPlayer();
         ProbeSession session = activeSessions.get(player.getUniqueId());
-        if (session != null) {
-            Location probeLoc = session.signLocation();
-            Location signLoc = event.getBlock().getLocation();
-            if (signLoc.getBlockX() == probeLoc.getBlockX()
-                    && signLoc.getBlockY() == probeLoc.getBlockY()
-                    && signLoc.getBlockZ() == probeLoc.getBlockZ()) {
-                event.setCancelled(true);
-            }
+        if (session == null) {
+            return;
         }
+        Location signLoc = event.getBlock().getLocation();
+        if (!session.isAt(signLoc.getBlockX(), signLoc.getBlockY(), signLoc.getBlockZ())) {
+            return;
+        }
+        event.setCancelled(true);
+
+        // Only reached when the UPDATE_SIGN packet was not consumed at the packet level
+        // (no PacketEvents): read the client's resolved lines from the event instead.
+        String[] lines = new String[4];
+        for (int i = 0; i < lines.length; i++) {
+            Component line = event.line(i);
+            lines[i] = line != null ? PlainTextComponentSerializer.plainText().serialize(line) : "";
+        }
+        handleResponse(player.getUniqueId(), signLoc.getBlockX(), signLoc.getBlockY(), signLoc.getBlockZ(), lines);
     }
 
     private void startProbe(Player player, List<TranslationCheck> checks) {
@@ -239,22 +224,20 @@ public class SignTranslationProber implements Listener {
             sign.update(true, false);
 
             // Register the probe session
-            activeSessions.put(player.getUniqueId(),
-                    new ProbeSession(signLoc, originalData, originalState, lineChecks, remainingChecks));
+            ProbeSession probe = new ProbeSession(signLoc, originalData, originalState, lineChecks, remainingChecks);
+            activeSessions.put(player.getUniqueId(), probe);
 
             // Open sign editor after a short delay to let the block update propagate
-            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+            Schedulers.runForEntity(player, () -> {
                 if (!player.isOnline()) {
-                    ProbeSession s = activeSessions.remove(player.getUniqueId());
-                    if (s != null) restoreBlock(s);
+                    if (activeSessions.remove(player.getUniqueId(), probe)) restoreBlock(probe);
                     return;
                 }
 
                 BlockState currentState = block.getState();
                 if (!(currentState instanceof Sign currentSign)) {
                     Logs.logWarning("HackedServer | Sign disappeared before editor opened for " + player.getName());
-                    ProbeSession s = activeSessions.remove(player.getUniqueId());
-                    if (s != null) restoreBlock(s);
+                    if (activeSessions.remove(player.getUniqueId(), probe)) restoreBlock(probe);
                     return;
                 }
 
@@ -264,10 +247,19 @@ public class SignTranslationProber implements Listener {
                     Logs.logInfo("HackedServer | Opened sign editor for " + player.getName());
                 }
 
+                // Close the editor right away: the client answers with the lines it rendered when the
+                // screen closes, so the probe neither waits for nor depends on the player
+                Schedulers.runForEntity(player, () -> {
+                    if (activeSessions.get(player.getUniqueId()) == probe && !probe.handled.get()) {
+                        player.closeInventory();
+                    }
+                }, 2L);
+
                 // Timeout: restore block but keep session for late packet arrivals
-                Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+                // Compare by identity: a later probe batch may have replaced this session
+                Schedulers.runForEntity(player, () -> {
                     ProbeSession s = activeSessions.get(player.getUniqueId());
-                    if (s != null && !s.handled.get()) {
+                    if (s == probe && !s.handled.get()) {
                         s.timedOut = true;
                         if (Config.DEBUG.toBool()) {
                             Logs.logInfo("HackedServer | Sign probe timed out for " + player.getName() + " (waiting for late packet)");
@@ -277,14 +269,13 @@ public class SignTranslationProber implements Listener {
                 }, 400L); // 20 second timeout
 
                 // Final cleanup: remove session after grace period for late packets
-                Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
-                    ProbeSession s = activeSessions.remove(player.getUniqueId());
-                    if (s != null && !s.handled.get()) {
+                Schedulers.runForEntity(player, () -> {
+                    if (activeSessions.remove(player.getUniqueId(), probe) && !probe.handled.get()) {
                         if (Config.DEBUG.toBool()) {
                             Logs.logInfo("HackedServer | Sign probe final cleanup for " + player.getName());
                         }
-                        restoreBlock(s);
-                        scheduleRemainingChecks(player, s);
+                        restoreBlock(probe);
+                        scheduleRemainingChecks(player, probe);
                     }
                 }, 440L); // 2 second grace period after timeout
             }, 5L);
@@ -297,44 +288,44 @@ public class SignTranslationProber implements Listener {
         }
     }
 
-    private void handleUpdateSign(PacketReceiveEvent event) {
-        WrapperPlayClientUpdateSign updateSign = new WrapperPlayClientUpdateSign(event);
-        UUID playerUUID = event.getUser().getUUID();
-
+    /**
+     * Handles the client's reply to a probe sign. Safe to call from a netty thread.
+     *
+     * @return true if the reply belongs to an active probe and must not reach the server
+     */
+    public boolean handleResponse(UUID playerUUID, int x, int y, int z, String[] lines) {
         ProbeSession session = activeSessions.get(playerUUID);
         if (session == null || session.handled.get()) {
-            return;
+            return false;
         }
 
         // Verify this UPDATE_SIGN is for the probe sign, not a legitimate sign edit
-        com.github.retrooper.packetevents.util.Vector3i signPos = updateSign.getBlockPosition();
-        Location probeLoc = session.signLocation();
-        if (signPos.x != probeLoc.getBlockX()
-                || signPos.y != probeLoc.getBlockY()
-                || signPos.z != probeLoc.getBlockZ()) {
-            return;
+        if (!session.isAt(x, y, z)) {
+            return false;
         }
 
         // Atomically claim the session to avoid race with timeout handler
         if (!session.handled.compareAndSet(false, true)) {
-            return;
+            return false;
         }
         if (!activeSessions.remove(playerUUID, session)) {
-            return;
+            return false;
         }
 
-        event.setCancelled(true);
-
-        String[] lines = updateSign.getTextLines();
+        Player player = Bukkit.getPlayer(playerUUID);
 
         if (Config.DEBUG.toBool()) {
-            Player player = Bukkit.getPlayer(playerUUID);
             String playerName = player != null ? player.getName() : playerUUID.toString();
             Logs.logInfo("HackedServer | Sign probe response from " + playerName
                     + ": [\"" + String.join("\", \"", lines) + "\"]");
         }
 
-        Bukkit.getScheduler().runTask(HackedServerPlugin.get(), () -> {
+        if (player == null) {
+            restoreBlock(session);
+            return true;
+        }
+
+        Schedulers.runForEntity(player, () -> {
             if (!session.timedOut) {
                 restoreBlock(session);
             }
@@ -344,7 +335,7 @@ public class SignTranslationProber implements Listener {
                 return;
             }
 
-            HackedPlayer hackedPlayer = HackedServer.getPlayer(playerUUID);
+            HackedPlayer hackedPlayer = HackedServer.getPlayerIfPresent(playerUUID);
             if (hackedPlayer == null) {
                 return;
             }
@@ -364,7 +355,7 @@ public class SignTranslationProber implements Listener {
                         Logs.logInfo("HackedServer | DETECTED: " + check.getName()
                                 + " via sign translation probe");
                     }
-                    String probeCheckId = "probe_" + check.getId();
+                    String probeCheckId = HackedServer.PROBE_CHECK_PREFIX + check.getId();
                     if (!hackedPlayer.hasGenericCheck(probeCheckId)) {
                         hackedPlayer.addGenericCheck(probeCheckId);
                         PayloadProcessor.runActions(onlinePlayer, check.getName(), check.getActions());
@@ -373,13 +364,23 @@ public class SignTranslationProber implements Listener {
             }
 
             scheduleRemainingChecks(onlinePlayer, session);
-        });
+        }, 0L);
+        return true;
     }
 
     private void restoreBlock(ProbeSession session) {
         if (!session.restored.compareAndSet(false, true)) {
             return;
         }
+        try {
+            Schedulers.runAtLocationNow(session.signLocation(), () -> restoreBlockNow(session));
+        } catch (Exception e) {
+            // Scheduling fails while the plugin is disabling on Folia
+            Logs.logWarning("Failed to restore block after probe: " + e.getMessage());
+        }
+    }
+
+    private void restoreBlockNow(ProbeSession session) {
         try {
             Block block = session.signLocation().getBlock();
             block.setBlockData(session.originalBlockData(), false);
@@ -396,7 +397,7 @@ public class SignTranslationProber implements Listener {
         if (session.remainingChecks().isEmpty() || !player.isOnline()) {
             return;
         }
-        Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), () -> {
+        Schedulers.runForEntity(player, () -> {
             if (player.isOnline()) {
                 startProbe(player, session.remainingChecks());
             }

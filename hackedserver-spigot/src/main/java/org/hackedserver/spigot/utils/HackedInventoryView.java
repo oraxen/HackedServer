@@ -94,12 +94,21 @@ public final class HackedInventoryView {
                     .count();
             int cleanCount = totalNonLoader - detectedNonLoader.size();
 
-            if (detectedNonLoader.isEmpty()) {
+            List<String> detectedNames = detectedNonLoader.stream()
+                    .map(GenericCheck::getName)
+                    .collect(Collectors.toList());
+            hackedPlayer.getGenericChecks().stream()
+                    .filter(id -> id.startsWith(HackedServer.PROBE_CHECK_PREFIX))
+                    .map(HackedServer::getCheckName)
+                    .sorted()
+                    .forEach(detectedNames::add);
+
+            if (detectedNames.isEmpty()) {
                 lore.add(toLegacy(Component.text("✓ " + cleanCount + " checks passed", NamedTextColor.GREEN)
                         .decoration(TextDecoration.ITALIC, false)));
             } else {
-                for (GenericCheck check : detectedNonLoader) {
-                    lore.add(toLegacy(Component.text("⚠ " + check.getName(), NamedTextColor.YELLOW)
+                for (String detectedName : detectedNames) {
+                    lore.add(toLegacy(Component.text("⚠ " + detectedName, NamedTextColor.YELLOW)
                             .decoration(TextDecoration.ITALIC, false)));
                 }
                 lore.add(toLegacy(Component.text("")));

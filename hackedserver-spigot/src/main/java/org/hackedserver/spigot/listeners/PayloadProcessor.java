@@ -1,5 +1,6 @@
 package org.hackedserver.spigot.listeners;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
@@ -19,11 +20,14 @@ import org.hackedserver.core.forge.ForgeHandshakeResult;
 import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.core.forge.ForgeSpoofingDetector;
 import org.hackedserver.spigot.HackedServerPlugin;
+import org.hackedserver.spigot.utils.Schedulers;
 import org.hackedserver.spigot.utils.logs.Logs;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class PayloadProcessor {
 
@@ -151,13 +155,7 @@ public final class PayloadProcessor {
     private static void performActions(Action action, Player player, Map<String, String> commandPlaceholders,
                                        TagResolver.Single... templates) {
         if (action.hasAlert()) {
-            Logs.logComponent(action.getAlert(templates));
-            for (Player admin : Bukkit.getOnlinePlayers()) {
-                if (admin.hasPermission("hackedserver.alert")) {
-                    HackedServerPlugin.get().getAudiences().player(admin)
-                            .sendMessage(action.getAlert(templates));
-                }
-            }
+            sendAlert(action.getAlert(templates));
         }
         if (player.hasPermission("hackedserver.bypass")) {
             return;
@@ -166,11 +164,23 @@ public final class PayloadProcessor {
         // Check if player is fully online - if not, defer the actions
         HackedPlayer hackedPlayer = HackedServer.getPlayer(player.getUniqueId());
         if (!isPlayerFullyOnline(player)) {
-            hackedPlayer.queuePendingAction(() -> executeCommands(action, player, commandPlaceholders));
+            hackedPlayer.queuePendingAction(() -> executeCommands(action, player.getUniqueId(), commandPlaceholders));
             return;
         }
 
-        executeCommands(action, player, commandPlaceholders);
+        executeCommands(action, player.getUniqueId(), commandPlaceholders);
+    }
+
+    /**
+     * Sends an alert to the console and every online player with the {@code hackedserver.alert} permission.
+     */
+    public static void sendAlert(Component alert) {
+        Logs.logComponent(alert);
+        for (Player admin : Bukkit.getOnlinePlayers()) {
+            if (admin.hasPermission("hackedserver.alert")) {
+                HackedServerPlugin.get().getAudiences().player(admin).sendMessage(alert);
+            }
+        }
     }
 
     private static boolean isPlayerFullyOnline(Player player) {
@@ -180,21 +190,33 @@ public final class PayloadProcessor {
         return onlinePlayer != null && onlinePlayer.isOnline();
     }
 
-    private static void executeCommands(Action action, Player player, Map<String, String> placeholders) {
-        long delayTicks = action.getDelayTicks();
+    private static void executeCommands(Action action, UUID playerUuid, Map<String, String> placeholders) {
+        Player player = Bukkit.getPlayer(playerUuid);
+        if (player == null) {
+            return; // Player logged out before we could execute
+        }
 
         // Schedule the commands with the configured delay
         // This ensures the player is fully connected before executing actions like kick
-        Runnable commandRunner = () -> {
+        // Player commands run on the player's thread, console commands on the global thread (Folia)
+        Schedulers.runForEntity(player, () -> {
             // Re-fetch the player to ensure we have the current online instance
-            Player onlinePlayer = Bukkit.getPlayer(player.getUniqueId());
+            Player onlinePlayer = Bukkit.getPlayer(playerUuid);
             if (onlinePlayer == null || !onlinePlayer.isOnline()) {
                 return; // Player logged out before we could execute
             }
+            // Re-check bypass permission now that player is fully online
+            if (onlinePlayer.hasPermission("hackedserver.bypass")) {
+                return;
+            }
 
+            List<String> consoleCommands = new ArrayList<>();
             for (String command : action.getConsoleCommands()) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        replacePlaceholders(command, onlinePlayer, placeholders));
+                consoleCommands.add(replacePlaceholders(command, onlinePlayer, placeholders));
+            }
+            if (!consoleCommands.isEmpty()) {
+                Schedulers.runGlobalNow(() -> consoleCommands.forEach(command ->
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)));
             }
             for (String command : action.getPlayerCommands()) {
                 Bukkit.dispatchCommand(onlinePlayer,
@@ -203,17 +225,14 @@ public final class PayloadProcessor {
             for (String command : action.getOppedPlayerCommands()) {
                 boolean op = onlinePlayer.isOp();
                 onlinePlayer.setOp(true);
-                Bukkit.dispatchCommand(onlinePlayer,
-                        replacePlaceholders(command, onlinePlayer, placeholders));
-                onlinePlayer.setOp(op);
+                try {
+                    Bukkit.dispatchCommand(onlinePlayer,
+                            replacePlaceholders(command, onlinePlayer, placeholders));
+                } finally {
+                    onlinePlayer.setOp(op);
+                }
             }
-        };
-
-        if (delayTicks > 0) {
-            Bukkit.getScheduler().runTaskLater(HackedServerPlugin.get(), commandRunner, delayTicks);
-        } else {
-            Bukkit.getScheduler().runTask(HackedServerPlugin.get(), commandRunner);
-        }
+        }, action.getDelayTicks());
     }
 
     private static String replacePlaceholders(String command, Player player, Map<String, String> placeholders) {

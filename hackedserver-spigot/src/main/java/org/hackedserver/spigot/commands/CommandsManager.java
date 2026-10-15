@@ -2,7 +2,6 @@ package org.hackedserver.spigot.commands;
 
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -15,6 +14,7 @@ import org.hackedserver.core.config.LunarConfig;
 import org.hackedserver.core.forge.ForgeConfig;
 import org.hackedserver.core.forge.ForgeModInfo;
 import org.hackedserver.core.lunar.LunarModInfo;
+import org.hackedserver.spigot.utils.HackedAudiences;
 import org.hackedserver.spigot.utils.HackedInventoryView;
 
 import java.util.Objects;
@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
 public class CommandsManager {
 
     private final JavaPlugin plugin;
-    private final BukkitAudiences audiences;
+    private final HackedAudiences audiences;
 
-    public CommandsManager(JavaPlugin plugin, BukkitAudiences audiences) {
+    public CommandsManager(JavaPlugin plugin, HackedAudiences audiences) {
         this.plugin = plugin;
         this.audiences = audiences;
     }
@@ -65,8 +65,7 @@ public class CommandsManager {
                     if (hasGenericChecks) {
                         Message.CHECK_MODS.send(audiences.sender(sender));
                         hackedPlayer.getGenericChecks().forEach(checkId -> {
-                            var check = HackedServer.getCheck(checkId);
-                            String modName = check != null ? check.getName() : checkId;
+                            String modName = HackedServer.getCheckName(checkId);
                             Message.MOD_LIST_FORMAT.send(audiences.sender(sender),
                                     Placeholder.parsed("mod", modName));
                         });

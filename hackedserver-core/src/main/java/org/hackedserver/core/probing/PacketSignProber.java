@@ -5,18 +5,22 @@ import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.ConnectionState;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.nbt.NBTByte;
 import com.github.retrooper.packetevents.protocol.nbt.NBTList;
 import com.github.retrooper.packetevents.protocol.nbt.NBTString;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.world.blockentity.BlockEntityTypes;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUpdateSign;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockEntityData;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenSignEditor;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 
@@ -56,6 +60,8 @@ import java.util.logging.Logger;
 public class PacketSignProber {
 
     private static final Logger LOGGER = Logger.getLogger("HackedServer");
+    private static final int MAX_READY_ATTEMPTS = 40;
+    private static final long READY_RETRY_DELAY_MS = 500L;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "HackedServer-ProbeScheduler");
         t.setDaemon(true);
@@ -170,13 +176,41 @@ public class PacketSignProber {
         }
 
         long delayMs = ProbingConfig.getDelayTicks() * 50L; // Convert ticks to milliseconds
+        scheduleProbeAttempt(user, playerName, checks, delayMs, MAX_READY_ATTEMPTS);
+    }
+
+    /**
+     * Proxies see the player before it finished joining a backend server (configuration phase,
+     * position unknown). Play packets sent then are dropped or rejected by the client, so wait
+     * until the connection is in the PLAY state and a position is known, for a bounded time.
+     */
+    private void scheduleProbeAttempt(User user, String playerName, List<TranslationCheck> checks,
+                                      long delayMs, int attemptsLeft) {
         scheduler.schedule(() -> {
             try {
+                if (!isReadyForProbe(user) && attemptsLeft > 0) {
+                    scheduleProbeAttempt(user, playerName, checks, READY_RETRY_DELAY_MS, attemptsLeft - 1);
+                    return;
+                }
+                if (user.getEncoderState() != ConnectionState.PLAY) {
+                    if (debugEnabled) {
+                        LOGGER.info("HackedServer | Skipping packet sign probe for " + playerName
+                                + " (never reached the play state)");
+                    }
+                    return;
+                }
                 doStartProbe(user, playerName, checks);
             } catch (Exception e) {
                 LOGGER.warning("HackedServer | Failed to start packet sign probe for " + playerName + ": " + e.getMessage());
             }
         }, delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    private boolean isReadyForProbe(User user) {
+        UUID uuid = user.getUUID();
+        return uuid != null
+                && user.getEncoderState() == ConnectionState.PLAY
+                && playerPositions.containsKey(uuid);
     }
 
     /**
@@ -214,13 +248,18 @@ public class PacketSignProber {
         }
 
         // 1. Send Block Change to place a virtual sign
-        WrappedBlockState signState = WrappedBlockState.getByString(
-                user.getClientVersion(), "minecraft:oak_sign");
+        // A bare "minecraft:oak_sign" string does not resolve to a sign state, and real clients ignore
+        // the sign editor unless a sign block entity exists at the position
+        WrappedBlockState signState = StateTypes.OAK_SIGN.createBlockState(user.getClientVersion());
         WrapperPlayServerBlockChange blockChange = new WrapperPlayServerBlockChange(signPos, signState);
         user.sendPacket(blockChange);
 
         // 2. Send Block Entity Data with translatable text components
-        NBTCompound signNBT = buildSignNBT(lineChecks);
+        boolean structuredComponents = user.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5);
+        NBTCompound signNBT = buildSignNBT(lineChecks, structuredComponents);
+        if (debugEnabled) {
+            LOGGER.info("HackedServer | Packet probe sign NBT for " + playerName + ": " + signNBT);
+        }
         WrapperPlayServerBlockEntityData blockEntityData = new WrapperPlayServerBlockEntityData(
                 signPos, BlockEntityTypes.SIGN, signNBT);
         user.sendPacket(blockEntityData);
@@ -241,6 +280,15 @@ public class PacketSignProber {
                 if (debugEnabled) {
                     LOGGER.info("HackedServer | Opened sign editor via packet for " + playerName);
                 }
+
+                // Close the editor right away: the client answers with the lines it rendered when the
+                // screen closes, so the probe neither waits for nor depends on the player
+                scheduler.schedule(() -> {
+                    ProbeSession s = activeSessions.get(playerUUID);
+                    if (s != null && !s.handled.get()) {
+                        user.sendPacket(new WrapperPlayServerCloseWindow(0));
+                    }
+                }, 100, TimeUnit.MILLISECONDS);
 
                 // Timeout: clean up the virtual block but keep the session briefly to consume late UPDATE_SIGN packets.
                 scheduler.schedule(() -> {
@@ -276,12 +324,7 @@ public class PacketSignProber {
      * <pre>
      * {
      *   "front_text": {
-     *     "messages": [
-     *       '{"translate":"key"}',
-     *       '{"translate":"key"}',
-     *       '{"translate":"key"}',
-     *       '{"translate":"key"}'
-     *     ],
+     *     "messages": [ line, line, line, line ],
      *     "color": "black",
      *     "has_glowing_text": 0b
      *   },
@@ -289,48 +332,23 @@ public class PacketSignProber {
      *   "is_waxed": 0b
      * }
      * </pre>
+     * Before 1.21.5 each line is a JSON string ('{"translate":"key"}'). Since 1.21.5 text components
+     * are stored as structured NBT ({translate:"key"}); a JSON string would be shown verbatim by the
+     * client and echoed back, which would flag every player.
      */
-    private NBTCompound buildSignNBT(List<TranslationCheck> checks) {
+    static NBTCompound buildSignNBT(List<TranslationCheck> checks, boolean structuredComponents) {
         NBTCompound root = new NBTCompound();
 
         // Front text with translatable components
         NBTCompound frontText = new NBTCompound();
-        NBTList<NBTString> messages = NBTList.createStringList();
-
-        for (int i = 0; i < 4; i++) {
-            if (i < checks.size()) {
-                TranslationCheck check = checks.get(i);
-                String json;
-                if (check.isBypassProtection()) {
-                    // Wrap in %s substitution to bypass client-side protection
-                    json = "{\"translate\":\"%s\",\"with\":[{\"translate\":\""
-                            + escapeJson(check.getTranslationKey()) + "\"}]}";
-                } else {
-                    json = "{\"translate\":\"" + escapeJson(check.getTranslationKey()) + "\"}";
-                }
-                messages.addTag(new NBTString(json));
-
-                if (debugEnabled) {
-                    LOGGER.info("HackedServer | Packet probe line " + i + ": " + json
-                            + " (bypass=" + check.isBypassProtection() + ")");
-                }
-            } else {
-                messages.addTag(new NBTString("{\"text\":\"\"}"));
-            }
-        }
-
-        frontText.setTag("messages", messages);
+        frontText.setTag("messages", buildLines(checks, structuredComponents));
         frontText.setTag("color", new NBTString("black"));
         frontText.setTag("has_glowing_text", new NBTByte((byte) 0));
         root.setTag("front_text", frontText);
 
         // Back text (empty)
         NBTCompound backText = new NBTCompound();
-        NBTList<NBTString> backMessages = NBTList.createStringList();
-        for (int i = 0; i < 4; i++) {
-            backMessages.addTag(new NBTString("{\"text\":\"\"}"));
-        }
-        backText.setTag("messages", backMessages);
+        backText.setTag("messages", buildLines(List.of(), structuredComponents));
         backText.setTag("color", new NBTString("black"));
         backText.setTag("has_glowing_text", new NBTByte((byte) 0));
         root.setTag("back_text", backText);
@@ -338,6 +356,51 @@ public class PacketSignProber {
         root.setTag("is_waxed", new NBTByte((byte) 0));
 
         return root;
+    }
+
+    private static NBTList<?> buildLines(List<TranslationCheck> checks, boolean structuredComponents) {
+        if (structuredComponents) {
+            NBTList<NBTCompound> lines = NBTList.createCompoundList();
+            for (int i = 0; i < 4; i++) {
+                lines.addTag(i < checks.size() ? translatableCompound(checks.get(i)) : emptyCompound());
+            }
+            return lines;
+        }
+        NBTList<NBTString> lines = NBTList.createStringList();
+        for (int i = 0; i < 4; i++) {
+            lines.addTag(new NBTString(i < checks.size() ? translatableJson(checks.get(i)) : "{\"text\":\"\"}"));
+        }
+        return lines;
+    }
+
+    static String translatableJson(TranslationCheck check) {
+        if (check.isBypassProtection()) {
+            // Wrap in %s substitution to bypass client-side protection
+            return "{\"translate\":\"%s\",\"with\":[{\"translate\":\""
+                    + escapeJson(check.getTranslationKey()) + "\"}]}";
+        }
+        return "{\"translate\":\"" + escapeJson(check.getTranslationKey()) + "\"}";
+    }
+
+    static NBTCompound translatableCompound(TranslationCheck check) {
+        NBTCompound inner = new NBTCompound();
+        inner.setTag("translate", new NBTString(check.getTranslationKey()));
+        if (!check.isBypassProtection()) {
+            return inner;
+        }
+        // Wrap in %s substitution to bypass client-side protection
+        NBTCompound outer = new NBTCompound();
+        outer.setTag("translate", new NBTString("%s"));
+        NBTList<NBTCompound> with = NBTList.createCompoundList();
+        with.addTag(inner);
+        outer.setTag("with", with);
+        return outer;
+    }
+
+    private static NBTCompound emptyCompound() {
+        NBTCompound empty = new NBTCompound();
+        empty.setTag("text", new NBTString(""));
+        return empty;
     }
 
     private void handleUpdateSign(PacketReceiveEvent event) {
@@ -399,7 +462,7 @@ public class PacketSignProber {
                     LOGGER.info("HackedServer | DETECTED: " + check.getName()
                             + " via packet sign translation probe");
                 }
-                String probeCheckId = "probe_" + check.getId();
+                String probeCheckId = HackedServer.PROBE_CHECK_PREFIX + check.getId();
                 if (!hackedPlayer.hasGenericCheck(probeCheckId)) {
                     hackedPlayer.addGenericCheck(probeCheckId);
                     actionExecutor.execute(playerUUID, user.getName(), check.getName(), check.getActions());

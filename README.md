@@ -35,15 +35,19 @@ HackedServer is a premium Minecraft plugin that uses packet-based analysis to de
 
 | Platform | Versions |
 |----------|----------|
-| Paper, Spigot, CraftBukkit | 1.16 - 1.21.x |
+| Paper, Purpur, Spigot, CraftBukkit | 1.16 - 1.21.11, 26.1 - 26.3 |
+| Folia | 1.20+ (tested on 26.2) |
 | BungeeCord | 1.16 - 1.21.x |
-| Velocity | 3.x |
+| Velocity | 3.x (tested on 3.5.1) |
 
 ## Requirements
 
-- **Java 17** or higher
-- **ProtocolLib** (for Spigot/Paper 1.17+) - automatically downloaded if missing
-- **PacketEvents** (for Velocity)
+- **Java 17** or higher (the server itself needs Java 21 for 1.20.5 - 1.21.x and Java 25 for 26.x)
+- A packet library on Spigot/Paper/Folia, automatically downloaded if missing:
+  - **ProtocolLib** 5.3+ (default up to 1.21.x)
+  - or **PacketEvents** 2.14.0+ (default on 26.x and hybrid servers such as Arclight)
+- **PacketEvents** on Velocity and BungeeCord (2.14.0+ for 26.x clients)
+- Sign translation probing requires Paper/Folia 1.20+ and works with either packet library
 
 ## Installation
 

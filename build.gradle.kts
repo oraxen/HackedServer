@@ -97,7 +97,15 @@ project(":hackedserver-core") {
         compileOnly("org.geysermc.geyser:api:2.4.2-SNAPSHOT")
         compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
         // PacketEvents API for packet-level sign translation probing (proxy platforms)
-        compileOnly("com.github.retrooper:packetevents-api:2.11.1")
+        compileOnly("com.github.retrooper:packetevents-api:2.14.0")
+
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+        testImplementation("com.github.retrooper:packetevents-api:2.14.0")
+    }
+
+    tasks.test {
+        useJUnitPlatform()
     }
 }
 
@@ -108,7 +116,7 @@ project(":hackedserver-spigot") {
         // ProtocolLib is now published on Maven Central under net.dmulloy2
         compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
         // PacketEvents as alternative to ProtocolLib (better Arclight/hybrid server compatibility)
-        compileOnly("com.github.retrooper:packetevents-spigot:2.11.1")
+        compileOnly("com.github.retrooper:packetevents-spigot:2.14.0")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly("io.netty:netty-all:4.1.68.Final")
         compileOnly("dev.jorel:commandapi-bukkit-core:11.0.0")
@@ -120,6 +128,14 @@ project(":hackedserver-spigot") {
         implementation("org.bstats:bstats-bukkit:3.1.0")
         // Hopper - Runtime dependency loader for auto-downloading ProtocolLib or PacketEvents
         implementation("md.thomas.hopper:hopper-bukkit:1.4.2")
+
+        testImplementation("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    }
+
+    tasks.test {
+        useJUnitPlatform()
     }
 }
 
@@ -132,7 +148,7 @@ project(":hackedserver-bungeecord") {
         compileOnly("net.md-5:bungeecord-api:1.20-R0.2")
         compileOnly("net.kyori:adventure-text-minimessage:4.14.0")
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
-        compileOnly("com.github.retrooper:packetevents-bungeecord:2.11.1")
+        compileOnly("com.github.retrooper:packetevents-bungeecord:2.14.0")
 
         implementation("net.kyori:adventure-platform-bungeecord:4.3.0")
         implementation("org.bstats:bstats-bungeecord:3.1.0")
@@ -150,7 +166,7 @@ project(":hackedserver-velocity") {
         compileOnly(project(path = ":hackedserver-core", configuration = "shadow"))
         compileOnly("com.velocitypowered:velocity-api:3.1.0")
         annotationProcessor("com.velocitypowered:velocity-api:3.1.0")
-        compileOnly("com.github.retrooper:packetevents-velocity:2.11.1")
+        compileOnly("com.github.retrooper:packetevents-velocity:2.14.0")
         implementation("org.bstats:bstats-velocity:3.1.0")
     }
 
