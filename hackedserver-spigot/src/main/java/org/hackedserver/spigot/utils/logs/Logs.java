@@ -17,7 +17,7 @@ public class Logs {
     public static void enableFilter(JavaPlugin plugin) throws NoSuchFieldException, IllegalAccessException {
         Field field = JavaPlugin.class.getDeclaredField("logger");
         field.setAccessible(true);
-        LOGGER = new CustomLogger(plugin);
+        LOGGER = new CustomLogger(plugin, plugin.getLogger());
         field.set(plugin, LOGGER);
     }
 
